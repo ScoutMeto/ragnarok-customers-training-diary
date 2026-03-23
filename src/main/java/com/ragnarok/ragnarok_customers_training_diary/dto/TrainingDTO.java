@@ -1,12 +1,9 @@
 package com.ragnarok.ragnarok_customers_training_diary.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ragnarok.ragnarok_customers_training_diary.entity.ExerciseEntity;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import lombok.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,26 +19,23 @@ public class TrainingDTO {
 
     //provázat s konkrétním userem, který trénink ukládá
     private Long userId;
+    private List<ExerciseDTO> exercises;
+    private String nameOfLesson;
 
-    private List<ExerciseEntity> exercises;
+    private int numberOfFreeSlots;
 
+    private String coachName;
 
+    private LocalDateTime dateOfCurrentLesson;
 
-//
-//    private int numberOfFreeSlots;
-//
-//    private String coachName;
-//
-//    private LocalDateTime dateOfCurrentLesson;
-//
-//    private LocalDateTime startOfCurrentLesson;
-//
-//    private LocalDateTime endOfCurrentLesson;
-//
-//    private int repeatIntervalInDays = 7;
-//
-//    private int numberOfCopyConcreteTraining = 0;
-//
-//    private Long parentTrainingId;
+    private LocalDateTime startOfCurrentLesson;
+
+    private LocalDateTime endOfCurrentLesson;
+
+    private int repeatIntervalInDays = 7;
+
+    private int numberOfCopyConcreteTraining = 0;
+
+    private Long parentTrainingId;
 
 }

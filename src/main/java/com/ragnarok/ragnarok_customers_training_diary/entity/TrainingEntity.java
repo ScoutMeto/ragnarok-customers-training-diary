@@ -22,8 +22,23 @@ public class TrainingEntity {
 
     @OneToMany(mappedBy = "training", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ExerciseEntity> exercises;
+    private String nameOfLesson;
 
-    //...?
+    private int numberOfFreeSlots;
+
+    private String coachName;
+
+    private LocalDateTime dateOfCurrentLesson;
+
+    private LocalDateTime startOfCurrentLesson;
+
+    private LocalDateTime endOfCurrentLesson;
+
+    private int repeatIntervalInDays;
+
+    private int numberOfCopyConcreteTraining;
+
+    private Long parentTrainingId;
 
 
     //type of training
@@ -43,25 +58,6 @@ public class TrainingEntity {
     private boolean medium;
     private boolean hard;
     private boolean anotherTrainingDifficulty;
-
-//    private String nameOfLesson;
-//
-//    private int numberOfFreeSlots;
-//
-//    private String coachName;
-//
-//    private LocalDateTime dateOfCurrentLesson;
-//
-//    private LocalDateTime startOfCurrentLesson;
-//
-//    private LocalDateTime endOfCurrentLesson;
-//
-//    private int repeatIntervalInDays;
-//
-//    private int numberOfCopyConcreteTraining;
-//
-//    private Long parentTrainingId;
-
-//    @OneToMany(mappedBy = "training", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    //    @OneToMany(mappedBy = "training", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
 //    private List<ReservationEntity> reservations;
 }
