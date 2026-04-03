@@ -2,7 +2,6 @@ package com.ragnarok.ragnarok_customers_training_diary.dto.mapper;
 
 import com.ragnarok.ragnarok_customers_training_diary.dto.CustomizingExerciseDTO;
 import com.ragnarok.ragnarok_customers_training_diary.entity.CustomizingExerciseEntity;
-import com.ragnarok.ragnarok_customers_training_diary.dto.CustomizingExerciseDTO;
 import com.ragnarok.ragnarok_customers_training_diary.dto.ExerciseDTO;
 import com.ragnarok.ragnarok_customers_training_diary.entity.ExerciseEntity;
 import java.time.Duration;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ExerciseMapper {
+
 
     public ExerciseEntity toEntity(ExerciseDTO dto) {
         ExerciseEntity entity = new ExerciseEntity();
