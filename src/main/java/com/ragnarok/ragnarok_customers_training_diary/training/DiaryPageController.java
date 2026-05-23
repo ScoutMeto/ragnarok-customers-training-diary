@@ -62,6 +62,9 @@ public class DiaryPageController {
     public String list(@AuthenticationPrincipal AccountEntity user, Model model) {
         List<TrainingEntity> trainings = trainingService.listMyTrainings(user);
         model.addAttribute("trainings", trainings);
+        // Dnešní skupinové tréninky od trenéra (viditelné všem klientům)
+        model.addAttribute("todayGroupTrainings",
+                trainingService.listGroupTrainingsForDay(java.time.LocalDate.now()));
         return "diary/list";
     }
 
@@ -71,21 +74,40 @@ public class DiaryPageController {
             @PathVariable Long id,
             Model model) {
         TrainingEntity training = loadTrainingForViewer(user, id);
+
+        boolean isGroup = training.getVisibility() == TrainingVisibility.GROUP;
+        boolean isOwner = !isGroup
+                && training.getOwner() != null
+                && training.getOwner().getId().equals(user.getId());
+
         model.addAttribute("training", training);
         model.addAttribute("comments", commentService.listForTraining(id));
         model.addAttribute("currentUser", user);
-        model.addAttribute("isOwner", training.getOwner().getId().equals(user.getId()));
+        model.addAttribute("isOwner", isOwner);
+        model.addAttribute("isGroup", isGroup);
         return "diary/detail";
     }
 
     /**
-     * Načte trénink — vlastní (owner) NEBO cizí, pokud je viewer ADMIN.
+     * Načte trénink podle role + typu:
+     *  - GROUP → kdokoliv (read-only pro klienta, admin může přes /admin/group-trainings editovat)
+     *  - PRIVATE + user je ADMIN → getAnyTraining (admin bypass)
+     *  - PRIVATE + user je USER → getMyTraining (ownership enforced)
      */
     private TrainingEntity loadTrainingForViewer(AccountEntity user, Long trainingId) {
-        if (user.getRole() == AccountRole.ADMIN) {
-            return trainingService.getAnyTraining(trainingId);
+        TrainingEntity training = trainingService.getAnyTraining(trainingId);
+
+        if (training.getVisibility() == TrainingVisibility.GROUP) {
+            return training; // viditelný všem
         }
-        return trainingService.getMyTraining(user, trainingId);
+        // PRIVATE
+        if (user.getRole() == AccountRole.ADMIN) {
+            return training;
+        }
+        if (training.getOwner() == null || !training.getOwner().getId().equals(user.getId())) {
+            throw new NotFoundException("Trénink (id=" + trainingId + ") nenalezen.");
+        }
+        return training;
     }
 
     // -----------------------------------------------------------------------------

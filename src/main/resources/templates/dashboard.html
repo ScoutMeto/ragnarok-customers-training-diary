@@ -94,6 +94,38 @@
         <a th:href="@{/diary/new}" class="alert-link">založ první trénink</a>.
     </div>
 
+    <!-- ==================== Dnes v gymu (skupinové tréninky) ==================== -->
+    <div class="mt-5" th:if="${!todayGroupTrainings.isEmpty()}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">🏋️ Dnes v gymu</h3>
+            <a th:href="@{/diary}" class="btn btn-outline-primary btn-sm">Do deníku →</a>
+        </div>
+        <div class="row g-3">
+            <div th:each="t : ${todayGroupTrainings}" class="col-md-6 col-lg-4">
+                <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
+                    <div class="card h-100 training-card border-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0" th:text="${t.name} ?: 'Skupinový trénink'">Trénink</h5>
+                                <span class="badge bg-primary">Dnes</span>
+                            </div>
+                            <p class="text-muted small mb-1" th:if="${t.startTime != null}">
+                                <span th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span>
+                                <span th:if="${t.endTime != null}">
+                                    – <span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span>
+                                </span>
+                            </p>
+                            <p class="text-muted small mb-0">
+                                <span th:text="${t.exercises.size()}">3</span> cviků
+                                · Trenér: <strong th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '?'}">Trenér</strong>
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
 
 </main>
 

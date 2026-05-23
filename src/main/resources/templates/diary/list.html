@@ -17,8 +17,47 @@
     <div th:if="${flashSuccess}" class="alert alert-success" role="alert" th:text="${flashSuccess}"></div>
     <div th:if="${flashError}"   class="alert alert-danger"  role="alert" th:text="${flashError}"></div>
 
+    <!-- ==================== Dnes v gymu (skupinové tréninky) ==================== -->
+    <div class="mb-4" th:if="${!todayGroupTrainings.isEmpty()}">
+        <h3 class="mb-3">🏋️ Dnes v gymu</h3>
+        <p class="text-muted small mb-3">Skupinové tréninky vypsané trenérem na dnešek.</p>
+        <div class="row g-3">
+            <div th:each="t : ${todayGroupTrainings}" class="col-md-6 col-lg-4">
+                <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
+                    <div class="card h-100 training-card border-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0" th:text="${t.name} ?: 'Skupinový trénink'">Skupinový trénink</h5>
+                                <span class="badge bg-primary">Skupinový</span>
+                            </div>
+                            <p class="text-muted small mb-2" th:if="${t.startTime != null}">
+                                <span th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span>
+                                <span th:if="${t.endTime != null}">
+                                    – <span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span>
+                                </span>
+                            </p>
+                            <div class="mb-2" th:if="${!t.tags.isEmpty()}">
+                                <span th:each="tag : ${t.tags}"
+                                      class="badge me-1"
+                                      th:style="'background-color: ' + (${tag.color} ?: '#6c757d')"
+                                      th:text="${tag.name}">Tag</span>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                <span th:text="${t.exercises.size()}">3</span> cviků
+                                · Trenér: <strong th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '?'}">Trenér</strong>
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <hr class="my-4">
+    </div>
+
+    <h3 class="mb-3" th:if="${!trainings.isEmpty() or !todayGroupTrainings.isEmpty()}">📓 Moje tréninky</h3>
+
     <div th:if="${trainings.isEmpty()}" class="text-center py-5">
-        <p class="text-muted lead">Zatím nemáš žádný trénink.</p>
+        <p class="text-muted lead">Zatím nemáš žádný vlastní trénink.</p>
         <a th:href="@{/diary/new}" class="btn btn-outline-primary">Začít první</a>
     </div>
 

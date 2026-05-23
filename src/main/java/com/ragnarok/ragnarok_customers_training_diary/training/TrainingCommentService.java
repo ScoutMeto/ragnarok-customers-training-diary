@@ -37,10 +37,14 @@ public class TrainingCommentService {
         TrainingEntity training = trainingRepository.findById(trainingId)
                 .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
 
-        // Smí komentovat: majitel tréninku NEBO admin
-        boolean isOwner = training.getOwner().getId().equals(author.getId());
+        // Smí komentovat:
+        //  - PRIVATE: jen majitel NEBO admin
+        //  - GROUP: kdokoliv přihlášený (klient i admin)
+        boolean isGroup = training.getVisibility() == com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.GROUP;
+        boolean isOwner = !isGroup && training.getOwner() != null
+                && training.getOwner().getId().equals(author.getId());
         boolean isAdmin = author.getRole() == AccountRole.ADMIN;
-        if (!isOwner && !isAdmin) {
+        if (!isGroup && !isOwner && !isAdmin) {
             throw new ForbiddenException("Komentovat trénink může jen jeho majitel nebo admin.");
         }
 

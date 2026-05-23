@@ -16,11 +16,14 @@
 
     <div th:if="${flashSuccess}" class="alert alert-success" role="alert" th:text="${flashSuccess}"></div>
 
-    <div class="card mb-4">
+    <div class="card mb-4" th:classappend="${isGroup} ? 'border-primary' : ''">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                    <h1 class="mb-1" th:text="${training.name} ?: 'Trénink'">Trénink</h1>
+                    <h1 class="mb-1">
+                        <span th:text="${training.name} ?: 'Trénink'">Trénink</span>
+                        <span th:if="${isGroup}" class="badge bg-primary ms-2" style="font-size: 0.5em; vertical-align: middle;">Skupinový</span>
+                    </h1>
                     <p class="text-muted mb-0">
                         <span th:text="${#temporals.format(training.trainingDate, 'EEEE, d. M. yyyy')}">úterý, 23. 5. 2026</span>
                         <span th:if="${training.startTime != null}">
@@ -31,8 +34,14 @@
                                 <span th:text="${#temporals.format(training.endTime, 'HH:mm')}">11:00</span>
                             </span>
                         </span>
+                        <span th:if="${isGroup and training.createdBy != null}">
+                            · Trenér:
+                            <strong th:text="${training.createdBy.firstName} + ' ' + ${training.createdBy.lastName}">Trenér</strong>
+                        </span>
                     </p>
                 </div>
+
+                <!-- PRIVATE + owner: edit/delete -->
                 <div class="d-flex gap-2" th:if="${isOwner}">
                     <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
                     <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
@@ -40,8 +49,25 @@
                         <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
                     </form>
                 </div>
-                <div th:unless="${isOwner}" class="text-muted small">
+
+                <!-- GROUP + admin: edit/delete přes admin sekci -->
+                <div class="d-flex gap-2"
+                     th:if="${isGroup and currentUser.role.name() == 'ADMIN'}">
+                    <a th:href="@{/admin/group-trainings/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
+                    <form th:action="@{/admin/group-trainings/{id}/delete(id=${training.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Opravdu smazat tento skupinový trénink?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
+                    </form>
+                </div>
+
+                <!-- PRIVATE + admin (cizí klient): jen info, žádné akce -->
+                <div th:if="${not isOwner and not isGroup}" class="text-muted small">
                     <em>Náhled trenéra</em> — komentáře přidáš níže.
+                </div>
+
+                <!-- GROUP + klient: jen info -->
+                <div th:if="${isGroup and currentUser.role.name() != 'ADMIN'}" class="text-muted small">
+                    <em>Skupinový trénink</em> — můžeš okomentovat níže.
                 </div>
             </div>
 
@@ -158,14 +184,17 @@
         </div>
     </div>
 
-    <!-- Form pro nový komentář — viditelný pro majitele tréninku NEBO admina -->
-    <div th:if="${isOwner or currentUser.role.name() == 'ADMIN'}" class="card mb-3">
+    <!-- Form pro nový komentář:
+         - PRIVATE: jen owner nebo admin
+         - GROUP: kdokoliv -->
+    <div th:if="${isOwner or isGroup or currentUser.role.name() == 'ADMIN'}" class="card mb-3">
         <div class="card-body">
             <form th:action="@{/diary/{id}/comments(id=${training.id})}" method="post">
                 <div class="mb-2">
                     <label for="commentText" class="form-label">
-                        <span th:if="${isOwner}">Tvoje poznámka</span>
-                        <span th:unless="${isOwner}">Zpětná vazba od trenéra</span>
+                        <span th:if="${isGroup}">Tvůj komentář k lekci</span>
+                        <span th:if="${isOwner and not isGroup}">Tvoje poznámka</span>
+                        <span th:if="${not isOwner and not isGroup}">Zpětná vazba od trenéra</span>
                     </label>
                     <textarea id="commentText" name="text" class="form-control" rows="2" required
                               placeholder="napsat komentář..."></textarea>

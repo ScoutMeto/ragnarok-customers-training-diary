@@ -6,6 +6,7 @@ import com.ragnarok.ragnarok_customers_training_diary.account.EmailAlreadyTakenE
 import com.ragnarok.ragnarok_customers_training_diary.account.dto.RegistrationRequest;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -87,6 +88,9 @@ public class PageController {
         // Tři nejnovější vlastní tréninky pro rychlý přístup
         var recent = trainingService.listMyTrainings(account).stream().limit(3).toList();
         model.addAttribute("recentTrainings", recent);
+        // Dnešní skupinové tréninky od trenéra (vidí všichni klienti)
+        model.addAttribute("todayGroupTrainings",
+                trainingService.listGroupTrainingsForDay(LocalDate.now()));
         return "dashboard";
     }
 }
