@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head(${editing} ? 'Admin: úprava účtu' : 'Admin: nový účet')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item"><a th:href="@{/admin/accounts}">Účty</a></li>
+            <li class="breadcrumb-item active" aria-current="page"
+                th:text="${editing} ? 'Úprava' : 'Nový'">Nový</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4" th:text="${editing} ? 'Úprava účtu' : 'Nový účet'">Nový účet</h1>
+
+    <form th:action="${editing} ? @{/admin/accounts/{id}(id=${form.id})} : @{/admin/accounts}"
+          th:object="${form}" method="post">
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="firstName" class="form-label">Jméno *</label>
+                        <input type="text" id="firstName" th:field="*{firstName}" class="form-control"
+                               th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{firstName}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="lastName" class="form-label">Příjmení *</label>
+                        <input type="text" id="lastName" th:field="*{lastName}" class="form-control"
+                               th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{lastName}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nickname" class="form-label">Přezdívka *</label>
+                        <input type="text" id="nickname" th:field="*{nickname}" class="form-control"
+                               th:classappend="${#fields.hasErrors('nickname')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{nickname}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="role" class="form-label">Role *</label>
+                        <select id="role" th:field="*{role}" class="form-select">
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">USER</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control"
+                               th:readonly="${editing}"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                        <div class="form-text" th:if="${editing}">Email nelze měnit po vytvoření.</div>
+                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="phone" class="form-label">Telefon</label>
+                        <input type="tel" id="phone" th:field="*{phone}" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label for="password" class="form-label">
+                            <span th:if="${editing}">Nové heslo (volitelné — prázdné = nezměnit)</span>
+                            <span th:unless="${editing}">Heslo *</span>
+                        </label>
+                        <input type="password" id="password" th:field="*{password}" class="form-control"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                        <div class="form-text">Aspoň 8 znaků.</div>
+                        <div class="invalid-feedback" th:errors="*{password}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <span th:text="${editing} ? 'Uložit změny' : 'Vytvořit účet'">Vytvořit</span>
+            </button>
+            <a th:href="${editing} ? @{/admin/accounts/{id}(id=${form.id})} : @{/admin/accounts}"
+               class="btn btn-outline-secondary">Zrušit</a>
+        </div>
+    </form>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
