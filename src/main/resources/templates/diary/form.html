@@ -17,14 +17,14 @@
 
     <h1 class="mb-4" th:text="${editingId != null} ? 'Upravit trénink' : 'Nový trénink'">Nový trénink</h1>
 
-    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
-        <ul class="mb-0">
-            <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</li>
-        </ul>
-    </div>
-
     <form th:action="${editingId != null} ? @{/diary/{id}(id=${editingId})} : @{/diary}"
           th:object="${form}" method="post" id="trainingForm">
+
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+            <ul class="mb-0">
+                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</li>
+            </ul>
+        </div>
 
         <!-- ==================== Hlavičky tréninku ==================== -->
         <div class="card mb-4">
