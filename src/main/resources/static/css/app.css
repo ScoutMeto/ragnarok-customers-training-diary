@@ -1,0 +1,22 @@
+/* Custom styling nad Bootstrap 5. Drž minimalistické — vlastní designové prvky až později. */
+
+body {
+    background-color: #f7f7f9;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.navbar-brand strong {
+    letter-spacing: 0.5px;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="cs">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5 flex-grow-1">
+
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Vítej, <span th:text="${account.firstName}">Marek</span>!</h1>
+            <p class="text-muted">
+                Role: <code th:text="${account.role}">USER</code>
+                &middot;
+                Email: <code th:text="${account.email}">user@example.com</code>
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📓 Můj deník</h5>
+                    <p class="card-text text-muted">
+                        Záznamy tvých tréninků, cviky, sety, RPE…
+                    </p>
+                    <span class="badge bg-secondary">Připraveno pro Fázi 1</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">🗓️ Plán lekcí</h5>
+                    <p class="card-text text-muted">
+                        Skupinové lekce trenéra na tento týden &plusmn;1.
+                    </p>
+                    <span class="badge bg-secondary">Připraveno pro Fázi 2</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📊 Statistiky</h5>
+                    <p class="card-text text-muted">
+                        PR, volume, RPE trend, body part split…
+                    </p>
+                    <span class="badge bg-secondary">Připraveno pro Fázi 5</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4" sec:authorize="hasRole('ADMIN')">
+            <div class="card h-100 border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">⚙️ Admin sekce</h5>
+                    <p class="card-text text-muted">
+                        Správa klientů, plánů lekcí, katalogu cviků.
+                    </p>
+                    <span class="badge bg-secondary">Připraveno pro Fázi 2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-5" role="alert">
+        <strong>Fáze 0 hotová.</strong> Tohle je foundation — login, registrace, role, layout.
+        Vlastní funkce přijdou v dalších fázích.
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
