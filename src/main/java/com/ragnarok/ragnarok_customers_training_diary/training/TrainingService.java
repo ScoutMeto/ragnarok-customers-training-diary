@@ -56,6 +56,24 @@ public class TrainingService {
                 .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
     }
 
+    /**
+     * Admin bypass — vrátí trénink bez ohledu na majitele. Použij <b>pouze</b> v admin
+     * sekci, kontrola role musí být zařízena v controlleru/security.
+     */
+    @Transactional(readOnly = true)
+    public TrainingEntity getAnyTraining(Long trainingId) {
+        return trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+    }
+
+    /**
+     * Admin bypass pro výpis cizích tréninků (admin sekce: detail klienta).
+     */
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listTrainingsOf(Long ownerId) {
+        return trainingRepository.findByOwner_IdOrderByTrainingDateDescIdDesc(ownerId);
+    }
+
     // =============================================================================
     // Create / Update
     // =============================================================================
