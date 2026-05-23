@@ -1,6 +1,9 @@
 package com.ragnarok.ragnarok_customers_training_diary.training;
 
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -70,6 +74,19 @@ public class TrainingExerciseEntity {
     @OneToMany(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("setIndex ASC")
     private List<ExerciseSetEntity> sets = new ArrayList<>();
+
+    // --- Per-type konfigurace (OneToOne přes shared PK).
+    // V daný okamžik je pro cvik vyplněna jen jedna config (podle type).
+    // Cascade ALL + orphanRemoval — když se vymění typ, stará config se smaže.
+
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private EmomConfigEntity emomConfig;
+
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private TabataConfigEntity tabataConfig;
+
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private AmrapConfigEntity amrapConfig;
 
     @PrePersist
     void prePersist() {

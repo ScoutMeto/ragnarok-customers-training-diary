@@ -40,6 +40,17 @@ public class TrainingExerciseInput {
     @Valid
     private List<SetInput> sets = new ArrayList<>();
 
+    // --- Per-type config (jen ten se vyplní co odpovídá `type`) ---
+
+    @Valid
+    private EmomConfigInput emom;
+
+    @Valid
+    private TabataConfigInput tabata;
+
+    @Valid
+    private AmrapConfigInput amrap;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

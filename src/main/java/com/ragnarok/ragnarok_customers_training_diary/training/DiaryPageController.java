@@ -46,16 +46,19 @@ public class DiaryPageController {
     private final ExerciseCatalogService catalogService;
     private final TrainingTagService tagService;
     private final TrainingCommentService commentService;
+    private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
 
     public DiaryPageController(
             TrainingService trainingService,
             ExerciseCatalogService catalogService,
             TrainingTagService tagService,
-            TrainingCommentService commentService) {
+            TrainingCommentService commentService,
+            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
         this.commentService = commentService;
+        this.typeToInputMapper = typeToInputMapper;
     }
 
     @GetMapping
@@ -254,7 +257,7 @@ public class DiaryPageController {
     private void prepareFormModel(Model model, TrainingInput form, AccountEntity user) {
         model.addAttribute("form", form);
         model.addAttribute("difficulties", TrainingDifficulty.values());
-        model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.FREEFORM));
+        model.addAttribute("exerciseTypes", java.util.List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogItems", catalogService.listAll());
         model.addAttribute("tags", tagService.findVisibleTo(user));
     }
@@ -292,6 +295,8 @@ public class DiaryPageController {
                 return si;
             }).collect(Collectors.toList());
             ei.setSets(setInputs);
+            // Per-type config (EMOM, Tabata, AMRAP, ...) z entity zpět do DTO
+            typeToInputMapper.fillInput(ei, ex);
             return ei;
         }).collect(Collectors.toList());
         input.setExercises(exerciseInputs);

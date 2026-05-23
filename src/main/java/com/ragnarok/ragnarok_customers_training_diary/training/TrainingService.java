@@ -10,6 +10,7 @@ import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.SetInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,14 +33,17 @@ public class TrainingService {
     private final TrainingRepository trainingRepository;
     private final ExerciseCatalogItemRepository catalogRepository;
     private final TrainingTagRepository tagRepository;
+    private final ExerciseTypeConfigMapper typeConfigMapper;
 
     public TrainingService(
             TrainingRepository trainingRepository,
             ExerciseCatalogItemRepository catalogRepository,
-            TrainingTagRepository tagRepository) {
+            TrainingTagRepository tagRepository,
+            ExerciseTypeConfigMapper typeConfigMapper) {
         this.trainingRepository = trainingRepository;
         this.catalogRepository = catalogRepository;
         this.tagRepository = tagRepository;
+        this.typeConfigMapper = typeConfigMapper;
     }
 
     // =============================================================================
@@ -222,6 +226,9 @@ public class TrainingService {
                 set.setNote(setInput.getNote());
                 exercise.addSet(set);
             }
+
+            // Per-type config (EMOM, Tabata, AMRAP, Circuit, ...). Bezpečné NO-OP pro FREEFORM.
+            typeConfigMapper.apply(exercise, exInput);
 
             training.addExercise(exercise);
         }

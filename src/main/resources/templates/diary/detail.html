@@ -127,6 +127,69 @@
                style="white-space: pre-wrap"
                th:text="${ex.notes}">Notes</p>
 
+            <!-- EMOM display -->
+            <div th:if="${ex.emomConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong>EMOM</strong> ·
+                <span th:text="${ex.emomConfig.totalMinutes}">10</span> min,
+                interval <span th:text="${ex.emomConfig.intervalSeconds}">60</span> s ·
+                <span th:if="${ex.emomConfig.defaultReps != null}">
+                    default <span th:text="${ex.emomConfig.defaultReps}">5</span> reps
+                </span>
+                <span th:if="${ex.emomConfig.defaultWeightKg != null}">
+                    · <span th:text="${ex.emomConfig.defaultWeightKg}">24</span> kg
+                </span>
+                <div th:if="${ex.emomConfig.notes != null and !ex.emomConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.emomConfig.notes}"></div>
+                <table class="table table-sm mb-0 mt-2" th:if="${!ex.emomConfig.minuteOverrides.isEmpty()}">
+                    <thead><tr><th>Minuta</th><th>Reps</th><th>Kg</th><th>Pozn.</th></tr></thead>
+                    <tbody>
+                    <tr th:each="o : ${ex.emomConfig.minuteOverrides}">
+                        <td th:text="${o.minuteIndex}">1</td>
+                        <td th:text="${o.reps} ?: '—'">5</td>
+                        <td th:text="${o.weightKg} ?: '—'">24</td>
+                        <td th:text="${o.note} ?: ''"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabata display -->
+            <div th:if="${ex.tabataConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong>Tabata</strong> ·
+                <span th:text="${ex.tabataConfig.rounds}">8</span> kol ×
+                <span th:text="${ex.tabataConfig.workSeconds}">20</span>s práce /
+                <span th:text="${ex.tabataConfig.restSeconds}">10</span>s pauza
+                <span th:if="${ex.tabataConfig.defaultReps != null}">
+                    · default <span th:text="${ex.tabataConfig.defaultReps}">5</span> reps
+                </span>
+                <span th:if="${ex.tabataConfig.defaultWeightKg != null}">
+                    · <span th:text="${ex.tabataConfig.defaultWeightKg}">16</span> kg
+                </span>
+                <div th:if="${ex.tabataConfig.notes != null and !ex.tabataConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
+            </div>
+
+            <!-- AMRAP display -->
+            <div th:if="${ex.amrapConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong>AMRAP</strong> ·
+                time-cap <span th:text="${ex.amrapConfig.timecapSeconds}">480</span> s
+                <span th:if="${ex.amrapConfig.targetRepsPerRound != null}">
+                    · target <span th:text="${ex.amrapConfig.targetRepsPerRound}">10</span> reps/kolo
+                </span>
+                <span th:if="${ex.amrapConfig.targetWeightKg != null}">
+                    · <span th:text="${ex.amrapConfig.targetWeightKg}">24</span> kg
+                </span>
+                <span th:if="${ex.amrapConfig.roundsCompleted != null}"
+                      class="badge bg-success ms-2">
+                    Výsledek: <span th:text="${ex.amrapConfig.roundsCompleted}">8</span> kol
+                    <span th:if="${ex.amrapConfig.extraReps != null and ex.amrapConfig.extraReps > 0}">
+                        + <span th:text="${ex.amrapConfig.extraReps}">3</span> reps
+                    </span>
+                </span>
+                <div th:if="${ex.amrapConfig.notes != null and !ex.amrapConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.amrapConfig.notes}"></div>
+            </div>
+
             <table class="table table-sm mb-0" th:if="${!ex.sets.isEmpty()}">
                 <thead>
                 <tr>

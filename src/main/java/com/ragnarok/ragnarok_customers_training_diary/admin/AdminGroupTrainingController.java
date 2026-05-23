@@ -42,14 +42,17 @@ public class AdminGroupTrainingController {
     private final TrainingService trainingService;
     private final ExerciseCatalogService catalogService;
     private final TrainingTagRepository tagRepository;
+    private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
 
     public AdminGroupTrainingController(
             TrainingService trainingService,
             ExerciseCatalogService catalogService,
-            TrainingTagRepository tagRepository) {
+            TrainingTagRepository tagRepository,
+            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagRepository = tagRepository;
+        this.typeToInputMapper = typeToInputMapper;
     }
 
     @GetMapping
@@ -166,7 +169,7 @@ public class AdminGroupTrainingController {
 
     private void prepareFormModel(Model model) {
         model.addAttribute("difficulties", TrainingDifficulty.values());
-        model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.FREEFORM));
+        model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogItems", catalogService.listAll());
         // Pro group trénink povolíme jen systémové tagy
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());
@@ -202,6 +205,7 @@ public class AdminGroupTrainingController {
                 return si;
             }).collect(Collectors.toList());
             ei.setSets(setInputs);
+            typeToInputMapper.fillInput(ei, ex);
             return ei;
         }).collect(Collectors.toList());
         input.setExercises(exerciseInputs);
