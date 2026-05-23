@@ -9,20 +9,34 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> {
 
-    /**
-     * Tréninky daného klienta, nejnovější nahoře.
-     */
-    List<TrainingEntity> findByOwner_IdOrderByTrainingDateDescIdDesc(Long ownerId);
+    // -----------------------------------------------------------------------------
+    // PRIVATE — vlastní tréninky klienta
+    // -----------------------------------------------------------------------------
 
     /**
-     * Pro detail/edit: load training + verify ownership v jednom dotazu.
+     * Vlastní (PRIVATE) tréninky klienta, nejnovější nahoře.
+     */
+    List<TrainingEntity> findByOwner_IdAndVisibilityOrderByTrainingDateDescIdDesc(
+            Long ownerId, TrainingVisibility visibility);
+
+    /**
+     * Pro detail/edit klientova tréninku: load + verify ownership v jednom dotazu.
      */
     Optional<TrainingEntity> findByIdAndOwner_Id(Long id, Long ownerId);
 
-    /**
-     * Tréninky klienta v daném datovém rozsahu (pro statistiky a dashboard).
-     */
+    /** Tréninky klienta v daném datovém rozsahu (pro statistiky a dashboard). */
     List<TrainingEntity> findByOwner_IdAndTrainingDateBetween(Long ownerId, LocalDate from, LocalDate to);
 
     long countByOwner_Id(Long ownerId);
+
+    // -----------------------------------------------------------------------------
+    // GROUP — skupinové tréninky vytvořené adminem, viditelné všem
+    // -----------------------------------------------------------------------------
+
+    /** Skupinové tréninky pro konkrétní den (klient view: dashboard / today section). */
+    List<TrainingEntity> findByVisibilityAndTrainingDateOrderByStartTimeAsc(
+            TrainingVisibility visibility, LocalDate date);
+
+    /** Všechny skupinové tréninky pro admin sekci, nejnovější nahoře. */
+    List<TrainingEntity> findByVisibilityOrderByTrainingDateDescIdDesc(TrainingVisibility visibility);
 }

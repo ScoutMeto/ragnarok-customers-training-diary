@@ -48,9 +48,25 @@ public class TrainingEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
+    /**
+     * Vlastník tréninku. {@code null} pro skupinové tréninky (visibility=GROUP).
+     * Pro PRIVATE musí být NOT NULL (DB constraint {@code training_visibility_owner_check}).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
     private AccountEntity owner;
+
+    /**
+     * Kdo trénink založil. Pro PRIVATE typicky = owner. Pro GROUP = admin (trenér).
+     * Nullable kvůli ON DELETE SET NULL — když admin odejde, jeho group tréninky zůstanou.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id")
+    private AccountEntity createdBy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private TrainingVisibility visibility = TrainingVisibility.PRIVATE;
 
     @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;

@@ -10,6 +10,7 @@ import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.SetInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,9 +46,14 @@ public class TrainingService {
     // Read
     // =============================================================================
 
+    // -----------------------------------------------------------------------------
+    // PRIVATE — klient si vede vlastní deník
+    // -----------------------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<TrainingEntity> listMyTrainings(AccountEntity owner) {
-        return trainingRepository.findByOwner_IdOrderByTrainingDateDescIdDesc(owner.getId());
+        return trainingRepository.findByOwner_IdAndVisibilityOrderByTrainingDateDescIdDesc(
+                owner.getId(), TrainingVisibility.PRIVATE);
     }
 
     @Transactional(readOnly = true)
@@ -57,8 +63,8 @@ public class TrainingService {
     }
 
     /**
-     * Admin bypass — vrátí trénink bez ohledu na majitele. Použij <b>pouze</b> v admin
-     * sekci, kontrola role musí být zařízena v controlleru/security.
+     * Admin bypass — vrátí trénink bez ohledu na majitele/visibility. Použij <b>pouze</b>
+     * v admin sekci, kontrola role musí být zařízena v controlleru/security.
      */
     @Transactional(readOnly = true)
     public TrainingEntity getAnyTraining(Long trainingId) {
@@ -66,23 +72,20 @@ public class TrainingService {
                 .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
     }
 
-    /**
-     * Admin bypass pro výpis cizích tréninků (admin sekce: detail klienta).
-     */
+    /** Admin bypass pro výpis cizích PRIVATE tréninků (admin sekce: detail klienta). */
     @Transactional(readOnly = true)
     public List<TrainingEntity> listTrainingsOf(Long ownerId) {
-        return trainingRepository.findByOwner_IdOrderByTrainingDateDescIdDesc(ownerId);
+        return trainingRepository.findByOwner_IdAndVisibilityOrderByTrainingDateDescIdDesc(
+                ownerId, TrainingVisibility.PRIVATE);
     }
-
-    // =============================================================================
-    // Create / Update
-    // =============================================================================
 
     public TrainingEntity create(AccountEntity owner, TrainingInput input) {
         validateExerciseNaming(input);
 
         TrainingEntity training = new TrainingEntity();
+        training.setVisibility(TrainingVisibility.PRIVATE);
         training.setOwner(owner);
+        training.setCreatedBy(owner);
         applyTrainingFields(training, input);
         applyExercises(training, input.getExercises());
         applyTags(training, input.getTagIds(), owner);
@@ -108,6 +111,67 @@ public class TrainingService {
     public void delete(AccountEntity owner, Long trainingId) {
         TrainingEntity training = trainingRepository.findByIdAndOwner_Id(trainingId, owner.getId())
                 .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+        trainingRepository.delete(training);
+    }
+
+    // -----------------------------------------------------------------------------
+    // GROUP — admin tvoří, všichni klienti vidí pro daný den
+    // -----------------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listGroupTrainingsForDay(LocalDate date) {
+        return trainingRepository.findByVisibilityAndTrainingDateOrderByStartTimeAsc(
+                TrainingVisibility.GROUP, date);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listAllGroupTrainings() {
+        return trainingRepository.findByVisibilityOrderByTrainingDateDescIdDesc(TrainingVisibility.GROUP);
+    }
+
+    /**
+     * Vytvoří skupinový trénink. {@code creator} musí být admin — vynucení role
+     * v controlleru/security.
+     */
+    public TrainingEntity createGroup(AccountEntity creator, TrainingInput input) {
+        validateExerciseNaming(input);
+
+        TrainingEntity training = new TrainingEntity();
+        training.setVisibility(TrainingVisibility.GROUP);
+        training.setOwner(null);
+        training.setCreatedBy(creator);
+        applyTrainingFields(training, input);
+        applyExercises(training, input.getExercises());
+        // Pro group tréninky používáme stejné tagy — viditelné napříč uživateli
+        // (omezíme to na systémové tagy v UI, custom tagy patří uživatelům).
+        applyTagsForGroup(training, input.getTagIds());
+
+        return trainingRepository.save(training);
+    }
+
+    public TrainingEntity updateGroup(Long trainingId, TrainingInput input) {
+        validateExerciseNaming(input);
+
+        TrainingEntity training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+        if (training.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Trénink není skupinový.");
+        }
+
+        applyTrainingFields(training, input);
+        training.getExercises().clear();
+        applyExercises(training, input.getExercises());
+        applyTagsForGroup(training, input.getTagIds());
+
+        return trainingRepository.save(training);
+    }
+
+    public void deleteGroup(Long trainingId) {
+        TrainingEntity training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+        if (training.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Trénink není skupinový.");
+        }
         trainingRepository.delete(training);
     }
 
@@ -173,6 +237,26 @@ public class TrainingService {
                 if (!tag.isSystem() && (tag.getOwner() == null
                         || !tag.getOwner().getId().equals(owner.getId()))) {
                     throw new ForbiddenException("Cizí custom tag (id=" + tagId + ").");
+                }
+                resolved.add(tag);
+            }
+        }
+        training.setTags(resolved);
+    }
+
+    /**
+     * Tagy pro group trénink — povolíme jen systémové (custom tagy patří uživateli,
+     * a group trénink je sdílený přes všechny uživatele).
+     */
+    private void applyTagsForGroup(TrainingEntity training, Set<Long> tagIds) {
+        Set<TrainingTagEntity> resolved = new HashSet<>();
+        if (tagIds != null) {
+            for (Long tagId : tagIds) {
+                TrainingTagEntity tag = tagRepository.findById(tagId)
+                        .orElseThrow(() -> new NotFoundException("Tag (id=" + tagId + ") nenalezen."));
+                if (!tag.isSystem()) {
+                    throw new IllegalArgumentException(
+                            "Group trénink může mít jen systémové tagy (tag id=" + tagId + " je custom).");
                 }
                 resolved.add(tag);
             }
