@@ -1,13 +1,8 @@
 package com.ragnarok.ragnarok_customers_training_diary.configuration;
 
-import com.ragnarok.ragnarok_customers_training_diary.account.AccountUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,6 +14,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  *
  * <p>Form-login na {@code /login}, session-based. Pro REST API endpointy ({@code /api/**})
  * je CSRF vypnutý (volá je JS přes fetch). Pro Thymeleaf formuláře je CSRF zapnutý.
+ *
+ * <p>{@code AuthenticationManager} se autokonfiguruje Spring Bootem ze
+ * {@link com.ragnarok.ragnarok_customers_training_diary.account.AccountUserDetailsService}
+ * + {@link #passwordEncoder()} bean — žádný custom {@code DaoAuthenticationProvider} není potřeba.
  */
 @Configuration
 public class SecurityConfiguration {
@@ -56,20 +55,6 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.maximumSessions(10));
 
         return http.build();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(
-            AccountUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
     }
 
     @Bean
