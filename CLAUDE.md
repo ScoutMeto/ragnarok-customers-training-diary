@@ -212,6 +212,12 @@ Mít jen JEDEN `SecurityFilterChain` bean, autokonfigurace zařídí zbytek z `U
 (catalog_item_id IS NULL AND custom_name IS NOT NULL)`. Pokud chceš povolit obojí jako null
 (což aktuálně NEDOVOLÍME), upravuj v migraci.
 
+### OSIV (Open Session In View) je ZAPNUTÝ
+`spring.jpa.open-in-view=true` — záměrně, pragmatická volba pro malou Thymeleaf aplikaci.
+Bez něj Thymeleaf rendering hodí `LazyInitializationException` na `training.tags`, `training.exercises.sets`
+atd. Alternativa (`@EntityGraph` na každém query) je hodně víc kódu a riskuje `MultipleBagFetchException`.
+Zrevidovat v Phase 5 (statistiky) nebo když výkon začne škrtit.
+
 ### IntelliJ Run okno blokuje port 8080
 Když uživatel zapomene zastavit IntelliJ Spring Boot run a spustí znovu, dostaneš
 `Port 8080 was already in use`. Najdi proces (`Get-NetTCPConnection -LocalPort 8080`)

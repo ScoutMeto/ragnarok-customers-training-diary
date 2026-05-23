@@ -244,3 +244,4 @@ upomínku klientům, kteří mají na zítra GroupLessonPlan. Per-account `email
 | 2026-05-23 | `#fields.hasGlobalErrors()` přesunut dovnitř `<form th:object>` | `c9dbd94` |
 | 2026-05-23 | Default DB heslo `Meto1990` → `postgres` | `256c705` |
 | 2026-05-23 | UI scaling pro 4K monitor (font 17-20px, container 1600px) | `ddf9296` |
+| 2026-05-23 | `spring.jpa.open-in-view=false` → `=true` (LazyInitException na detail.html) | – |
