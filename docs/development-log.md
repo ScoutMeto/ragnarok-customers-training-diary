@@ -11,8 +11,8 @@
 |---|------|------|-----|
 | 0 | Foundation | ✅ DONE | mergnuto do `develop` |
 | 1 | MVP diary | ✅ DONE | mergnuto do `develop` |
-| 2 | Trenér + GroupLessonPlan | ⏳ **NEXT** | rovnou na `develop` |
-| 3 | Rozšířené typy cviků | – | rovnou na `develop` |
+| 2 | Trenér + GroupLessonPlan + komentáře | ✅ DONE | na `develop` |
+| 3 | Rozšířené typy cviků | ⏳ **NEXT** | rovnou na `develop` |
 | 4 | Timer / stopky | – | rovnou na `develop` |
 | 5 | Statistiky | – | rovnou na `develop` |
 | 6 | Email notifikace | – | rovnou na `develop` |
@@ -100,7 +100,49 @@ Lokálně. **Nepushnuto na origin.** (Pushnout můžeme na žádost.)
 
 ---
 
-## ⏳ Fáze 2 — Trenér + GroupLessonPlan (NEXT)
+## ✅ Fáze 2 — Trenér + GroupLessonPlan + komentáře (DONE)
+
+**Branch:** přímo na `develop` (8 commitů)
+**Cíl:** trenér uvidí všechny klienty a jejich deníky, zveřejní plán skupinových lekcí,
+klient vidí plán ±1 týden, trenér komentuje konkrétní trénink klienta.
+
+### Co bylo dodáno
+
+- **V5 migrace** — `account.deleted_at`, `group_lesson_plan`, `training_comment`
+- **JPA entity**: `GroupLessonPlanEntity`, `TrainingCommentEntity`, soft-delete na `AccountEntity`
+- **Service vrstva**:
+  - `GroupLessonPlanService` (CRUD + ±7d klient filter, validace ADMIN role coache)
+  - `TrainingCommentService` (add/delete s ownership: owner nebo admin)
+  - `TrainingService.getAnyTraining` + `listTrainingsOf` — admin bypass
+  - `AccountService.softDelete` — anonymizace email/jméno/telefon + deleted_at
+- **Admin sekce**:
+  - `/admin/accounts` — list, detail (s deníkem klienta), create, edit, soft-delete
+  - `/admin/lessons` — CRUD pro skupinové lekce
+- **Klient view**: `/lessons` (read-only kalendář ±1 týden)
+- **Komentáře**: pod detailem tréninku (`diary/{id}`), zobrazují plné jméno + email
+- **Navbar dropdown** "Admin" pro ROLE_ADMIN s linky na Účty / Skupinové lekce
+- **Dashboard**: karty Můj deník / Plán lekcí / Admin sekce jsou aktivní, sekce
+  "Nadcházející lekce" pod posledními tréninky
+- **11 Phase 2 testů** (admin bypass, comments authorization, soft delete, lesson filter)
+
+### Klíčová rozhodnutí (z odpovědí trenéra)
+
+- Skupinové lekce **jednorázové** (žádné recurring/parent_id) — jedna lekce = jeden záznam
+- Kapacita **vypuštěna** — `group_lesson_plan` je čistě informativní, vazba na rezervace přijde v Phase 7
+- V komentářích zobrazujeme **jméno + email autora** (full kontakt dle požadavku)
+- **Soft delete** s anonymizací (email se přepíše na `deleted-{id}-{uuid}@deleted.local`)
+- Bootstrap admin login používá soft-delete-aware lookup (`findByEmailAndDeletedAtIsNull`)
+- Coach v `GroupLessonPlan` musí mít role ADMIN; FK je `ON DELETE RESTRICT`
+  (nelze smazat trenéra, který má aktivní lekce)
+
+### Stav testů
+```
+26/26 zelených (7 + 8 + 11)
+```
+
+---
+
+## ⏳ Fáze 3 — Rozšířené typy cviků (NEXT)
 
 **Cíl:** trenér uvidí všechny klienty a jejich deníky. Zveřejní plán skupinových lekcí. Klient
 vidí plán ±1 týden. Trenér komentuje konkrétní trénink klienta.
@@ -143,7 +185,7 @@ vidí plán ±1 týden. Trenér komentuje konkrétní trénink klienta.
 
 ---
 
-## 📋 Fáze 3 — Rozšířené typy cviků (BUDOUCÍ)
+## 📋 Fáze 3 — Detail (NEXT)
 
 **Cíl:** kromě FREEFORM přidat EMOM, Circuit, Tabata, AMRAP, Ladder, Stepladder, Pyramid,
 Superset, Straight sets, Complex.

@@ -157,8 +157,8 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 |---|------|------|-----|
 | 0 | Foundation (account, security, Thymeleaf skeleton) | ✅ DONE | mergnuto do `develop` |
 | 1 | MVP diary (klient si zapíše trénink) | ✅ DONE | mergnuto do `develop` |
-| 2 | Trenér + GroupLessonPlan + komentáře | ⏳ NEXT | rovnou na `develop` |
-| 3 | Rozšířené typy cviků (EMOM, Circuit, Tabata, ...) | – | rovnou na `develop` |
+| 2 | Trenér + GroupLessonPlan + komentáře | ✅ DONE | na `develop` |
+| 3 | Rozšířené typy cviků (EMOM, Circuit, Tabata, ...) | ⏳ NEXT | rovnou na `develop` |
 | 4 | Timer / stopky + wake lock | – | rovnou na `develop` |
 | 5 | TrainingAnalysisService (statistiky) | – | rovnou na `develop` |
 | 6 | Email notifikace | – | rovnou na `develop` |

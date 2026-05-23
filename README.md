@@ -12,23 +12,23 @@ si svoje statistiky a propojuje se s [rezervačním systémem](https://github.co
 - Spring Security (session-based, BCrypt, role USER/ADMIN)
 - Maven
 
-## Aktuální stav: Fáze 1 (MVP — klient si zapíše trénink)
+## Aktuální stav: Fáze 2 (Trenér + GroupLessonPlan + komentáře)
 
-✅ Sjednocený `account` model s rolemi USER/ADMIN
+✅ Sjednocený `account` model s rolemi USER/ADMIN + soft delete (anonymizace)
 ✅ Registrace + login + logout
-✅ Bootstrap admin při startu
-✅ Tréninkový deník: vytvořit / upravit / smazat trénink (ownership enforced)
-✅ Cviky v tréninku — výběr z katalogu (~92 položek) nebo vlastní název
-✅ Per-set logging (váha, opakování, RPE, poznámka)
-✅ Tagy (předdefinované systémové + custom per-user) s barvou
-✅ Difficulty (LIGHT/MEDIUM/HARD), RPE na třech úrovních (trénink/cvik/set)
+✅ Tréninkový deník (klient): vytvořit / upravit / smazat trénink, cviky, sety, tagy
+✅ Katalog ~92 cviků + 8 systémových tagů
+✅ **Admin sekce:**
+   - Správa klientů (list, detail s deníky klienta, edit, soft-delete)
+   - Správa skupinových lekcí (CRUD)
+✅ **Klient view:** plán lekcí ±1 týden
+✅ **Komentáře** k tréninku (klient nebo admin), zobrazují jméno + email autora
+✅ Dashboard ukazuje poslední tréninky + nadcházející lekce
 ✅ Thymeleaf UI s Bootstrap 5, responzivní
-✅ JS pro dynamické přidávání cviků/setů ve formuláři
-✅ 15 testů (7 account flow + 8 ownership/validace)
+✅ 26 testů (7 account flow + 8 ownership + 11 Phase 2)
 
-Plán lekcí (Fáze 2), rozšířené typy cviků (Fáze 3), Timer (Fáze 4),
-Statistiky (Fáze 5), Email notifikace (Fáze 6), Integrace s rezervacemi
-(Fáze 7) přijdou v dalších branchích.
+Rozšířené typy cviků (Fáze 3), Timer (Fáze 4), Statistiky (Fáze 5),
+Email notifikace (Fáze 6), Integrace s rezervacemi (Fáze 7) přijdou na `develop`.
 
 ## Lokální spuštění
 
