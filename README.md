@@ -39,7 +39,7 @@ přijde v dalších feature branchích.
 CREATE DATABASE ragnarok_diary_database;
 ```
 
-Pokud máš jiné heslo než `Meto1990`, nastav env var `DB_PASSWORD` (viz níže).
+Pokud máš jiné heslo než `postgres`, nastav env var `DB_PASSWORD` (viz níže).
 
 ### 3. Spuštění
 
@@ -66,7 +66,7 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 |-----|-----------------|-------|
 | `DB_URL` | `jdbc:postgresql://localhost:5432/ragnarok_diary_database` | JDBC URL |
 | `DB_USERNAME` | `postgres` | DB uživatel |
-| `DB_PASSWORD` | `Meto1990` | DB heslo |
+| `DB_PASSWORD` | `postgres` | DB heslo |
 | `SPRING_PROFILES_ACTIVE` | (none) | Pro produkci nastav `prod` |
 | `BOOTSTRAP_ADMIN_EMAIL` | `admin@admin.cz` | Email prvního admina |
 | `BOOTSTRAP_ADMIN_PASSWORD` | `heslo123` | Heslo prvního admina |
