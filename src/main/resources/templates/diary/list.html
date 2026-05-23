@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Můj deník')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Můj deník</h1>
+        <a th:href="@{/diary/new}" class="btn btn-primary">
+            + Nový trénink
+        </a>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" role="alert" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  role="alert" th:text="${flashError}"></div>
+
+    <div th:if="${trainings.isEmpty()}" class="text-center py-5">
+        <p class="text-muted lead">Zatím nemáš žádný trénink.</p>
+        <a th:href="@{/diary/new}" class="btn btn-outline-primary">Začít první</a>
+    </div>
+
+    <div th:unless="${trainings.isEmpty()}" class="row g-3">
+        <div th:each="t : ${trainings}" class="col-md-6 col-lg-4">
+            <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
+                <div class="card h-100 training-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0" th:text="${t.name} ?: 'Trénink'">Trénink</h5>
+                            <span class="badge bg-secondary"
+                                  th:text="${#temporals.format(t.trainingDate, 'dd.MM.yyyy')}">23.05.2026</span>
+                        </div>
+                        <p class="text-muted small mb-2" th:if="${t.startTime != null}">
+                            <span th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span>
+                            <span th:if="${t.endTime != null}">
+                                – <span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span>
+                            </span>
+                        </p>
+                        <div class="mb-2">
+                            <span class="badge bg-warning text-dark me-1"
+                                  th:if="${t.difficulty != null}"
+                                  th:text="${t.difficulty}">MEDIUM</span>
+                            <span class="badge bg-info text-dark me-1"
+                                  th:if="${t.rpe != null}"
+                                  th:text="'RPE ' + ${t.rpe}">RPE 7</span>
+                        </div>
+                        <div class="mb-2" th:if="${!t.tags.isEmpty()}">
+                            <span th:each="tag : ${t.tags}"
+                                  class="badge me-1"
+                                  th:style="'background-color: ' + (${tag.color} ?: '#6c757d')"
+                                  th:text="${tag.name}">Tag</span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            <span th:text="${t.exercises.size()}">3</span> cviků
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<style>
+    .training-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+        transition: all 0.15s ease;
+    }
+</style>
+
+</body>
+</html>

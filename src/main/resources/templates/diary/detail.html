@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Trénink')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a th:href="@{/diary}">Můj deník</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${training.name} ?: 'Trénink'">Trénink</li>
+        </ol>
+    </nav>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" role="alert" th:text="${flashSuccess}"></div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="mb-1" th:text="${training.name} ?: 'Trénink'">Trénink</h1>
+                    <p class="text-muted mb-0">
+                        <span th:text="${#temporals.format(training.trainingDate, 'EEEE, d. M. yyyy')}">úterý, 23. 5. 2026</span>
+                        <span th:if="${training.startTime != null}">
+                            ·
+                            <span th:text="${#temporals.format(training.startTime, 'HH:mm')}">10:00</span>
+                            <span th:if="${training.endTime != null}">
+                                –
+                                <span th:text="${#temporals.format(training.endTime, 'HH:mm')}">11:00</span>
+                            </span>
+                        </span>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
+                    <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Opravdu smazat tento trénink?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <span class="badge bg-warning text-dark me-1"
+                      th:if="${training.difficulty != null}"
+                      th:text="${training.difficulty}">MEDIUM</span>
+                <span class="badge bg-info text-dark me-1"
+                      th:if="${training.rpe != null}"
+                      th:text="'RPE ' + ${training.rpe}">RPE 7</span>
+                <span th:each="tag : ${training.tags}"
+                      class="badge me-1"
+                      th:style="'background-color: ' + (${tag.color} ?: '#6c757d')"
+                      th:text="${tag.name}">Tag</span>
+            </div>
+
+            <p th:if="${training.notes != null and !training.notes.isEmpty()}"
+               class="mb-0 text-muted"
+               style="white-space: pre-wrap"
+               th:text="${training.notes}">Notes</p>
+        </div>
+    </div>
+
+    <h3 class="mb-3">Cviky</h3>
+
+    <div th:if="${training.exercises.isEmpty()}" class="text-muted">
+        Žádné cviky v tomto tréninku.
+    </div>
+
+    <div th:each="ex, exStat : ${training.exercises}" class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">
+                    <span class="text-muted me-2" th:text="${exStat.count} + '.'">1.</span>
+                    <span th:text="${ex.displayName}">Cvik</span>
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark" th:text="${ex.type}">FREEFORM</span>
+                    <span class="badge bg-info text-dark"
+                          th:if="${ex.rpe != null}"
+                          th:text="'RPE ' + ${ex.rpe}">RPE 7</span>
+                </div>
+            </div>
+
+            <p class="text-muted small mb-2"
+               th:if="${ex.catalogItem != null}">
+                <span th:if="${ex.catalogItem.bodyRegion != null}"
+                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
+                <span th:if="${ex.catalogItem.movementPattern != null}"
+                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
+                <span th:if="${ex.catalogItem.equipment != null}"
+                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
+            </p>
+
+            <p th:if="${ex.notes != null and !ex.notes.isEmpty()}"
+               class="text-muted small"
+               style="white-space: pre-wrap"
+               th:text="${ex.notes}">Notes</p>
+
+            <table class="table table-sm mb-0" th:if="${!ex.sets.isEmpty()}">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Váha (kg)</th>
+                    <th>Opakování</th>
+                    <th>RPE</th>
+                    <th>Poznámka</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s, sStat : ${ex.sets}">
+                    <td th:text="${sStat.count}">1</td>
+                    <td th:text="${s.weightKg} ?: '—'">20</td>
+                    <td th:text="${s.reps} ?: '—'">10</td>
+                    <td th:text="${s.rpe} ?: '—'">7</td>
+                    <td th:text="${s.note} ?: ''">poznámka</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

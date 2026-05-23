@@ -1,0 +1,100 @@
+package com.ragnarok.ragnarok_customers_training_diary.training;
+
+import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Cvik v rámci tréninku — drží odkaz na katalog ({@link #catalogItem}) nebo vlastní
+ * název ({@link #customName}); právě jeden z těchto dvou musí být vyplněn (XOR).
+ *
+ * <p>Typ ({@link TrainingExerciseType}) určuje formulář a logiku — Fáze 1 implementuje
+ * jen {@link TrainingExerciseType#FREEFORM}, ostatní typy přijdou ve Fázi 3.
+ */
+@Entity
+@Table(name = "training_exercise")
+@Getter
+@Setter
+@NoArgsConstructor
+public class TrainingExerciseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "training_id", nullable = false)
+    private TrainingEntity training;
+
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private TrainingExerciseType type;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "catalog_item_id")
+    private ExerciseCatalogItemEntity catalogItem;
+
+    @Column(name = "custom_name", length = 128)
+    private String customName;
+
+    private Short rpe;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("setIndex ASC")
+    private List<ExerciseSetEntity> sets = new ArrayList<>();
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * Zobrazitelné jméno cviku — buď z katalogu, nebo custom.
+     */
+    public String getDisplayName() {
+        if (catalogItem != null) {
+            return catalogItem.getName();
+        }
+        return customName;
+    }
+
+    public void addSet(ExerciseSetEntity set) {
+        sets.add(set);
+        set.setTrainingExercise(this);
+    }
+
+    public void removeSet(ExerciseSetEntity set) {
+        sets.remove(set);
+        set.setTrainingExercise(null);
+    }
+}

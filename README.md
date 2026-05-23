@@ -12,17 +12,23 @@ si svoje statistiky a propojuje se s [rezervačním systémem](https://github.co
 - Spring Security (session-based, BCrypt, role USER/ADMIN)
 - Maven
 
-## Aktuální stav: Fáze 0 (Foundation)
+## Aktuální stav: Fáze 1 (MVP — klient si zapíše trénink)
 
 ✅ Sjednocený `account` model s rolemi USER/ADMIN
 ✅ Registrace + login + logout
 ✅ Bootstrap admin při startu
-✅ Thymeleaf skeleton (login, register, dashboard) s rolí-aware navigací
-✅ Flyway migrace
-✅ 7 smoke testů
+✅ Tréninkový deník: vytvořit / upravit / smazat trénink (ownership enforced)
+✅ Cviky v tréninku — výběr z katalogu (~92 položek) nebo vlastní název
+✅ Per-set logging (váha, opakování, RPE, poznámka)
+✅ Tagy (předdefinované systémové + custom per-user) s barvou
+✅ Difficulty (LIGHT/MEDIUM/HARD), RPE na třech úrovních (trénink/cvik/set)
+✅ Thymeleaf UI s Bootstrap 5, responzivní
+✅ JS pro dynamické přidávání cviků/setů ve formuláři
+✅ 15 testů (7 account flow + 8 ownership/validace)
 
-Implementace dalších fází (Můj deník, Plán lekcí, Statistiky, ...)
-přijde v dalších feature branchích.
+Plán lekcí (Fáze 2), rozšířené typy cviků (Fáze 3), Timer (Fáze 4),
+Statistiky (Fáze 5), Email notifikace (Fáze 6), Integrace s rezervacemi
+(Fáze 7) přijdou v dalších branchích.
 
 ## Lokální spuštění
 

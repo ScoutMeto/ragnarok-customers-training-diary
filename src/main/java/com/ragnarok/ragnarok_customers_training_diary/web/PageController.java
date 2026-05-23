@@ -4,6 +4,7 @@ import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountService;
 import com.ragnarok.ragnarok_customers_training_diary.account.EmailAlreadyTakenException;
 import com.ragnarok.ragnarok_customers_training_diary.account.dto.RegistrationRequest;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -22,9 +23,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class PageController {
 
     private final AccountService accountService;
+    private final TrainingService trainingService;
 
-    public PageController(AccountService accountService) {
+    public PageController(AccountService accountService, TrainingService trainingService) {
         this.accountService = accountService;
+        this.trainingService = trainingService;
     }
 
     @GetMapping("/")
@@ -81,6 +84,9 @@ public class PageController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal AccountEntity account, Model model) {
         model.addAttribute("account", account);
+        // Nejnovějších pár tréninků pro rychlý přístup
+        var recent = trainingService.listMyTrainings(account).stream().limit(3).toList();
+        model.addAttribute("recentTrainings", recent);
         return "dashboard";
     }
 }
