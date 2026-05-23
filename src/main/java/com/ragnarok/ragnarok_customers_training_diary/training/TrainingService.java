@@ -1,0 +1,185 @@
+package com.ragnarok.ragnarok_customers_training_diary.training;
+
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemRepository;
+import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
+import com.ragnarok.ragnarok_customers_training_diary.common.NotFoundException;
+import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity;
+import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.SetInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Business logika tréninkového deníku.
+ *
+ * <p>Všechny operace, které vrací nebo upravují trénink, validují vlastnictví —
+ * uživatel může číst/editovat/mazat jen svoje vlastní tréninky. (Admin bypass
+ * přijde ve Fázi 2.)
+ */
+@Service
+@Transactional
+public class TrainingService {
+
+    private final TrainingRepository trainingRepository;
+    private final ExerciseCatalogItemRepository catalogRepository;
+    private final TrainingTagRepository tagRepository;
+
+    public TrainingService(
+            TrainingRepository trainingRepository,
+            ExerciseCatalogItemRepository catalogRepository,
+            TrainingTagRepository tagRepository) {
+        this.trainingRepository = trainingRepository;
+        this.catalogRepository = catalogRepository;
+        this.tagRepository = tagRepository;
+    }
+
+    // =============================================================================
+    // Read
+    // =============================================================================
+
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listMyTrainings(AccountEntity owner) {
+        return trainingRepository.findByOwner_IdOrderByTrainingDateDescIdDesc(owner.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public TrainingEntity getMyTraining(AccountEntity owner, Long trainingId) {
+        return trainingRepository.findByIdAndOwner_Id(trainingId, owner.getId())
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+    }
+
+    // =============================================================================
+    // Create / Update
+    // =============================================================================
+
+    public TrainingEntity create(AccountEntity owner, TrainingInput input) {
+        validateExerciseNaming(input);
+
+        TrainingEntity training = new TrainingEntity();
+        training.setOwner(owner);
+        applyTrainingFields(training, input);
+        applyExercises(training, input.getExercises());
+        applyTags(training, input.getTagIds(), owner);
+
+        return trainingRepository.save(training);
+    }
+
+    public TrainingEntity update(AccountEntity owner, Long trainingId, TrainingInput input) {
+        validateExerciseNaming(input);
+
+        TrainingEntity training = trainingRepository.findByIdAndOwner_Id(trainingId, owner.getId())
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+
+        applyTrainingFields(training, input);
+        // Cviky a sety přepíšeme od základu — jednodušší než inkrementální merge.
+        training.getExercises().clear();
+        applyExercises(training, input.getExercises());
+        applyTags(training, input.getTagIds(), owner);
+
+        return trainingRepository.save(training);
+    }
+
+    public void delete(AccountEntity owner, Long trainingId) {
+        TrainingEntity training = trainingRepository.findByIdAndOwner_Id(trainingId, owner.getId())
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+        trainingRepository.delete(training);
+    }
+
+    // =============================================================================
+    // Privátní helpery
+    // =============================================================================
+
+    private void applyTrainingFields(TrainingEntity training, TrainingInput input) {
+        training.setTrainingDate(input.getTrainingDate());
+        training.setStartTime(input.getStartTime());
+        training.setEndTime(input.getEndTime());
+        training.setName(input.getName());
+        training.setDifficulty(input.getDifficulty());
+        training.setRpe(input.getRpe());
+        training.setNotes(input.getNotes());
+    }
+
+    private void applyExercises(TrainingEntity training, List<TrainingExerciseInput> exerciseInputs) {
+        if (exerciseInputs == null) return;
+
+        int orderIdx = 0;
+        for (TrainingExerciseInput exInput : exerciseInputs) {
+            TrainingExerciseEntity exercise = new TrainingExerciseEntity();
+            exercise.setOrderIndex(orderIdx++);
+            exercise.setType(exInput.getType());
+            exercise.setRpe(exInput.getRpe());
+            exercise.setNotes(exInput.getNotes());
+
+            if (exInput.getCatalogItemId() != null) {
+                ExerciseCatalogItemEntity catalogItem = catalogRepository.findById(exInput.getCatalogItemId())
+                        .orElseThrow(() -> new NotFoundException(
+                                "Cvik z katalogu (id=" + exInput.getCatalogItemId() + ") nenalezen."));
+                exercise.setCatalogItem(catalogItem);
+                exercise.setCustomName(null);
+            } else {
+                exercise.setCatalogItem(null);
+                exercise.setCustomName(exInput.getCustomName());
+            }
+
+            int setIdx = 0;
+            for (SetInput setInput : exInput.getSets()) {
+                if (isSetEmpty(setInput)) continue;
+                ExerciseSetEntity set = new ExerciseSetEntity();
+                set.setSetIndex(setIdx++);
+                set.setWeightKg(setInput.getWeightKg());
+                set.setReps(setInput.getReps());
+                set.setRpe(setInput.getRpe());
+                set.setNote(setInput.getNote());
+                exercise.addSet(set);
+            }
+
+            training.addExercise(exercise);
+        }
+    }
+
+    private void applyTags(TrainingEntity training, Set<Long> tagIds, AccountEntity owner) {
+        Set<TrainingTagEntity> resolved = new HashSet<>();
+        if (tagIds != null) {
+            for (Long tagId : tagIds) {
+                TrainingTagEntity tag = tagRepository.findById(tagId)
+                        .orElseThrow(() -> new NotFoundException("Tag (id=" + tagId + ") nenalezen."));
+                // Custom tag musí patřit uživateli; system tag je OK pro všechny
+                if (!tag.isSystem() && (tag.getOwner() == null
+                        || !tag.getOwner().getId().equals(owner.getId()))) {
+                    throw new ForbiddenException("Cizí custom tag (id=" + tagId + ").");
+                }
+                resolved.add(tag);
+            }
+        }
+        training.setTags(resolved);
+    }
+
+    private boolean isSetEmpty(SetInput s) {
+        return s.getWeightKg() == null
+                && s.getReps() == null
+                && s.getRpe() == null
+                && (s.getNote() == null || s.getNote().isBlank());
+    }
+
+    private void validateExerciseNaming(TrainingInput input) {
+        if (input.getExercises() == null) return;
+        List<String> errors = new ArrayList<>();
+        for (int i = 0; i < input.getExercises().size(); i++) {
+            TrainingExerciseInput ex = input.getExercises().get(i);
+            if (!ex.isNamingValid()) {
+                errors.add("Cvik #" + (i + 1) + ": vyber buď cvik z katalogu, nebo zadej vlastní název.");
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(" ", errors));
+        }
+    }
+}
