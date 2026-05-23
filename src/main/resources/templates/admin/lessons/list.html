@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Admin: skupinové lekce')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page">Skupinové lekce</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Skupinové lekce</h1>
+        <a th:href="@{/admin/lessons/new}" class="btn btn-primary">+ Nová lekce</a>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+
+    <p class="text-muted" th:if="${lessons.isEmpty()}">Žádné lekce zatím nejsou vypsány.</p>
+
+    <table class="table align-middle" th:unless="${lessons.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Datum</th>
+            <th>Čas</th>
+            <th>Název</th>
+            <th>Trenér</th>
+            <th>Popis</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="l : ${lessons}">
+            <td th:text="${#temporals.format(l.lessonDate, 'EEE dd.MM.yyyy')}">po 23.05.2026</td>
+            <td>
+                <span th:text="${#temporals.format(l.startTime, 'HH:mm')}">10:00</span>
+                <span th:if="${l.endTime != null}">
+                    – <span th:text="${#temporals.format(l.endTime, 'HH:mm')}">11:00</span>
+                </span>
+            </td>
+            <td><strong th:text="${l.lessonName}">Název</strong></td>
+            <td th:text="${l.coach.firstName} + ' ' + ${l.coach.lastName}">Trenér</td>
+            <td class="text-muted small" th:text="${l.description} ?: '—'">Popis</td>
+            <td class="text-end">
+                <a th:href="@{/admin/lessons/{id}/edit(id=${l.id})}" class="btn btn-sm btn-outline-primary">Upravit</a>
+                <form th:action="@{/admin/lessons/{id}/delete(id=${l.id})}" method="post" class="d-inline"
+                      onsubmit="return confirm('Opravdu smazat tuto lekci?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

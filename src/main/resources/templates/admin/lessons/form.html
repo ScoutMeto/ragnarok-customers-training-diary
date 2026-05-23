@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head(${editing} ? 'Admin: úprava lekce' : 'Admin: nová lekce')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item"><a th:href="@{/admin/lessons}">Skupinové lekce</a></li>
+            <li class="breadcrumb-item active" aria-current="page"
+                th:text="${editing} ? 'Úprava' : 'Nová'">Nová</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4" th:text="${editing} ? 'Úprava lekce' : 'Nová lekce'">Nová lekce</h1>
+
+    <form th:action="${editing} ? @{/admin/lessons/{id}(id=${form.id})} : @{/admin/lessons}"
+          th:object="${form}" method="post">
+
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+            <ul class="mb-0">
+                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</li>
+            </ul>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="lessonDate" class="form-label">Datum *</label>
+                        <input type="date" id="lessonDate" th:field="*{lessonDate}" class="form-control"
+                               th:classappend="${#fields.hasErrors('lessonDate')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{lessonDate}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="startTime" class="form-label">Začátek *</label>
+                        <input type="time" id="startTime" th:field="*{startTime}" class="form-control"
+                               th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{startTime}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="endTime" class="form-label">Konec</label>
+                        <input type="time" id="endTime" th:field="*{endTime}" class="form-control">
+                    </div>
+
+                    <div class="col-md-8">
+                        <label for="lessonName" class="form-label">Název lekce *</label>
+                        <input type="text" id="lessonName" th:field="*{lessonName}" class="form-control"
+                               th:classappend="${#fields.hasErrors('lessonName')} ? 'is-invalid'"
+                               placeholder="např. KB silový, AMRAP basics, mobility...">
+                        <div class="invalid-feedback" th:errors="*{lessonName}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="coachId" class="form-label">Trenér *</label>
+                        <select id="coachId" th:field="*{coachId}" class="form-select"
+                                th:classappend="${#fields.hasErrors('coachId')} ? 'is-invalid'">
+                            <option th:each="c : ${coaches}" th:value="${c.id}"
+                                    th:text="${c.firstName} + ' ' + ${c.lastName}">Trenér</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{coachId}"></div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="description" class="form-label">Popis lekce</label>
+                        <textarea id="description" th:field="*{description}" class="form-control" rows="3"
+                                  placeholder="co se bude dělat, na co se zaměřuje, materiál..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <span th:text="${editing} ? 'Uložit změny' : 'Vytvořit lekci'">Vytvořit</span>
+            </button>
+            <a th:href="@{/admin/lessons}" class="btn btn-outline-secondary">Zrušit</a>
+        </div>
+    </form>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
