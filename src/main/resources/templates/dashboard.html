@@ -35,20 +35,6 @@
         </div>
 
         <div class="col-md-6 col-lg-4">
-            <a th:href="@{/lessons}" class="text-decoration-none text-dark">
-                <div class="card h-100 dashboard-card">
-                    <div class="card-body">
-                        <h5 class="card-title">🗓️ Plán lekcí</h5>
-                        <p class="card-text text-muted">
-                            Skupinové lekce trenéra na tento týden &plusmn;1.
-                        </p>
-                        <span class="badge bg-success">Aktivní</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
             <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">📊 Statistiky</h5>
@@ -66,7 +52,7 @@
                     <div class="card-body">
                         <h5 class="card-title">⚙️ Admin sekce</h5>
                         <p class="card-text text-muted">
-                            Správa klientů a skupinových lekcí.
+                            Správa klientů a skupinových tréninků.
                         </p>
                         <span class="badge bg-success">Aktivní</span>
                     </div>
@@ -108,29 +94,6 @@
         <a th:href="@{/diary/new}" class="alert-link">založ první trénink</a>.
     </div>
 
-    <!-- ==================== Nadcházející lekce ==================== -->
-    <div class="mt-5" th:if="${!upcomingLessons.isEmpty()}">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Nadcházející lekce</h3>
-            <a th:href="@{/lessons}" class="btn btn-outline-primary btn-sm">Celý plán →</a>
-        </div>
-        <div class="row g-3">
-            <div th:each="l : ${upcomingLessons}" class="col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h6 class="card-title mb-2" th:text="${l.lessonName}">Název</h6>
-                        <p class="text-muted small mb-1">
-                            <span th:text="${#temporals.format(l.lessonDate, 'EEE dd.MM.')}">po 23.05.</span>
-                            ·
-                            <span th:text="${#temporals.format(l.startTime, 'HH:mm')}">10:00</span>
-                        </p>
-                        <p class="text-muted small mb-0"
-                           th:text="${l.coach.firstName} + ' ' + ${l.coach.lastName}">Trenér</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
 </main>
 

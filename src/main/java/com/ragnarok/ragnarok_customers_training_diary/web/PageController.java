@@ -4,9 +4,7 @@ import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountService;
 import com.ragnarok.ragnarok_customers_training_diary.account.EmailAlreadyTakenException;
 import com.ragnarok.ragnarok_customers_training_diary.account.dto.RegistrationRequest;
-import com.ragnarok.ragnarok_customers_training_diary.lesson.GroupLessonPlanService;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingService;
-import java.time.LocalDate;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -26,13 +24,10 @@ public class PageController {
 
     private final AccountService accountService;
     private final TrainingService trainingService;
-    private final GroupLessonPlanService lessonService;
 
-    public PageController(AccountService accountService, TrainingService trainingService,
-                          GroupLessonPlanService lessonService) {
+    public PageController(AccountService accountService, TrainingService trainingService) {
         this.accountService = accountService;
         this.trainingService = trainingService;
-        this.lessonService = lessonService;
     }
 
     @GetMapping("/")
@@ -89,16 +84,9 @@ public class PageController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal AccountEntity account, Model model) {
         model.addAttribute("account", account);
-        // Nejnovějších pár tréninků pro rychlý přístup
+        // Tři nejnovější vlastní tréninky pro rychlý přístup
         var recent = trainingService.listMyTrainings(account).stream().limit(3).toList();
         model.addAttribute("recentTrainings", recent);
-        // Skupinové lekce v týdnu (max 4 nejbližší)
-        LocalDate today = LocalDate.now();
-        var upcomingLessons = lessonService.listForClient(today).stream()
-                .filter(l -> !l.getLessonDate().isBefore(today))
-                .limit(4)
-                .toList();
-        model.addAttribute("upcomingLessons", upcomingLessons);
         return "dashboard";
     }
 }

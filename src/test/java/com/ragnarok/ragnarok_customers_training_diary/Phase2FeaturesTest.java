@@ -8,9 +8,6 @@ import com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountService;
 import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
-import com.ragnarok.ragnarok_customers_training_diary.lesson.GroupLessonPlanEntity;
-import com.ragnarok.ragnarok_customers_training_diary.lesson.GroupLessonPlanService;
-import com.ragnarok.ragnarok_customers_training_diary.lesson.dto.GroupLessonPlanInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingCommentEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingCommentService;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingEntity;
@@ -19,7 +16,6 @@ import com.ragnarok.ragnarok_customers_training_diary.training.TrainingService;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
  *  - regular user cannot see other users' trainings (regression)
  *  - regular user cannot comment on other users' trainings
  *  - soft delete anonymizes + disables login
- *  - GroupLessonPlan client window filters ±7 days
+ *
+ * Group training tests jsou v {@link GroupTrainingTest} (V6+).
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -46,7 +43,6 @@ class Phase2FeaturesTest {
     @Autowired private TrainingCommentService commentService;
     @Autowired private AccountService accountService;
     @Autowired private AccountRepository accountRepository;
-    @Autowired private GroupLessonPlanService lessonService;
     @Autowired private PasswordEncoder passwordEncoder;
 
     private AccountEntity alice;
@@ -162,38 +158,6 @@ class Phase2FeaturesTest {
     }
 
     // -----------------------------------------------------------------------------
-    // GroupLessonPlan filtrování ±7 dní
-    // -----------------------------------------------------------------------------
-
-    @Test
-    void lessonsForClientFilterPlusMinus7Days() {
-        LocalDate today = LocalDate.now();
-        createLesson(trainer, today.minusDays(10), "starší 10d");
-        createLesson(trainer, today.minusDays(3),  "minulý týden");
-        createLesson(trainer, today,               "dnes");
-        createLesson(trainer, today.plusDays(5),   "tento týden");
-        createLesson(trainer, today.plusDays(20),  "za 3 týdny");
-
-        List<GroupLessonPlanEntity> visible = lessonService.listForClient(today);
-
-        assertThat(visible).extracting(GroupLessonPlanEntity::getLessonName)
-                .containsExactlyInAnyOrder("minulý týden", "dnes", "tento týden");
-    }
-
-    @Test
-    void onlyAdminCanBeCoach() {
-        GroupLessonPlanInput input = new GroupLessonPlanInput();
-        input.setLessonDate(LocalDate.now());
-        input.setStartTime(LocalTime.of(18, 0));
-        input.setLessonName("Test");
-        input.setCoachId(alice.getId());  // alice is USER, not ADMIN
-
-        assertThatThrownBy(() -> lessonService.create(input))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("trenér");
-    }
-
-    // -----------------------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------------------
 
@@ -217,14 +181,5 @@ class Phase2FeaturesTest {
         ex.setCustomName("KB swing");
         input.getExercises().add(ex);
         return input;
-    }
-
-    private void createLesson(AccountEntity coach, LocalDate date, String name) {
-        GroupLessonPlanInput input = new GroupLessonPlanInput();
-        input.setLessonDate(date);
-        input.setStartTime(LocalTime.of(18, 0));
-        input.setLessonName(name);
-        input.setCoachId(coach.getId());
-        lessonService.create(input);
     }
 }
