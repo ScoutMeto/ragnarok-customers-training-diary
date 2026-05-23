@@ -106,13 +106,14 @@ V Railway dashboardu:
 
 ## Vývoj — branching
 
-```bash
-# Nová feature větev
-git checkout -b feature/phase-N-popis
+- `master` — stable release (zatím prázdné, mergne se ze `develop` ručně při stabilizaci verze)
+- `develop` — **veškerý aktivní vývoj** se odehrává tady
+- Pro Phase N se **nevytváří** separátní branch, commity jdou rovnou na `develop`
+- Hotfix nebo rizikový experiment lze udělat krátkodobou `feature/...` branch a merge zpět
 
-# Po dokončení
-git push -u origin feature/phase-N-popis
-# Pull request → review → merge do main
+```bash
+git checkout develop
+# ... commity přímo na develop ...
 ```
 
 ## Struktura projektu

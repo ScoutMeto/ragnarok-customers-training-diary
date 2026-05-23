@@ -119,10 +119,10 @@ PGPASSWORD=postgres "/c/Program Files/PostgreSQL/17/bin/psql.exe" -U postgres -h
 PGPASSWORD=postgres "/c/Program Files/PostgreSQL/17/bin/psql.exe" -U postgres -c "DROP DATABASE ragnarok_diary_database"
 PGPASSWORD=postgres "/c/Program Files/PostgreSQL/17/bin/psql.exe" -U postgres -c "CREATE DATABASE ragnarok_diary_database WITH ENCODING='UTF8'"
 
-# Git workflow (vždy feature branch, nikdy přímo na master)
-git checkout -b feature/phase-N-popis
-# ... commits ...
-# Push + PR na GitHubu nebo lokální merge
+# Git workflow — develop je integration branch, master je stable
+git checkout develop
+# ... commits přímo na develop ...
+# Master se merguje až při stabilním release (později)
 ```
 
 ## 6. Databáze — lokální dev
@@ -153,24 +153,32 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 
 ## 8. Stav fází (k 2026-05-23)
 
-| # | Fáze | Stav | Branch |
-|---|------|------|--------|
-| 0 | Foundation (account, security, Thymeleaf skeleton) | ✅ DONE | `feature/phase-0-foundation` |
-| 1 | MVP diary (klient si zapíše trénink) | ✅ DONE | `feature/phase-1-mvp-diary` |
-| 2 | Trenér + GroupLessonPlan + komentáře | ⏳ NEXT | – |
-| 3 | Rozšířené typy cviků (EMOM, Circuit, Tabata, ...) | – | – |
-| 4 | Timer / stopky + wake lock | – | – |
-| 5 | TrainingAnalysisService (statistiky) | – | – |
-| 6 | Email notifikace | – | – |
-| 7 | Integrace s rezervačním systémem (REST API) | – | – |
-| 8 | Individuální plány od trenéra (template + text) | – | – |
+| # | Fáze | Stav | Kde |
+|---|------|------|-----|
+| 0 | Foundation (account, security, Thymeleaf skeleton) | ✅ DONE | mergnuto do `develop` |
+| 1 | MVP diary (klient si zapíše trénink) | ✅ DONE | mergnuto do `develop` |
+| 2 | Trenér + GroupLessonPlan + komentáře | ⏳ NEXT | rovnou na `develop` |
+| 3 | Rozšířené typy cviků (EMOM, Circuit, Tabata, ...) | – | rovnou na `develop` |
+| 4 | Timer / stopky + wake lock | – | rovnou na `develop` |
+| 5 | TrainingAnalysisService (statistiky) | – | rovnou na `develop` |
+| 6 | Email notifikace | – | rovnou na `develop` |
+| 7 | Integrace s rezervačním systémem (REST API) | – | rovnou na `develop` |
+| 8 | Individuální plány od trenéra (template + text) | – | rovnou na `develop` |
+
+**Branching strategie:** `develop` = veškerý vývoj. `master` = stable release (zatím se nepoužívá,
+mergnutí ze `develop` proběhne ručně při stabilizaci verze pro produkci).
 
 Detail jednotlivých fází viz `docs/development-log.md` a `docs/architecture.md`.
 
 ## 9. Důležité konvence
 
 ### Vždy
-- **Feature branch** (`feature/phase-N-popis`), 5–9 atomických commitů, na konci review/merge
+- **Branche:**
+  - `master` — stable releases (zatím prázdné, mergne se ze `develop` při stabilizaci)
+  - `develop` — integration, **veškerý vývoj se odehrává tady**
+  - Pro Phase N **netvořit** separátní feature branch — commity rovnou na `develop`
+  - Pro rizikový experiment/hotfix lze krátkodobou `feature/...` branch, merge zpět do develop
+- **Commit messages** v Conventional Commits stylu (`feat:`, `fix:`, `chore:`, `docs:`, `test:`)
 - **Flyway migrace** pro každou schema změnu (V5, V6, …) — nikdy nesahat na existující migraci!
 - **Bezpečnost na service vrstvě** — controllery se neptají na ownership, service ano (viz `TrainingService.getMyTraining`)
 - **Per-set logging nepovinné** — klient zaznamenává jen to, co chce sledovat

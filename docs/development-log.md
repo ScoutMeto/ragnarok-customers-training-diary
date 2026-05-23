@@ -7,19 +7,26 @@
 
 ## 📊 Stav fází (k 2026-05-23)
 
-| # | Fáze | Stav | Branch |
-|---|------|------|--------|
-| 0 | Foundation | ✅ DONE | `feature/phase-0-foundation` |
-| 1 | MVP diary | ✅ DONE | `feature/phase-1-mvp-diary` |
-| 2 | Trenér + GroupLessonPlan | ⏳ **NEXT** | – |
-| 3 | Rozšířené typy cviků | – | – |
-| 4 | Timer / stopky | – | – |
-| 5 | Statistiky | – | – |
-| 6 | Email notifikace | – | – |
-| 7 | Integrace s rezervacemi | – | – |
-| 8 | Individuální plány od trenéra | – | – |
+| # | Fáze | Stav | Kde |
+|---|------|------|-----|
+| 0 | Foundation | ✅ DONE | mergnuto do `develop` |
+| 1 | MVP diary | ✅ DONE | mergnuto do `develop` |
+| 2 | Trenér + GroupLessonPlan | ⏳ **NEXT** | rovnou na `develop` |
+| 3 | Rozšířené typy cviků | – | rovnou na `develop` |
+| 4 | Timer / stopky | – | rovnou na `develop` |
+| 5 | Statistiky | – | rovnou na `develop` |
+| 6 | Email notifikace | – | rovnou na `develop` |
+| 7 | Integrace s rezervacemi | – | rovnou na `develop` |
+| 8 | Individuální plány od trenéra | – | rovnou na `develop` |
 
-**Branch status:** všechno lokálně, **nepushnuto na origin**. Žádný PR/merge zatím.
+**Branching strategie (od Fáze 2):**
+- `master` = stable releases (zatím prázdné, mergne se ze `develop` ručně při stabilizaci)
+- `develop` = veškerý vývoj
+- Pro Phase N **nevytvářet** separátní feature branch — commity rovnou na `develop`
+- Hotfix nebo rizikový experiment může mít krátkodobou `feature/...` branch a merge zpět
+
+**Branch status:** `develop` má Phase 0 + Phase 1 mergnuté přes `--no-ff` merge commits.
+Lokálně. **Nepushnuto na origin.** (Pushnout můžeme na žádost.)
 
 ---
 
