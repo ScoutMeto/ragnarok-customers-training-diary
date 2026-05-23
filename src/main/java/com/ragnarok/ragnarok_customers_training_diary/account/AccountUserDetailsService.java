@@ -20,7 +20,8 @@ public class AccountUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return accountRepository.findByEmail(email)
+        // Pouze aktivní (deleted_at IS NULL) účty se mohou přihlásit.
+        return accountRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found: " + email));
     }
 }

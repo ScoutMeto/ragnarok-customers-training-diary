@@ -62,6 +62,19 @@ public class AccountEntity implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    /**
+     * Soft-delete timestamp. {@code null} = aktivní účet. Když je nastaven, účet
+     * je anonymizován (email, jméno, telefon přepsány) a v dotazech aktivních
+     * účtů se ignoruje.
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    /** Konvenience getter — `deletedAt == null`. */
+    public boolean isActive() {
+        return deletedAt == null;
+    }
+
     // ---------------------------------------------------------------------------------------------
     // UserDetails (Spring Security)
     // ---------------------------------------------------------------------------------------------
@@ -96,8 +109,9 @@ public class AccountEntity implements UserDetails {
         return true;
     }
 
+    /** Soft-deleted účet se nemůže přihlásit. */
     @Override
     public boolean isEnabled() {
-        return true;
+        return deletedAt == null;
     }
 }
