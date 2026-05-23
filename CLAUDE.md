@@ -36,7 +36,7 @@ s **samostatným** [rezervačním systémem](https://github.com/ScoutMeto/ragnar
 ```
 com.ragnarok.ragnarok_customers_training_diary/
 ├── RagnarokCustomersTrainingDiaryApplication.java     # main
-├── account/                # Sjednocený User+Admin model (role enum)
+├── account/                # Sjednocený User+Admin model (role enum + soft delete)
 │   ├── AccountEntity.java          # implements UserDetails
 │   ├── AccountRole.java            # USER, ADMIN
 │   ├── AccountRepository.java
@@ -56,16 +56,23 @@ com.ragnarok.ragnarok_customers_training_diary/
 │   ├── TrainingTagRepository.java
 │   ├── TrainingTagService.java
 │   └── TrainingTagRestController.java       # /api/tags
-├── training/               # Tréninkový deník
-│   ├── TrainingEntity.java         # 1 trénink = 1 klient (owner_id FK)
+├── training/               # Tréninkový deník (PRIVATE + GROUP)
+│   ├── TrainingEntity.java         # visibility=PRIVATE (klient) nebo GROUP (admin)
 │   ├── TrainingExerciseEntity.java # cvik v tréninku (XOR catalog_item / custom_name)
 │   ├── ExerciseSetEntity.java      # set cviku (weight, reps, RPE, note — vše nullable)
 │   ├── TrainingDifficulty.java     # enum LIGHT/MEDIUM/HARD
+│   ├── TrainingVisibility.java     # enum PRIVATE/GROUP
 │   ├── TrainingExerciseType.java   # FREEFORM + budoucí EMOM/CIRCUIT/Tabata/...
+│   ├── TrainingCommentEntity.java  # komentář (autor klient nebo admin)
 │   ├── *Repository.java
-│   ├── TrainingService.java        # business logic + ownership check
-│   ├── DiaryPageController.java    # /diary/** (Thymeleaf)
+│   ├── TrainingService.java        # business logic + ownership check + group ops
+│   ├── TrainingCommentService.java
+│   ├── DiaryPageController.java    # /diary/** (Thymeleaf, klient + group view)
 │   └── dto/                # TrainingInput, TrainingExerciseInput, SetInput
+├── admin/                  # Admin sekce (jen ROLE_ADMIN)
+│   ├── AdminAccountController.java       # /admin/accounts CRUD (soft-delete)
+│   ├── AdminAccountForm.java
+│   └── AdminGroupTrainingController.java # /admin/group-trainings CRUD
 ├── web/                    # General Thymeleaf controllers
 │   ├── PageController.java         # /, /login, /register, /dashboard
 │   └── RegistrationForm.java
@@ -82,18 +89,24 @@ com.ragnarok.ragnarok_customers_training_diary/
 ## 4. Datový model (high-level)
 
 ```
-account (USER nebo ADMIN)
-   └─ training (1:N)                       [owner_id FK na account]
+account (USER nebo ADMIN, + deleted_at pro soft delete)
+   └─ training (1:N)                       [visibility=PRIVATE: owner_id NOT NULL]
+                                            [visibility=GROUP:   owner_id NULL]
+                                            [created_by_id (kdo založil)]
          └─ training_exercise (1:N)        [type, catalog_item_id XOR custom_name]
                └─ exercise_set (1:N)       [weight_kg, reps, rpe, note — nullable]
 
-exercise_catalog_item   ─── system seed (V3, 92 cviků) + custom by admin (Phase 2)
-training_tag            ─── system tags (V4, 8 tagů) + per-user custom
-training_tag_link       ─── M:N (training × tag)
+training_comment           ─── komentář k tréninku (text, author, created_at)
+exercise_catalog_item      ─── system seed (V3, 92 cviků) + custom by admin (Phase 2+)
+training_tag               ─── system tags (V4, 8 tagů) + per-user custom
+training_tag_link          ─── M:N (training × tag)
 ```
 
 **Klíčová pravidla:**
-- Trénink patří 1 klientovi (owner_id FK na account, nikdy null)
+- **PRIVATE trénink** patří 1 klientovi (owner_id NOT NULL), vidí jen majitel (a admin)
+- **GROUP trénink** vytvoří admin (createdBy=admin), owner=NULL, vidí všichni klienti
+  pro daný den (training_date)
+- DB CHECK constraint: `visibility=PRIVATE → owner_id NOT NULL`
 - Cvik buď z katalogu (catalog_item_id) NEBO custom název — XOR vynucený DB constraintem
 - RPE existuje na 3 úrovních: trénink / cvik / set, všude nullable, 1–10
 - Difficulty (LIGHT/MEDIUM/HARD) jen na tréninku, nullable, klient si nastavuje sám

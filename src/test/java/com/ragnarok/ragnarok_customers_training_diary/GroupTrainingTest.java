@@ -1,0 +1,168 @@
+package com.ragnarok.ragnarok_customers_training_diary;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository;
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingCommentService;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingExerciseType;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingService;
+import com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
+import java.time.LocalDate;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Tests for GROUP visibility trainings (Phase 2 corrected scope):
+ *  - admin creates group training
+ *  - all clients see today's group trainings via listGroupTrainingsForDay
+ *  - listMyTrainings ignores group trainings (owner=NULL)
+ *  - PRIVATE/GROUP filter is consistent
+ *  - clients can comment on group trainings (PRIVATE rules unchanged)
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class GroupTrainingTest {
+
+    @Autowired private TrainingService trainingService;
+    @Autowired private TrainingCommentService commentService;
+    @Autowired private AccountRepository accountRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+
+    private AccountEntity alice;
+    private AccountEntity bob;
+    private AccountEntity trainer;
+
+    @BeforeEach
+    void seed() {
+        alice   = createUser("alice@example.com", "Alice", AccountRole.USER);
+        bob     = createUser("bob@example.com",   "Bob",   AccountRole.USER);
+        trainer = createUser("coach@example.com", "Coach", AccountRole.ADMIN);
+    }
+
+    @Test
+    void adminCreatesGroupTraining_setsVisibilityAndCreator() {
+        TrainingEntity group = trainingService.createGroup(trainer, sampleInputForDate(LocalDate.now()));
+
+        assertThat(group.getVisibility()).isEqualTo(TrainingVisibility.GROUP);
+        assertThat(group.getOwner()).isNull();
+        assertThat(group.getCreatedBy().getId()).isEqualTo(trainer.getId());
+    }
+
+    @Test
+    void groupTrainingsForDay_returnsOnlyMatchingDate() {
+        LocalDate today = LocalDate.now();
+        trainingService.createGroup(trainer, sampleInputForDate(today.minusDays(1)));
+        trainingService.createGroup(trainer, sampleInputForDate(today));
+        trainingService.createGroup(trainer, sampleInputForDate(today));
+        trainingService.createGroup(trainer, sampleInputForDate(today.plusDays(1)));
+
+        List<TrainingEntity> result = trainingService.listGroupTrainingsForDay(today);
+        assertThat(result).hasSize(2);
+        assertThat(result).allMatch(t -> t.getTrainingDate().equals(today));
+        assertThat(result).allMatch(t -> t.getVisibility() == TrainingVisibility.GROUP);
+    }
+
+    @Test
+    void listMyTrainings_excludesGroup() {
+        // Alice has 1 private + admin created 1 group on same day
+        trainingService.create(alice, sampleInputForDate(LocalDate.now()));
+        trainingService.createGroup(trainer, sampleInputForDate(LocalDate.now()));
+
+        List<TrainingEntity> alicePrivate = trainingService.listMyTrainings(alice);
+        assertThat(alicePrivate).hasSize(1);
+        assertThat(alicePrivate).allMatch(t -> t.getVisibility() == TrainingVisibility.PRIVATE);
+    }
+
+    @Test
+    void listTrainingsOf_admin_returnsOnlyPrivate() {
+        trainingService.create(alice, sampleInputForDate(LocalDate.now()));
+        trainingService.create(alice, sampleInputForDate(LocalDate.now().minusDays(1)));
+        trainingService.createGroup(trainer, sampleInputForDate(LocalDate.now()));
+
+        // Admin pohled na Alice — neměl by vidět group jako její
+        assertThat(trainingService.listTrainingsOf(alice.getId())).hasSize(2);
+    }
+
+    @Test
+    void clientCanCommentGroupTraining() {
+        TrainingEntity group = trainingService.createGroup(trainer, sampleInputForDate(LocalDate.now()));
+
+        var comment = commentService.addComment(alice, group.getId(), "Skvělá lekce!");
+        assertThat(comment.getAuthor().getId()).isEqualTo(alice.getId());
+        assertThat(comment.getTraining().getId()).isEqualTo(group.getId());
+
+        // Bob (taky klient) taky smí
+        commentService.addComment(bob, group.getId(), "Souhlasím");
+        assertThat(commentService.listForTraining(group.getId())).hasSize(2);
+    }
+
+    @Test
+    void updateGroup_changesFields() {
+        TrainingEntity group = trainingService.createGroup(trainer, sampleInputForDate(LocalDate.now()));
+
+        TrainingInput updated = sampleInputForDate(LocalDate.now());
+        updated.setName("Upravený název");
+        trainingService.updateGroup(group.getId(), updated);
+
+        TrainingEntity reloaded = trainingService.getAnyTraining(group.getId());
+        assertThat(reloaded.getName()).isEqualTo("Upravený název");
+        assertThat(reloaded.getVisibility()).isEqualTo(TrainingVisibility.GROUP);
+    }
+
+    @Test
+    void updateGroup_onPrivateTraining_rejected() {
+        TrainingEntity privateTraining = trainingService.create(alice, sampleInputForDate(LocalDate.now()));
+
+        assertThatThrownBy(() -> trainingService.updateGroup(privateTraining.getId(), sampleInputForDate(LocalDate.now())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("není skupinový");
+    }
+
+    @Test
+    void deleteGroup_onPrivateTraining_rejected() {
+        TrainingEntity privateTraining = trainingService.create(alice, sampleInputForDate(LocalDate.now()));
+
+        assertThatThrownBy(() -> trainingService.deleteGroup(privateTraining.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("není skupinový");
+    }
+
+    // -----------------------------------------------------------------------------
+    // helpers
+    // -----------------------------------------------------------------------------
+
+    private AccountEntity createUser(String email, String firstName, AccountRole role) {
+        AccountEntity a = new AccountEntity();
+        a.setEmail(email);
+        a.setPasswordHash(passwordEncoder.encode("password"));
+        a.setRole(role);
+        a.setNickname(firstName.toLowerCase());
+        a.setFirstName(firstName);
+        a.setLastName("Test");
+        return accountRepository.save(a);
+    }
+
+    private TrainingInput sampleInputForDate(LocalDate date) {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(date);
+        input.setName("Sample");
+        TrainingExerciseInput ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.FREEFORM);
+        ex.setCustomName("KB swing");
+        input.getExercises().add(ex);
+        return input;
+    }
+}

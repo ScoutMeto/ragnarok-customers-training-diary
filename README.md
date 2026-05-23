@@ -12,20 +12,22 @@ si svoje statistiky a propojuje se s [rezervačním systémem](https://github.co
 - Spring Security (session-based, BCrypt, role USER/ADMIN)
 - Maven
 
-## Aktuální stav: Fáze 2 (Trenér + GroupLessonPlan + komentáře)
+## Aktuální stav: Fáze 2 (Trenér + skupinové tréninky + komentáře)
 
 ✅ Sjednocený `account` model s rolemi USER/ADMIN + soft delete (anonymizace)
 ✅ Registrace + login + logout
 ✅ Tréninkový deník (klient): vytvořit / upravit / smazat trénink, cviky, sety, tagy
 ✅ Katalog ~92 cviků + 8 systémových tagů
+✅ **Skupinové tréninky** — admin vytvoří strukturovaný trénink (cviky + sety) na konkrétní den,
+   všichni klienti ho vidí na dashboardu / v deníku pro daný den (read-only)
 ✅ **Admin sekce:**
    - Správa klientů (list, detail s deníky klienta, edit, soft-delete)
-   - Správa skupinových lekcí (CRUD)
-✅ **Klient view:** plán lekcí ±1 týden
-✅ **Komentáře** k tréninku (klient nebo admin), zobrazují jméno + email autora
-✅ Dashboard ukazuje poslední tréninky + nadcházející lekce
+   - Správa skupinových tréninků (CRUD se stejným formulářem jako klientův trénink)
+✅ **Komentáře** k tréninku — klient k vlastnímu nebo skupinovému, admin k libovolnému;
+   zobrazují jméno + email autora
+✅ Dashboard ukazuje "Dnes v gymu" (skupinové) + "Poslední tréninky" (vlastní)
 ✅ Thymeleaf UI s Bootstrap 5, responzivní
-✅ 26 testů (7 account flow + 8 ownership + 11 Phase 2)
+✅ 32 testů (7 account flow + 8 ownership + 9 Phase 2 + 8 group training)
 
 Rozšířené typy cviků (Fáze 3), Timer (Fáze 4), Statistiky (Fáze 5),
 Email notifikace (Fáze 6), Integrace s rezervacemi (Fáze 7) přijdou na `develop`.

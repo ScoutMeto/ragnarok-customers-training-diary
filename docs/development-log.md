@@ -100,44 +100,64 @@ Lokálně. **Nepushnuto na origin.** (Pushnout můžeme na žádost.)
 
 ---
 
-## ✅ Fáze 2 — Trenér + GroupLessonPlan + komentáře (DONE)
+## ✅ Fáze 2 — Trenér + skupinové tréninky + komentáře (DONE)
 
-**Branch:** přímo na `develop` (8 commitů)
-**Cíl:** trenér uvidí všechny klienty a jejich deníky, zveřejní plán skupinových lekcí,
-klient vidí plán ±1 týden, trenér komentuje konkrétní trénink klienta.
+**Branch:** přímo na `develop` (8 + 5 fix commitů = 13)
+**Cíl:** trenér uvidí všechny klienty a jejich deníky, vytváří **skupinové tréninky**
+(strukturované, s cviky+sety, jako klientovy vlastní) viditelné všem klientům pro daný den.
+Komentáře pod detailem tréninku.
+
+### ⚠️ Mid-phase pivot
+
+Původně byla Fáze 2 navrhnutá s `GroupLessonPlan` (samostatná entita s datum+čas+název+popis).
+Po implementaci uživatel upřesnil: "My jsme chtěli skupinové tréninky které by Admin vytvořil
+na konkrétní den a tenhle trénink by se všem klientům zobrazoval v deníku nebo na dashboardu
+pro daný den. Plán lekcí ani tvorbu a management skupinových lekcí tady nechceme."
+
+→ Smazán `lesson/` balíček + `/admin/lessons` + `/lessons`. Místo toho rozšířena `Training`
+entita o `visibility` (PRIVATE/GROUP) a admin tvoří group tréninky přes podobný formulář
+jako klient. Detaily: viz `architecture.md` sekce "Group training visibility".
 
 ### Co bylo dodáno
 
-- **V5 migrace** — `account.deleted_at`, `group_lesson_plan`, `training_comment`
-- **JPA entity**: `GroupLessonPlanEntity`, `TrainingCommentEntity`, soft-delete na `AccountEntity`
+- **V5 migrace** — `account.deleted_at`, `training_comment` (group_lesson_plan z V5 zrušen v V6)
+- **V6 migrace** — `training.visibility` PRIVATE/GROUP, `training.created_by_id`,
+  owner nullable, CHECK constraints, partial index pro group dotazy
+- **JPA entity**:
+  - `TrainingEntity` — visibility enum, owner nullable, createdBy FK
+  - `TrainingVisibility` enum (PRIVATE, GROUP)
+  - `TrainingCommentEntity` — komentáře
+  - Soft-delete na `AccountEntity` (`deletedAt` field, `isEnabled()` false když smazán)
 - **Service vrstva**:
-  - `GroupLessonPlanService` (CRUD + ±7d klient filter, validace ADMIN role coache)
-  - `TrainingCommentService` (add/delete s ownership: owner nebo admin)
+  - `TrainingService.createGroup/updateGroup/deleteGroup/listGroupTrainingsForDay/listAllGroupTrainings`
   - `TrainingService.getAnyTraining` + `listTrainingsOf` — admin bypass
-  - `AccountService.softDelete` — anonymizace email/jméno/telefon + deleted_at
+  - `TrainingCommentService` — komentáře (PRIVATE owner/admin; GROUP kdokoliv)
+  - `AccountService.softDelete` — anonymizace email/jméno/telefon
 - **Admin sekce**:
   - `/admin/accounts` — list, detail (s deníkem klienta), create, edit, soft-delete
-  - `/admin/lessons` — CRUD pro skupinové lekce
-- **Klient view**: `/lessons` (read-only kalendář ±1 týden)
-- **Komentáře**: pod detailem tréninku (`diary/{id}`), zobrazují plné jméno + email
-- **Navbar dropdown** "Admin" pro ROLE_ADMIN s linky na Účty / Skupinové lekce
-- **Dashboard**: karty Můj deník / Plán lekcí / Admin sekce jsou aktivní, sekce
-  "Nadcházející lekce" pod posledními tréninky
-- **11 Phase 2 testů** (admin bypass, comments authorization, soft delete, lesson filter)
+  - `/admin/group-trainings` — CRUD pro skupinové tréninky (vlastní form, redirect na /diary/{id})
+- **Klient view**:
+  - `/diary` — sekce "Dnes v gymu" (group tréninky pro dnešek) + "Moje tréninky"
+  - `/diary/{id}` — funguje pro PRIVATE i GROUP (read-only pro group klientovi)
+- **Komentáře** pod detailem tréninku — zobrazují jméno + email autora
+- **Dashboard**: karty + sekce "Dnes v gymu"
+- **17 Phase 2 testů** (9 features + 8 group training)
 
 ### Klíčová rozhodnutí (z odpovědí trenéra)
 
-- Skupinové lekce **jednorázové** (žádné recurring/parent_id) — jedna lekce = jeden záznam
-- Kapacita **vypuštěna** — `group_lesson_plan` je čistě informativní, vazba na rezervace přijde v Phase 7
-- V komentářích zobrazujeme **jméno + email autora** (full kontakt dle požadavku)
+- Skupinové tréninky **strukturované** (cviky + sety jako klientovy vlastní)
+- **Víc group tréninků na den** povoleno (ranní KB + odpolední cardio)
+- Klient + group **vedle sebe** (samostatné záznamy, žádná template/log vazba)
+- Group má jen **systémové tagy** (custom patří userům)
+- V komentářích zobrazujeme **jméno + email autora**
 - **Soft delete** s anonymizací (email se přepíše na `deleted-{id}-{uuid}@deleted.local`)
 - Bootstrap admin login používá soft-delete-aware lookup (`findByEmailAndDeletedAtIsNull`)
-- Coach v `GroupLessonPlan` musí mít role ADMIN; FK je `ON DELETE RESTRICT`
-  (nelze smazat trenéra, který má aktivní lekce)
+- Group tréninky nemají owner; PRIVATE musí mít owner (DB CHECK constraint)
+- Po create/edit group tréninku redirect na `/diary/{id}` — detail je sdílený
 
 ### Stav testů
 ```
-26/26 zelených (7 + 8 + 11)
+32/32 zelených (7 + 8 + 9 + 8)
 ```
 
 ---
@@ -294,3 +314,4 @@ upomínku klientům, kteří mají na zítra GroupLessonPlan. Per-account `email
 | 2026-05-23 | Default DB heslo `Meto1990` → `postgres` | `256c705` |
 | 2026-05-23 | UI scaling pro 4K monitor (font 17-20px, container 1600px) | `ddf9296` |
 | 2026-05-23 | `spring.jpa.open-in-view=false` → `=true` (LazyInitException na detail.html) | – |
+| 2026-05-23 | Phase 2 pivot: GroupLessonPlan → Training.visibility (PRIVATE/GROUP) | `8928cde`→`975bcb5` |
