@@ -21,15 +21,17 @@
 
     <div class="row g-4">
         <div class="col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">📓 Můj deník</h5>
-                    <p class="card-text text-muted">
-                        Záznamy tvých tréninků, cviky, sety, RPE…
-                    </p>
-                    <span class="badge bg-secondary">Připraveno pro Fázi 1</span>
+            <a th:href="@{/diary}" class="text-decoration-none text-dark">
+                <div class="card h-100 dashboard-card">
+                    <div class="card-body">
+                        <h5 class="card-title">📓 Můj deník</h5>
+                        <p class="card-text text-muted">
+                            Záznamy tvých tréninků, cviky, sety, RPE…
+                        </p>
+                        <span class="badge bg-success">Aktivní</span>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-md-6 col-lg-4">
@@ -70,8 +72,8 @@
     </div>
 
     <div class="alert alert-info mt-5" role="alert">
-        <strong>Fáze 0 hotová.</strong> Tohle je foundation — login, registrace, role, layout.
-        Vlastní funkce přijdou v dalších fázích.
+        <strong>Fáze 1 aktivní.</strong> Můj deník je funkční — můžeš logovat tréninky.
+        Plán lekcí, statistiky a admin sekce přijdou v dalších fázích.
     </div>
 
 </main>
