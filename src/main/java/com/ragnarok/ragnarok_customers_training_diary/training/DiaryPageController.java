@@ -1,7 +1,9 @@
 package com.ragnarok.ragnarok_customers_training_diary.training;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogService;
+import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
 import com.ragnarok.ragnarok_customers_training_diary.common.NotFoundException;
 import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagService;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.SetInput;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -42,14 +45,17 @@ public class DiaryPageController {
     private final TrainingService trainingService;
     private final ExerciseCatalogService catalogService;
     private final TrainingTagService tagService;
+    private final TrainingCommentService commentService;
 
     public DiaryPageController(
             TrainingService trainingService,
             ExerciseCatalogService catalogService,
-            TrainingTagService tagService) {
+            TrainingTagService tagService,
+            TrainingCommentService commentService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
+        this.commentService = commentService;
     }
 
     @GetMapping
@@ -64,9 +70,22 @@ public class DiaryPageController {
             @AuthenticationPrincipal AccountEntity user,
             @PathVariable Long id,
             Model model) {
-        TrainingEntity training = trainingService.getMyTraining(user, id);
+        TrainingEntity training = loadTrainingForViewer(user, id);
         model.addAttribute("training", training);
+        model.addAttribute("comments", commentService.listForTraining(id));
+        model.addAttribute("currentUser", user);
+        model.addAttribute("isOwner", training.getOwner().getId().equals(user.getId()));
         return "diary/detail";
+    }
+
+    /**
+     * Načte trénink — vlastní (owner) NEBO cizí, pokud je viewer ADMIN.
+     */
+    private TrainingEntity loadTrainingForViewer(AccountEntity user, Long trainingId) {
+        if (user.getRole() == AccountRole.ADMIN) {
+            return trainingService.getAnyTraining(trainingId);
+        }
+        return trainingService.getMyTraining(user, trainingId);
     }
 
     // -----------------------------------------------------------------------------
@@ -166,6 +185,44 @@ public class DiaryPageController {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
         return "redirect:/diary";
+    }
+
+    // -----------------------------------------------------------------------------
+    // Komentáře
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/{id}/comments")
+    public String addComment(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            @RequestParam("text") String text,
+            RedirectAttributes flash) {
+        try {
+            commentService.addComment(user, id, text);
+            flash.addFlashAttribute("flashSuccess", "Komentář přidán.");
+        } catch (IllegalArgumentException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        } catch (ForbiddenException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        } catch (NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/diary/" + id;
+    }
+
+    @PostMapping("/{id}/comments/{commentId}/delete")
+    public String deleteComment(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            @PathVariable Long commentId,
+            RedirectAttributes flash) {
+        try {
+            commentService.deleteComment(user, commentId);
+            flash.addFlashAttribute("flashSuccess", "Komentář smazán.");
+        } catch (ForbiddenException | NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/diary/" + id;
     }
 
     // -----------------------------------------------------------------------------

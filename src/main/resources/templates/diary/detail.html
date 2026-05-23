@@ -33,12 +33,15 @@
                         </span>
                     </p>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2" th:if="${isOwner}">
                     <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
                     <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu smazat tento trénink?');">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
                     </form>
+                </div>
+                <div th:unless="${isOwner}" class="text-muted small">
+                    <em>Náhled trenéra</em> — komentáře přidáš níže.
                 </div>
             </div>
 
@@ -118,6 +121,57 @@
                 </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- ==================== Komentáře ==================== -->
+    <h3 class="mt-5 mb-3">Komentáře</h3>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div th:if="${comments.isEmpty()}" class="text-muted small">
+                Zatím žádné komentáře.
+            </div>
+
+            <div th:each="c, cStat : ${comments}"
+                 class="comment-item"
+                 th:classappend="${cStat.last} ? '' : 'border-bottom pb-3 mb-3'">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                        <strong th:text="${c.author.firstName} + ' ' + ${c.author.lastName}">Jméno</strong>
+                        <span class="badge ms-1"
+                              th:classappend="${c.author.role.name() == 'ADMIN'} ? 'bg-warning text-dark' : 'bg-light text-dark'"
+                              th:text="${c.author.role}">USER</span>
+                        <span class="text-muted small ms-1" th:text="'<' + ${c.author.email} + '>'">&lt;mail&gt;</span>
+                    </div>
+                    <small class="text-muted"
+                           th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')}">23.05.2026 10:00</small>
+                </div>
+                <p class="mb-1" style="white-space: pre-wrap" th:text="${c.text}">Text komentáře</p>
+                <form th:if="${currentUser.id == c.author.id or currentUser.role.name() == 'ADMIN'}"
+                      th:action="@{/diary/{id}/comments/{cid}/delete(id=${training.id}, cid=${c.id})}"
+                      method="post" class="d-inline"
+                      onsubmit="return confirm('Smazat komentář?');">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">Smazat</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form pro nový komentář — viditelný pro majitele tréninku NEBO admina -->
+    <div th:if="${isOwner or currentUser.role.name() == 'ADMIN'}" class="card mb-3">
+        <div class="card-body">
+            <form th:action="@{/diary/{id}/comments(id=${training.id})}" method="post">
+                <div class="mb-2">
+                    <label for="commentText" class="form-label">
+                        <span th:if="${isOwner}">Tvoje poznámka</span>
+                        <span th:unless="${isOwner}">Zpětná vazba od trenéra</span>
+                    </label>
+                    <textarea id="commentText" name="text" class="form-control" rows="2" required
+                              placeholder="napsat komentář..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Přidat komentář</button>
+            </form>
         </div>
     </div>
 
