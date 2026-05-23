@@ -71,9 +71,37 @@
         </div>
     </div>
 
-    <div class="alert alert-info mt-5" role="alert">
-        <strong>Fáze 1 aktivní.</strong> Můj deník je funkční — můžeš logovat tréninky.
-        Plán lekcí, statistiky a admin sekce přijdou v dalších fázích.
+    <div class="mt-5" th:if="${!recentTrainings.isEmpty()}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Poslední tréninky</h3>
+            <a th:href="@{/diary}" class="btn btn-outline-primary btn-sm">Všechny →</a>
+        </div>
+        <div class="row g-3">
+            <div th:each="t : ${recentTrainings}" class="col-md-4">
+                <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
+                    <div class="card h-100 training-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0" th:text="${t.name} ?: 'Trénink'">Trénink</h5>
+                                <span class="badge bg-secondary"
+                                      th:text="${#temporals.format(t.trainingDate, 'dd.MM.')}">23.05.</span>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                <span th:text="${t.exercises.size()}">3</span> cviků
+                                <span th:if="${t.rpe != null}">
+                                    · RPE <span th:text="${t.rpe}">7</span>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-5" role="alert" th:if="${recentTrainings.isEmpty()}">
+        <strong>Vítej!</strong> Klikni na „Můj deník" nebo
+        <a th:href="@{/diary/new}" class="alert-link">založ první trénink</a>.
     </div>
 
 </main>
