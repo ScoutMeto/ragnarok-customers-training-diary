@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Registrace')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-5 flex-grow-1">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Vytvoření klientského účtu</h3>
+
+                    <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">Jméno *</label>
+                            <input type="text" id="firstName" th:field="*{firstName}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('firstName')}"
+                                 th:errors="*{firstName}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Příjmení *</label>
+                            <input type="text" id="lastName" th:field="*{lastName}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('lastName')}"
+                                 th:errors="*{lastName}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nickname" class="form-label">Přezdívka *</label>
+                            <input type="text" id="nickname" th:field="*{nickname}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('nickname')} ? 'is-invalid'">
+                            <div class="form-text">Zobrazuje se v navigaci.</div>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nickname')}"
+                                 th:errors="*{nickname}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" id="email" th:field="*{email}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+                                 th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Telefon</label>
+                            <input type="tel" id="phone" th:field="*{phone}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid'">
+                            <div class="form-text">Nepovinné. Pomáhá při rezervacích.</div>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}"
+                                 th:errors="*{phone}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Heslo *</label>
+                            <input type="password" id="password" th:field="*{password}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                            <div class="form-text">Aspoň 8 znaků.</div>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}"
+                                 th:errors="*{password}"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Vytvořit účet</button>
+                    </form>
+
+                    <p class="mt-3 text-center small">
+                        Už máš účet? <a th:href="@{/login}">Přihlas se.</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

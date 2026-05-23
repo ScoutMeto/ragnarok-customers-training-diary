@@ -1,0 +1,71 @@
+/* Custom styling nad Bootstrap 5. */
+
+/* Větší základní písmo pro pohodlnější čtení na velkých obrazovkách. */
+html {
+    font-size: 17px;
+}
+
+@media (min-width: 1600px) {
+    html { font-size: 18px; }
+}
+
+@media (min-width: 2200px) {
+    html { font-size: 20px; }
+}
+
+body {
+    background-color: #f7f7f9;
+}
+
+/* Rozšířený container, ať obsah nesedí na 4K monitorech v úzkém centrálním sloupci. */
+.container {
+    max-width: 1600px;
+}
+
+@media (min-width: 2200px) {
+    .container { max-width: 1800px; }
+}
+
+/* Hezčí karty */
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.card .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.card .card-body {
+    padding: 1.5rem;
+}
+
+/* Větší dashboard headline */
+main h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+main h3 {
+    font-size: 1.5rem;
+}
+
+/* Navbar — jemně */
+.navbar-brand {
+    font-size: 1.15rem;
+}
+
+.navbar-brand strong {
+    letter-spacing: 0.5px;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+}
