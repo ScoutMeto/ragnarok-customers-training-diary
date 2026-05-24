@@ -39,4 +39,11 @@ public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> 
 
     /** Všechny skupinové tréninky pro admin sekci, nejnovější nahoře. */
     List<TrainingEntity> findByVisibilityOrderByTrainingDateDescIdDesc(TrainingVisibility visibility);
+
+    // -----------------------------------------------------------------------------
+    // TEMPLATE — šablony v admin sekci (Phase 8)
+    // -----------------------------------------------------------------------------
+
+    /** Všechny šablony, nejnovější nahoře (podle created_at). */
+    List<TrainingEntity> findByVisibilityOrderByCreatedAtDesc(TrainingVisibility visibility);
 }

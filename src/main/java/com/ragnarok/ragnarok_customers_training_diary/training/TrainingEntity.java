@@ -68,6 +68,14 @@ public class TrainingEntity {
     @Column(nullable = false, length = 16)
     private TrainingVisibility visibility = TrainingVisibility.PRIVATE;
 
+    /**
+     * Pokud je tento trénink vytvořen z šablony, odkaz na originál (visibility=TEMPLATE).
+     * Vyplní se v {@link TrainingService} při „přiřazení šablony klientovi". Nullable.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_template_id")
+    private TrainingEntity sourceTemplate;
+
     @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
 
