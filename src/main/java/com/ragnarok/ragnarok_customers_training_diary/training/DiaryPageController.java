@@ -250,6 +250,26 @@ public class DiaryPageController {
         return "redirect:/diary/" + id;
     }
 
+    /**
+     * Klient zkopíruje GROUP trénink do svého osobního deníku jako PRIVATE.
+     * Nový trénink má stejné cviky, sety jsou prázdné šablony pro klientovo doplnění.
+     */
+    @PostMapping("/{id}/copy")
+    public String copyGroupToMyDiary(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            RedirectAttributes flash) {
+        try {
+            TrainingEntity copy = trainingService.copyGroupToPrivate(user, id, typeToInputMapper);
+            flash.addFlashAttribute("flashSuccess",
+                    "Trénink zkopírován do tvého deníku. Doplň vlastní váhy a opakování.");
+            return "redirect:/diary/" + copy.getId();
+        } catch (IllegalArgumentException | NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+            return "redirect:/diary/" + id;
+        }
+    }
+
     // -----------------------------------------------------------------------------
     // Privátní helpery
     // -----------------------------------------------------------------------------

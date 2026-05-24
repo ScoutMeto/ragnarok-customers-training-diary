@@ -62,6 +62,9 @@ public class TrainingExerciseInput {
     @Valid
     private CompositeSetConfigInput composite;
 
+    @Valid
+    private StraightSetsConfigInput straightSets;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

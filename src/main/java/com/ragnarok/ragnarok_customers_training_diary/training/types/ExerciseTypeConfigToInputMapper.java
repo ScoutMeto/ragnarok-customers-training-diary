@@ -15,6 +15,8 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.C
 import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.StraightSetsConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.straight.StraightSetsConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -47,6 +49,19 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getCompositeSetConfig() != null) {
             input.setComposite(toCompositeInput(ex.getCompositeSetConfig()));
         }
+        if (ex.getStraightSetsConfig() != null) {
+            input.setStraightSets(toStraightSetsInput(ex.getStraightSetsConfig()));
+        }
+    }
+
+    private StraightSetsConfigInput toStraightSetsInput(StraightSetsConfigEntity e) {
+        StraightSetsConfigInput in = new StraightSetsConfigInput();
+        in.setSetCount(e.getSetCount());
+        in.setRepsPerSet(e.getRepsPerSet());
+        in.setWeightKg(e.getWeightKg());
+        in.setRestSeconds(e.getRestSeconds());
+        in.setNotes(e.getNotes());
+        return in;
     }
 
     private CompositeSetConfigInput toCompositeInput(CompositeSetConfigEntity e) {

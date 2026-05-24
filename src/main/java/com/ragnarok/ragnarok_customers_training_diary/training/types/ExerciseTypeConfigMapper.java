@@ -16,6 +16,8 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.C
 import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.StraightSetsConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.straight.StraightSetsConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -44,6 +46,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setCircuitConfig(null);
         exercise.setNumericSeriesConfig(null);
         exercise.setCompositeSetConfig(null);
+        exercise.setStraightSetsConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -55,8 +58,23 @@ public class ExerciseTypeConfigMapper {
             case CIRCUIT -> applyCircuit(exercise, input.getCircuit());
             case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
             case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
-            case FREEFORM, CUSTOMIZING, STRAIGHT_SETS -> { /* žádný extra config */ }
+            case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
+            case FREEFORM, CUSTOMIZING -> { /* žádný extra config */ }
         }
+    }
+
+    private void applyStraightSets(TrainingExerciseEntity exercise, StraightSetsConfigInput in) {
+        if (in == null || in.getSetCount() == null) return;
+
+        StraightSetsConfigEntity cfg = new StraightSetsConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setSetCount(in.getSetCount());
+        cfg.setRepsPerSet(in.getRepsPerSet());
+        cfg.setWeightKg(in.getWeightKg());
+        cfg.setRestSeconds(in.getRestSeconds());
+        cfg.setNotes(in.getNotes());
+
+        exercise.setStraightSetsConfig(cfg);
     }
 
     // ----- EMOM -----

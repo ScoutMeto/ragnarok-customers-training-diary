@@ -253,6 +253,17 @@
                         </table>
                     </div>
 
+                    <div class="type-config type-straight_sets mt-4" style="display:none">
+                        <h6 class="mb-2">Straight Sets</h6>
+                        <div class="row g-2">
+                            <div class="col-md-3"><label class="form-label form-label-sm">Setů *</label><input type="number" min="1" max="50" th:name="|exercises[${exStat.index}].straightSets.setCount|" th:value="${ex.straightSets?.setCount}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Opakování / set</label><input type="number" th:name="|exercises[${exStat.index}].straightSets.repsPerSet|" th:value="${ex.straightSets?.repsPerSet}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" th:name="|exercises[${exStat.index}].straightSets.weightKg|" th:value="${ex.straightSets?.weightKg}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" th:name="|exercises[${exStat.index}].straightSets.restSeconds|" th:value="${ex.straightSets?.restSeconds}" class="form-control form-control-sm"></div>
+                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].straightSets.notes|" th:value="${ex.straightSets?.notes}" class="form-control form-control-sm"></div>
+                        </div>
+                    </div>
+
                     <div class="type-config type-superset type-complex mt-4" style="display:none">
                         <h6 class="mb-2">Schéma (kompozitní)</h6>
                         <div class="row g-2 mb-2">
@@ -413,6 +424,16 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="type-config type-straight_sets mt-4" style="display:none">
+                <h6 class="mb-2">Straight Sets</h6>
+                <div class="row g-2">
+                    <div class="col-md-3"><label class="form-label form-label-sm">Setů *</label><input type="number" min="1" max="50" data-name="straightSets.setCount" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Opakování / set</label><input type="number" data-name="straightSets.repsPerSet" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="straightSets.weightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" data-name="straightSets.restSeconds" class="form-control form-control-sm"></div>
+                    <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="straightSets.notes" class="form-control form-control-sm"></div>
+                </div>
             </div>
             <div class="type-config type-superset type-complex mt-4" style="display:none">
                 <h6 class="mb-2">Schéma (kompozitní)</h6>

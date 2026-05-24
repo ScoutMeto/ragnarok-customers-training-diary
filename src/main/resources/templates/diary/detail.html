@@ -65,9 +65,13 @@
                     <em>Náhled trenéra</em> — komentáře přidáš níže.
                 </div>
 
-                <!-- GROUP + klient: jen info -->
-                <div th:if="${isGroup and currentUser.role.name() != 'ADMIN'}" class="text-muted small">
-                    <em>Skupinový trénink</em> — můžeš okomentovat níže.
+                <!-- GROUP + klient: info + copy-to-my-diary -->
+                <div th:if="${isGroup and currentUser.role.name() != 'ADMIN'}" class="d-flex flex-column align-items-end gap-2">
+                    <em class="text-muted small">Skupinový trénink — můžeš okomentovat níže.</em>
+                    <form th:action="@{/diary/{id}/copy(id=${training.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Zkopírovat tento trénink do tvého deníku? Pak si můžeš zaznamenat své výkony.');">
+                        <button type="submit" class="btn btn-outline-success btn-sm">📥 Zkopírovat do mého deníku</button>
+                    </form>
                 </div>
             </div>
 
@@ -167,6 +171,21 @@
                 </span>
                 <div th:if="${ex.tabataConfig.notes != null and !ex.tabataConfig.notes.isEmpty()}"
                      class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
+            </div>
+
+            <!-- Straight Sets display -->
+            <div th:if="${ex.straightSetsConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong>Straight Sets</strong> ·
+                <span th:text="${ex.straightSetsConfig.setCount}">3</span> ×
+                <span th:text="${ex.straightSetsConfig.repsPerSet} ?: '?'">8</span>
+                <span th:if="${ex.straightSetsConfig.weightKg != null}">
+                    · <span th:text="${ex.straightSetsConfig.weightKg}">24</span> kg
+                </span>
+                <span th:if="${ex.straightSetsConfig.restSeconds != null}">
+                    · pauza <span th:text="${ex.straightSetsConfig.restSeconds}">120</span> s
+                </span>
+                <div th:if="${ex.straightSetsConfig.notes != null and !ex.straightSetsConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.straightSetsConfig.notes}"></div>
             </div>
 
             <!-- Composite (Superset / Complex) display -->

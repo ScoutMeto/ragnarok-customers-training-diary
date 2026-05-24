@@ -179,6 +179,64 @@ public class TrainingService {
         trainingRepository.delete(training);
     }
 
+    /**
+     * Zkopíruje GROUP trénink do klientova osobního deníku jako nový PRIVATE záznam.
+     * Nový trénink dostane stejné cviky, sety, tagy (jen systémové) a per-type configs,
+     * ale s owner=klient a visibility=PRIVATE. Klient pak může vyplnit svoje výkony.
+     *
+     * <p>Implementace: použijeme {@link ExerciseTypeConfigToInputMapper} pro převod
+     * entity → input, a pak normální {@code create()} s vlastnickou logikou.
+     *
+     * @return nově vytvořený PRIVATE trénink
+     */
+    public TrainingEntity copyGroupToPrivate(AccountEntity owner, Long groupTrainingId,
+                                              com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper toInputMapper) {
+        TrainingEntity source = trainingRepository.findById(groupTrainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + groupTrainingId + ") nenalezen."));
+        if (source.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Lze zkopírovat jen skupinový trénink.");
+        }
+
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(source.getTrainingDate());
+        input.setStartTime(source.getStartTime());
+        input.setEndTime(source.getEndTime());
+        input.setName(source.getName() != null ? source.getName() + " (kopie)" : "Kopie skupiny");
+        input.setDifficulty(source.getDifficulty());
+        input.setRpe(source.getRpe());
+        input.setNotes(source.getNotes());
+        // Tagy: jen systémové (custom tag patří jinému uživateli)
+        java.util.Set<Long> systemTagIds = new java.util.HashSet<>();
+        for (TrainingTagEntity t : source.getTags()) {
+            if (t.isSystem()) systemTagIds.add(t.getId());
+        }
+        input.setTagIds(systemTagIds);
+
+        // Cviky + per-type config
+        for (TrainingExerciseEntity sourceEx : source.getExercises()) {
+            TrainingExerciseInput exInput = new TrainingExerciseInput();
+            exInput.setType(sourceEx.getType());
+            exInput.setCatalogItemId(sourceEx.getCatalogItem() != null ? sourceEx.getCatalogItem().getId() : null);
+            exInput.setCustomName(sourceEx.getCustomName());
+            exInput.setRpe(sourceEx.getRpe());
+            exInput.setNotes(sourceEx.getNotes());
+            // Sety (přenes prázdné jako šablona - klient si je doplní)
+            for (var s : sourceEx.getSets()) {
+                SetInput si = new SetInput();
+                si.setWeightKg(s.getWeightKg());
+                si.setReps(s.getReps());
+                si.setRpe(s.getRpe());
+                si.setNote(s.getNote());
+                exInput.getSets().add(si);
+            }
+            // Per-type config
+            toInputMapper.fillInput(exInput, sourceEx);
+            input.getExercises().add(exInput);
+        }
+
+        return create(owner, input);
+    }
+
     // =============================================================================
     // Privátní helpery
     // =============================================================================

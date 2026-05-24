@@ -6,6 +6,7 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.Cir
 import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.straight.StraightSetsConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -101,6 +102,10 @@ public class TrainingExerciseEntity {
     /** Sdílená config pro Superset a Complex. */
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private CompositeSetConfigEntity compositeSetConfig;
+
+    /** Straight sets (3×8, 5×5, ...). */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private StraightSetsConfigEntity straightSetsConfig;
 
     @PrePersist
     void prePersist() {
