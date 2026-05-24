@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 Stav fází (k 2026-05-23)
+## 📊 Stav fází (k 2026-05-24)
 
 | # | Fáze | Stav | Kde |
 |---|------|------|-----|
@@ -15,9 +15,9 @@
 | 3 | Rozšířené typy cviků (10 typů) | ✅ DONE | na `develop` |
 | 4 | Timer / stopky | ✅ DONE | na `develop` |
 | 5 | Statistiky (klient + admin overview) | ✅ DONE | na `develop` |
-| 6 | Email notifikace | ⏳ **NEXT** | rovnou na `develop` |
-| 7 | Integrace s rezervacemi | – | rovnou na `develop` |
-| 8 | Individuální plány od trenéra | – | rovnou na `develop` |
+| 6 | Email notifikace | ⏳ odloženo (po Phase 8) | rovnou na `develop` |
+| 7 | Integrace s rezervacemi | ⏳ odloženo (po Phase 8) | rovnou na `develop` |
+| 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan) | ✅ DONE | na `develop` |
 
 **Branching strategie (od Fáze 2):**
 - `master` = stable releases (zatím prázdné, mergne se ze `develop` ručně při stabilizaci)
@@ -263,7 +263,69 @@ Ladder/Stepladder/Pyramid; CompositeSet pro Superset/Complex).
 
 ---
 
-## ⏳ Fáze 6 — Email notifikace (NEXT)
+## ✅ Fáze 8 — Individuální plány od trenéra (DONE, 2026-05-24)
+
+**Cíl:** trenér umí klientovi předat strukturovaný trénink (template) *i* volný textový
+plán (coach plan). Fáze 6 (email) a 7 (rezervace) odloženy na později — user explicitně řekl
+"6 7 bych nechal nakonec a udělal Phase 8".
+
+### Co bylo dodáno
+
+**P8.1 — V12 migrace + entity**
+- `V12__phase8_templates_and_coach_plans.sql`:
+  - `training.visibility` CHECK constraint rozšířen o `TEMPLATE`
+  - `training_visibility_owner_check`: TEMPLATE smí mít owner=NULL (jako GROUP)
+  - `training.source_template_id BIGINT FK → training(id) ON DELETE SET NULL` + partial index
+  - Tabulka `coach_plan(id, client_id, author_id, title, body_markdown TEXT, valid_from, valid_to, ...)`
+- Enum `TrainingVisibility` rozšířen: `PRIVATE / GROUP / TEMPLATE`
+- `TrainingEntity.sourceTemplate` (self-FK na šablonu, z níž byl trénink přiřazen)
+- `CoachPlanEntity` + `CoachPlanRepository` s JPQL `findActiveForClient`
+
+**P8.2 — Services + markdown**
+- `commonmark-java 0.24.0` v pom.xml
+- `MarkdownRenderer` (escapeHtml=true → XSS safe; raw HTML se escapuje)
+- `CoachPlanService` — CRUD + `getForClientOrAdmin` (klient čte jen své, admin všechno)
+- `TrainingService` rozšířen o template ops:
+  - `listAllTemplates / getTemplate / createTemplate / updateTemplate / deleteTemplate`
+  - `assignTemplateToClient(templateId, client, date, toInputMapper)` →
+    nový PRIVATE trénink jako kopie šablony se `sourceTemplate` FK; klient si pak
+    doplní vlastní váhy / opakování / RPE / poznámky
+  - `listTrainingsFromTemplate(templateId)` — admin view, kdo dostal šablonu
+
+**P8.3 — Admin Training Templates UI**
+- `AdminTrainingTemplateController` (`/admin/training-templates`):
+  - list + new + edit + delete + assign (vybrat klienta + datum)
+- Templates: `admin/templates/{list,form,assign}.html`
+- Navbar: nový admin dropdown link "Šablony tréninků"
+
+**P8.4 — Admin Coach Plans UI + klient view**
+- `AdminCoachPlanController` (`/admin/accounts/{clientId}/coach-plans`):
+  - list + new + edit + show + delete; markdown editor + rendered preview přes `MarkdownRenderer`
+- `MyPlanPageController` (`/my-plan`, `/my-plan/{id}`):
+  - Klient vidí svůj aktuálně platný plán + historii starších; detail s vyrenderovaným markdown
+- Templates: `admin/coach-plans/{list,form,show}.html`, `coach/{my-plan,plan-detail}.html`
+- Navbar: "Můj plán" pro `!hasRole('ADMIN')`, tlačítko "📋 Plány od trenéra" v `admin/accounts/detail.html`
+
+**P8.5 — Testy + dokumentace**
+- Nový `Phase8FeaturesTest` (14 testů): template CRUD, assign → sourceTemplate FK,
+  CoachPlan CRUD, ordering, findActive, cross-client forbidden, MarkdownRenderer (basic + XSS escape + null)
+- **Test sumář: 51/51 zelených** (7 + 8 + 9 + 14 + 8 + 5)
+- CLAUDE.md a development-log.md aktualizovány
+
+### Klíčová rozhodnutí
+
+- **Templates používají `TrainingEntity` s `visibility=TEMPLATE`**, ne separátní tabulku —
+  share schema pro cviky/sety/per-type configs, statistiky to ignorují (counts jen PRIVATE)
+- **Šablona ↔ instance přes `source_template_id` FK** — ON DELETE SET NULL (smazaná šablona
+  netraumatizuje historii klientů)
+- **Při přiřazení šablony se kopírují JEN systémové tagy** — custom tagy patří někomu jinému
+- **CoachPlan = markdown body** (commonmark-java + escapeHtml) — žádný strukturovaný plánovač,
+  flexibilita víc než struktura
+- **Klient může mít víc plánů (historie)**, "aktivní" = ten, jehož `valid_from..valid_to` pokrývá today
+
+---
+
+## ⏳ Fáze 6 — Email notifikace (DEFERRED)
 
 Spring Mail (Gmail SMTP nebo Mailgun přes env vars). `@Scheduled` cron každý večer pošle
 upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
@@ -271,7 +333,7 @@ upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
 
 ---
 
-## 🔗 Fáze 7 — Integrace s rezervacemi (BUDOUCÍ)
+## 🔗 Fáze 7 — Integrace s rezervacemi (DEFERRED)
 
 **Pravidla:**
 - Diary konzumuje **REST API** rezervačního systému (https://github.com/ScoutMeto/ragnarok_customers_reservation_system)
@@ -283,22 +345,6 @@ upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
 **Formulář pro novou rezervaci:**
 - Pre-fill z profilu klienta: jméno, příjmení, email, telefon (volitelně)
 - "Počet míst" default = 1, klient může změnit
-
----
-
-## 📝 Fáze 8 — Individuální plány od trenéra (BUDOUCÍ)
-
-**Dva souběžné mechanismy:**
-
-### 8a) `TrainingTemplate` (strukturovaný)
-- Trenér si vytvoří šablonu tréninku (cviky + sety jako u běžného tréninku)
-- Přiřadí klientovi + datum → vytvoří se z toho instance `Training` (klient ji vidí jako "úkol")
-- Klient může logovat výsledky proti šabloně
-
-### 8b) `CoachPlan` (volný text)
-- Tabulka: `coach_plan(id, client_id, author_id, title, valid_from, valid_to, body_markdown, ...)`
-- Trenér napíše víceúrovňový plán na týdny/měsíce dopředu jako markdown
-- Klient čte, ale loguje si sám strukturovaně (přes /diary/new)
 
 ---
 

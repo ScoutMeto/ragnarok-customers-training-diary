@@ -56,13 +56,13 @@ com.ragnarok.ragnarok_customers_training_diary/
 │   ├── TrainingTagRepository.java
 │   ├── TrainingTagService.java
 │   └── TrainingTagRestController.java       # /api/tags
-├── training/               # Tréninkový deník (PRIVATE + GROUP)
-│   ├── TrainingEntity.java         # visibility=PRIVATE (klient) nebo GROUP (admin)
+├── training/               # Tréninkový deník (PRIVATE + GROUP + TEMPLATE)
+│   ├── TrainingEntity.java         # visibility=PRIVATE/GROUP/TEMPLATE + sourceTemplate FK
 │   ├── TrainingExerciseEntity.java # cvik v tréninku (XOR catalog_item / custom_name)
 │   │                               # + OneToOne per-type configs (emom/tabata/amrap/circuit/...)
 │   ├── ExerciseSetEntity.java      # set cviku (weight, reps, RPE, note — vše nullable)
 │   ├── TrainingDifficulty.java     # enum LIGHT/MEDIUM/HARD
-│   ├── TrainingVisibility.java     # enum PRIVATE/GROUP
+│   ├── TrainingVisibility.java     # enum PRIVATE/GROUP/TEMPLATE
 │   ├── TrainingExerciseType.java   # FREEFORM/CUSTOMIZING/EMOM/TABATA/AMRAP/CIRCUIT/
 │   │                               # LADDER/STEPLADDER/PYRAMID/SUPERSET/COMPLEX/STRAIGHT_SETS
 │   ├── TrainingCommentEntity.java  # komentář (autor klient nebo admin)
@@ -86,10 +86,18 @@ com.ragnarok.ragnarok_customers_training_diary/
 │   ├── AnalysisRestController.java # /api/analysis/** (JSON pro Chart.js)
 │   └── AnalysisPageController.java # /analysis (klient) - + admin/overview je v admin/
 ├── admin/                  # Admin sekce (jen ROLE_ADMIN)
-│   ├── AdminAccountController.java       # /admin/accounts CRUD (soft-delete)
+│   ├── AdminAccountController.java         # /admin/accounts CRUD (soft-delete)
 │   ├── AdminAccountForm.java
-│   ├── AdminGroupTrainingController.java # /admin/group-trainings CRUD
-│   └── AdminOverviewController.java      # /admin/overview gym-wide statistiky
+│   ├── AdminGroupTrainingController.java   # /admin/group-trainings CRUD
+│   ├── AdminTrainingTemplateController.java # /admin/training-templates CRUD + assign (Phase 8)
+│   ├── AdminCoachPlanController.java       # /admin/accounts/{id}/coach-plans CRUD (Phase 8)
+│   └── AdminOverviewController.java        # /admin/overview gym-wide statistiky
+├── coach/                  # Coach plány (Phase 8)
+│   ├── CoachPlanEntity.java        # markdown plan: client_id, author_id, title, body, valid_from/to
+│   ├── CoachPlanRepository.java    # + findActiveForClient JPQL
+│   ├── CoachPlanService.java       # CRUD + getForClientOrAdmin autorizace
+│   ├── MarkdownRenderer.java       # commonmark-java wrapper (escapeHtml=true)
+│   └── MyPlanPageController.java   # /my-plan + /my-plan/{id} (klient view)
 ├── web/                    # General Thymeleaf controllers
 │   ├── PageController.java         # /, /login, /register, /dashboard
 │   └── RegistrationForm.java
@@ -108,11 +116,15 @@ com.ragnarok.ragnarok_customers_training_diary/
 ```
 account (USER nebo ADMIN, + deleted_at pro soft delete)
    └─ training (1:N)                       [visibility=PRIVATE: owner_id NOT NULL]
-                                            [visibility=GROUP:   owner_id NULL]
+                                            [visibility=GROUP:    owner_id NULL]
+                                            [visibility=TEMPLATE: owner_id NULL]
                                             [created_by_id (kdo založil)]
+                                            [source_template_id → training (Phase 8)]
          └─ training_exercise (1:N)        [type, catalog_item_id XOR custom_name]
                └─ exercise_set (1:N)       [weight_kg, reps, rpe, note — nullable]
 
+coach_plan                 ─── markdown plán od trenéra (client_id, author_id, title,
+                               body_markdown, valid_from, valid_to)  -- Phase 8
 training_comment           ─── komentář k tréninku (text, author, created_at)
 exercise_catalog_item      ─── system seed (V3, 92 cviků) + custom by admin (Phase 2+)
 training_tag               ─── system tags (V4, 8 tagů) + per-user custom
@@ -123,11 +135,14 @@ training_tag_link          ─── M:N (training × tag)
 - **PRIVATE trénink** patří 1 klientovi (owner_id NOT NULL), vidí jen majitel (a admin)
 - **GROUP trénink** vytvoří admin (createdBy=admin), owner=NULL, vidí všichni klienti
   pro daný den (training_date)
-- DB CHECK constraint: `visibility=PRIVATE → owner_id NOT NULL`
+- **TEMPLATE trénink** (Phase 8) je šablona od admina (owner=NULL); po `assignTemplateToClient`
+  vznikne klientovi PRIVATE kopie se `source_template_id` FK na šablonu
+- DB CHECK constraint: `visibility=PRIVATE → owner_id NOT NULL`; GROUP/TEMPLATE smí owner=NULL
 - Cvik buď z katalogu (catalog_item_id) NEBO custom název — XOR vynucený DB constraintem
 - RPE existuje na 3 úrovních: trénink / cvik / set, všude nullable, 1–10
 - Difficulty (LIGHT/MEDIUM/HARD) jen na tréninku, nullable, klient si nastavuje sám
 - Tagy: system (globální) + custom (per-user, owner_id NOT NULL)
+- Statistiky (`/analysis`, `/admin/overview`) počítají JEN PRIVATE — GROUP/TEMPLATE ignorují
 
 ## 5. Časté příkazy
 
@@ -181,7 +196,7 @@ Při startu se v `AdminInitializer` vytvoří admin účet, pokud ještě neexis
 Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, atd.
 **Na Railway nastavit silnější heslo!**
 
-## 8. Stav fází (k 2026-05-23)
+## 8. Stav fází (k 2026-05-24)
 
 | # | Fáze | Stav | Kde |
 |---|------|------|-----|
@@ -191,9 +206,9 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 3 | Rozšířené typy cviků (10 typů — EMOM/Tabata/AMRAP/Circuit/Ladder/Stepladder/Pyramid/Superset/Complex/StraightSets) | ✅ DONE | na `develop` |
 | 4 | Timer / stopky + wake lock | ✅ DONE | na `develop` |
 | 5 | Statistiky (klient `/analysis` + admin `/admin/overview`) | ✅ DONE | na `develop` |
-| 6 | Email notifikace | ⏳ NEXT | rovnou na `develop` |
-| 7 | Integrace s rezervačním systémem (REST API) | – | rovnou na `develop` |
-| 8 | Individuální plány od trenéra (template + text) | – | rovnou na `develop` |
+| 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan markdown) | ✅ DONE | na `develop` |
+| 6 | Email notifikace | ⏳ DEFERRED (po Phase 8, dle user request) | rovnou na `develop` |
+| 7 | Integrace s rezervačním systémem (REST API) | ⏳ DEFERRED | rovnou na `develop` |
 
 **Branching strategie:** `develop` = veškerý vývoj. `master` = stable release (zatím se nepoužívá,
 mergnutí ze `develop` proběhne ručně při stabilizaci verze pro produkci).
