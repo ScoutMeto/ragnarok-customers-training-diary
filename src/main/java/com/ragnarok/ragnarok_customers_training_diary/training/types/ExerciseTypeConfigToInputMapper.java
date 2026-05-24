@@ -2,10 +2,14 @@ package com.ragnarok.ragnarok_customers_training_diary.training.types;
 
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingExerciseEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.AmrapConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.EmomConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TabataConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -29,6 +33,34 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getAmrapConfig() != null) {
             input.setAmrap(toAmrapInput(ex.getAmrapConfig()));
         }
+        if (ex.getCircuitConfig() != null) {
+            input.setCircuit(toCircuitInput(ex.getCircuitConfig()));
+        }
+    }
+
+    private CircuitConfigInput toCircuitInput(CircuitConfigEntity e) {
+        CircuitConfigInput in = new CircuitConfigInput();
+        in.setRounds(e.getRounds());
+        in.setRestBetweenRoundsS(e.getRestBetweenRoundsS());
+        in.setNotes(e.getNotes());
+        for (CircuitStepEntity s : e.getSteps()) {
+            CircuitConfigInput.StepInput si = new CircuitConfigInput.StepInput();
+            si.setOrderIndex(s.getOrderIndex());
+            si.setName(s.getName());
+            si.setReps(s.getReps());
+            si.setDurationSeconds(s.getDurationSeconds());
+            si.setWeightKg(s.getWeightKg());
+            si.setRestSeconds(s.getRestSeconds());
+            si.setNote(s.getNote());
+            in.getSteps().add(si);
+        }
+        for (CircuitRoundRestEntity r : e.getRoundRests()) {
+            CircuitConfigInput.RoundRestInput ri = new CircuitConfigInput.RoundRestInput();
+            ri.setRoundIndex(r.getRoundIndex());
+            ri.setRestSeconds(r.getRestSeconds());
+            in.getRoundRests().add(ri);
+        }
+        return in;
     }
 
     private EmomConfigInput toEmomInput(EmomConfigEntity e) {

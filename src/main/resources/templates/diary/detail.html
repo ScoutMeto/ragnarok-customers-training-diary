@@ -169,6 +169,30 @@
                      class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
             </div>
 
+            <!-- Circuit display -->
+            <div th:if="${ex.circuitConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong>Circuit</strong> ·
+                <span th:text="${ex.circuitConfig.rounds}">3</span> kol
+                <span th:if="${ex.circuitConfig.restBetweenRoundsS != null}">
+                    · pauza mezi koly <span th:text="${ex.circuitConfig.restBetweenRoundsS}">60</span> s
+                </span>
+                <div th:if="${ex.circuitConfig.notes != null and !ex.circuitConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.circuitConfig.notes}"></div>
+                <table class="table table-sm mb-0 mt-2" th:if="${!ex.circuitConfig.steps.isEmpty()}">
+                    <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Sek</th><th>Kg</th><th>Rest</th></tr></thead>
+                    <tbody>
+                    <tr th:each="s, st : ${ex.circuitConfig.steps}">
+                        <td th:text="${st.count}">1</td>
+                        <td th:text="${s.name}">Swing</td>
+                        <td th:text="${s.reps} ?: '—'">10</td>
+                        <td th:text="${s.durationSeconds} ?: '—'">30</td>
+                        <td th:text="${s.weightKg} ?: '—'">24</td>
+                        <td th:text="${s.restSeconds} ?: '—'">15</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- AMRAP display -->
             <div th:if="${ex.amrapConfig != null}" class="alert alert-info py-2 mb-2">
                 <strong>AMRAP</strong> ·

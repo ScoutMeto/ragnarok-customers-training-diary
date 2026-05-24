@@ -215,6 +215,30 @@
                             <div class="col-md-9"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].tabata.notes|" th:value="${ex.tabata?.notes}" class="form-control form-control-sm"></div>
                         </div>
                     </div>
+                    <div class="type-config type-circuit mt-4" style="display:none">
+                        <h6 class="mb-2">Circuit schéma</h6>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" th:name="|exercises[${exStat.index}].circuit.rounds|" th:value="${ex.circuit?.rounds} ?: 3" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" min="0" th:name="|exercises[${exStat.index}].circuit.restBetweenRoundsS|" th:value="${ex.circuit?.restBetweenRoundsS}" class="form-control form-control-sm"></div>
+                            <div class="col-md-6"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].circuit.notes|" th:value="${ex.circuit?.notes}" class="form-control form-control-sm"></div>
+                        </div>
+                        <div class="form-text mb-2">Kroky (až 8) — prázdné se ignorují:</div>
+                        <table class="table table-sm">
+                            <thead><tr><th style="width:40px">#</th><th>Název *</th><th style="width:80px">Reps</th><th style="width:80px">Sekundy</th><th style="width:80px">Kg</th><th style="width:80px">Rest (s)</th><th>Pozn.</th></tr></thead>
+                            <tbody>
+                            <tr th:each="i : ${#numbers.sequence(0, 7)}">
+                                <td th:text="${i + 1}">1</td>
+                                <td><input type="text" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].name|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).name : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].reps|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).reps : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].durationSeconds|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).durationSeconds : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" step="0.25" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].weightKg|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).weightKg : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].restSeconds|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).restSeconds : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="text" th:name="|exercises[${exStat.index}].circuit.steps[__${i}__].note|" th:value="${ex.circuit?.steps != null and ex.circuit.steps.size() > i ? ex.circuit.steps.get(i).note : ''}" class="form-control form-control-sm"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div class="type-config type-amrap mt-4" style="display:none">
                         <h6 class="mb-2">AMRAP schéma</h6>
                         <div class="row g-2">
@@ -318,6 +342,28 @@
                     <div class="col-md-3"><label class="form-label form-label-sm">Default kg</label><input type="number" step="0.25" data-name="tabata.defaultWeightKg" class="form-control form-control-sm"></div>
                     <div class="col-md-9"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="tabata.notes" class="form-control form-control-sm"></div>
                 </div>
+            </div>
+            <div class="type-config type-circuit mt-4" style="display:none">
+                <h6 class="mb-2">Circuit schéma</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="circuit.rounds" value="3" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" min="0" data-name="circuit.restBetweenRoundsS" class="form-control form-control-sm"></div>
+                    <div class="col-md-6"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="circuit.notes" class="form-control form-control-sm"></div>
+                </div>
+                <table class="table table-sm">
+                    <thead><tr><th style="width:40px">#</th><th>Název *</th><th style="width:80px">Reps</th><th style="width:80px">Sekundy</th><th style="width:80px">Kg</th><th style="width:80px">Rest (s)</th><th>Pozn.</th></tr></thead>
+                    <tbody>
+                    <tr th:each="i : ${#numbers.sequence(0,7)}">
+                        <td th:text="${i + 1}">1</td>
+                        <td><input type="text" th:attr="data-name='circuit.steps[' + ${i} + '].name'" class="form-control form-control-sm"></td>
+                        <td><input type="number" th:attr="data-name='circuit.steps[' + ${i} + '].reps'" class="form-control form-control-sm"></td>
+                        <td><input type="number" th:attr="data-name='circuit.steps[' + ${i} + '].durationSeconds'" class="form-control form-control-sm"></td>
+                        <td><input type="number" step="0.25" th:attr="data-name='circuit.steps[' + ${i} + '].weightKg'" class="form-control form-control-sm"></td>
+                        <td><input type="number" th:attr="data-name='circuit.steps[' + ${i} + '].restSeconds'" class="form-control form-control-sm"></td>
+                        <td><input type="text" th:attr="data-name='circuit.steps[' + ${i} + '].note'" class="form-control form-control-sm"></td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
             <div class="type-config type-amrap mt-4" style="display:none">
                 <h6 class="mb-2">AMRAP schéma</h6>

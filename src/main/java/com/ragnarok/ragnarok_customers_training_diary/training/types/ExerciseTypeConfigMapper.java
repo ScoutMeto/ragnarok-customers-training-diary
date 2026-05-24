@@ -3,10 +3,14 @@ package com.ragnarok.ragnarok_customers_training_diary.training.types;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingExerciseEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingExerciseType;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.AmrapConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.EmomConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TabataConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -32,6 +36,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setEmomConfig(null);
         exercise.setTabataConfig(null);
         exercise.setAmrapConfig(null);
+        exercise.setCircuitConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -40,9 +45,10 @@ public class ExerciseTypeConfigMapper {
             case EMOM -> applyEmom(exercise, input.getEmom());
             case TABATA -> applyTabata(exercise, input.getTabata());
             case AMRAP -> applyAmrap(exercise, input.getAmrap());
+            case CIRCUIT -> applyCircuit(exercise, input.getCircuit());
             case FREEFORM, CUSTOMIZING, STRAIGHT_SETS -> { /* žádný extra config */ }
-            // Ostatní typy přijdou v P3.2-3.4
-            default -> { /* TODO P3.2+ */ }
+            // Ostatní typy přijdou v P3.3-3.4
+            default -> { /* TODO P3.3+ */ }
         }
     }
 
@@ -132,5 +138,47 @@ public class ExerciseTypeConfigMapper {
         cfg.setNotes(in.getNotes());
 
         exercise.setAmrapConfig(cfg);
+    }
+
+    // ----- CIRCUIT -----
+
+    private void applyCircuit(TrainingExerciseEntity exercise, CircuitConfigInput in) {
+        if (in == null || in.getRounds() == null) return;
+
+        CircuitConfigEntity cfg = new CircuitConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setRounds(in.getRounds());
+        cfg.setRestBetweenRoundsS(in.getRestBetweenRoundsS());
+        cfg.setNotes(in.getNotes());
+
+        if (in.getSteps() != null) {
+            int idx = 0;
+            for (CircuitConfigInput.StepInput s : in.getSteps()) {
+                if (s.getName() == null || s.getName().isBlank()) continue;
+                CircuitStepEntity step = new CircuitStepEntity();
+                step.setCircuitConfig(cfg);
+                step.setOrderIndex(idx++);
+                step.setName(s.getName().trim());
+                step.setReps(s.getReps());
+                step.setDurationSeconds(s.getDurationSeconds());
+                step.setWeightKg(s.getWeightKg());
+                step.setRestSeconds(s.getRestSeconds());
+                step.setNote(s.getNote());
+                cfg.getSteps().add(step);
+            }
+        }
+
+        if (in.getRoundRests() != null) {
+            for (CircuitConfigInput.RoundRestInput r : in.getRoundRests()) {
+                if (r.getRoundIndex() == null || r.getRestSeconds() == null) continue;
+                CircuitRoundRestEntity rr = new CircuitRoundRestEntity();
+                rr.setCircuitConfig(cfg);
+                rr.setRoundIndex(r.getRoundIndex());
+                rr.setRestSeconds(r.getRestSeconds());
+                cfg.getRoundRests().add(rr);
+            }
+        }
+
+        exercise.setCircuitConfig(cfg);
     }
 }

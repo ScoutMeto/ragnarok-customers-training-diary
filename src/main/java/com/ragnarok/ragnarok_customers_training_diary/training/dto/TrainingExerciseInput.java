@@ -51,6 +51,9 @@ public class TrainingExerciseInput {
     @Valid
     private AmrapConfigInput amrap;
 
+    @Valid
+    private CircuitConfigInput circuit;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

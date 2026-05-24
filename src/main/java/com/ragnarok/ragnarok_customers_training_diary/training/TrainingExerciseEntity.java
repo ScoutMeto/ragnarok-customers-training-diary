@@ -2,6 +2,7 @@ package com.ragnarok.ragnarok_customers_training_diary.training;
 
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
 import jakarta.persistence.CascadeType;
@@ -87,6 +88,9 @@ public class TrainingExerciseEntity {
 
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private AmrapConfigEntity amrapConfig;
+
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private CircuitConfigEntity circuitConfig;
 
     @PrePersist
     void prePersist() {
