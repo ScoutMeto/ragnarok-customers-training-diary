@@ -35,15 +35,17 @@
         </div>
 
         <div class="col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">📊 Statistiky</h5>
-                    <p class="card-text text-muted">
-                        PR, volume, RPE trend, body part split…
-                    </p>
-                    <span class="badge bg-secondary">Připraveno pro Fázi 5</span>
+            <a th:href="@{/analysis}" class="text-decoration-none text-dark">
+                <div class="card h-100 dashboard-card">
+                    <div class="card-body">
+                        <h5 class="card-title">📊 Statistiky</h5>
+                        <p class="card-text text-muted">
+                            PR, volume, RPE trend, body part split…
+                        </p>
+                        <span class="badge bg-success">Aktivní</span>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-md-6 col-lg-4" sec:authorize="hasRole('ADMIN')">
