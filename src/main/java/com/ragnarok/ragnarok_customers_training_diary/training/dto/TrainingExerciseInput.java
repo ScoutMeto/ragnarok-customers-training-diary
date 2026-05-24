@@ -54,6 +54,10 @@ public class TrainingExerciseInput {
     @Valid
     private CircuitConfigInput circuit;
 
+    /** Sdílený pro Ladder, Stepladder, Pyramid. */
+    @Valid
+    private NumericSeriesConfigInput numericSeries;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

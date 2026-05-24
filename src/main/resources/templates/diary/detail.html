@@ -169,6 +169,30 @@
                      class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
             </div>
 
+            <!-- Numeric series (Ladder/Stepladder/Pyramid) display -->
+            <div th:if="${ex.numericSeriesConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong th:text="${ex.type}">LADDER</strong>
+                <span th:if="${ex.numericSeriesConfig.peakValue != null}">
+                    · peak <span th:text="${ex.numericSeriesConfig.peakValue}">5</span>
+                </span>
+                <span th:if="${ex.numericSeriesConfig.stepSize != null}">
+                    · krok <span th:text="${ex.numericSeriesConfig.stepSize}">1</span>
+                </span>
+                <span th:if="${ex.numericSeriesConfig.weightKg != null}">
+                    · <span th:text="${ex.numericSeriesConfig.weightKg}">24</span> kg
+                </span>
+                <span th:if="${ex.numericSeriesConfig.restSecondsBetween != null}">
+                    · pauza <span th:text="${ex.numericSeriesConfig.restSecondsBetween}">15</span> s
+                </span>
+                <div th:if="${ex.numericSeriesConfig.repSequenceCsv != null and !ex.numericSeriesConfig.repSequenceCsv.isEmpty()}"
+                     class="mt-1">
+                    <strong>Sekvence:</strong>
+                    <code th:text="${ex.numericSeriesConfig.repSequenceCsv}">1,2,3,5,8</code>
+                </div>
+                <div th:if="${ex.numericSeriesConfig.notes != null and !ex.numericSeriesConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.numericSeriesConfig.notes}"></div>
+            </div>
+
             <!-- Circuit display -->
             <div th:if="${ex.circuitConfig != null}" class="alert alert-info py-2 mb-2">
                 <strong>Circuit</strong> ·

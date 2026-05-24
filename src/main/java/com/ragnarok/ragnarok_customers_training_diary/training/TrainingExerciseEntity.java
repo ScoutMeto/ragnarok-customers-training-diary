@@ -4,6 +4,7 @@ import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogIte
 import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -91,6 +92,10 @@ public class TrainingExerciseEntity {
 
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private CircuitConfigEntity circuitConfig;
+
+    /** Sdílená config pro Ladder, Stepladder, Pyramid (typ rozliší {@link #type}). */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private NumericSeriesConfigEntity numericSeriesConfig;
 
     @PrePersist
     void prePersist() {

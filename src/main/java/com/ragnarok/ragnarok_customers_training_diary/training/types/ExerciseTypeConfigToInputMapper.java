@@ -10,6 +10,8 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -36,6 +38,21 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getCircuitConfig() != null) {
             input.setCircuit(toCircuitInput(ex.getCircuitConfig()));
         }
+        if (ex.getNumericSeriesConfig() != null) {
+            input.setNumericSeries(toNumericSeriesInput(ex.getNumericSeriesConfig()));
+        }
+    }
+
+    private NumericSeriesConfigInput toNumericSeriesInput(NumericSeriesConfigEntity e) {
+        NumericSeriesConfigInput in = new NumericSeriesConfigInput();
+        in.setStartValue(e.getStartValue());
+        in.setPeakValue(e.getPeakValue());
+        in.setStepSize(e.getStepSize());
+        in.setRepSequenceCsv(e.getRepSequenceCsv());
+        in.setWeightKg(e.getWeightKg());
+        in.setRestSecondsBetween(e.getRestSecondsBetween());
+        in.setNotes(e.getNotes());
+        return in;
     }
 
     private CircuitConfigInput toCircuitInput(CircuitConfigEntity e) {

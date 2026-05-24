@@ -11,6 +11,8 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomMinuteOverrideEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.tabata.TabataConfigEntity;
@@ -37,6 +39,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setTabataConfig(null);
         exercise.setAmrapConfig(null);
         exercise.setCircuitConfig(null);
+        exercise.setNumericSeriesConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -46,9 +49,9 @@ public class ExerciseTypeConfigMapper {
             case TABATA -> applyTabata(exercise, input.getTabata());
             case AMRAP -> applyAmrap(exercise, input.getAmrap());
             case CIRCUIT -> applyCircuit(exercise, input.getCircuit());
+            case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
             case FREEFORM, CUSTOMIZING, STRAIGHT_SETS -> { /* žádný extra config */ }
-            // Ostatní typy přijdou v P3.3-3.4
-            default -> { /* TODO P3.3+ */ }
+            default -> { /* TODO P3.4+ */ }
         }
     }
 
@@ -180,5 +183,27 @@ public class ExerciseTypeConfigMapper {
         }
 
         exercise.setCircuitConfig(cfg);
+    }
+
+    // ----- NUMERIC SERIES (Ladder / Stepladder / Pyramid) -----
+
+    private void applyNumericSeries(TrainingExerciseEntity exercise, NumericSeriesConfigInput in) {
+        // Pokud nic není vyplněno, nepřidávej config (no-op).
+        if (in == null) return;
+        boolean hasAlgo = in.getPeakValue() != null;
+        boolean hasCsv = in.getRepSequenceCsv() != null && !in.getRepSequenceCsv().isBlank();
+        if (!hasAlgo && !hasCsv) return;
+
+        NumericSeriesConfigEntity cfg = new NumericSeriesConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setStartValue(in.getStartValue() != null ? in.getStartValue() : 1);
+        cfg.setPeakValue(in.getPeakValue());
+        cfg.setStepSize(in.getStepSize() != null ? in.getStepSize() : 1);
+        cfg.setRepSequenceCsv(hasCsv ? in.getRepSequenceCsv().trim() : null);
+        cfg.setWeightKg(in.getWeightKg());
+        cfg.setRestSecondsBetween(in.getRestSecondsBetween());
+        cfg.setNotes(in.getNotes());
+
+        exercise.setNumericSeriesConfig(cfg);
     }
 }
