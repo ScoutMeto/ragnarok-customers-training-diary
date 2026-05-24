@@ -2,132 +2,145 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="cs">
 <head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('dashboard')}"></nav>
 
-<main class="container py-5 flex-grow-1">
+<main class="rk-page">
 
-    <div class="row mb-4">
-        <div class="col">
-            <h1>Vítej, <span th:text="${account.firstName}">Marek</span>!</h1>
-            <p class="text-muted">
-                Role: <code th:text="${account.role}">USER</code>
-                &middot;
-                Email: <code th:text="${account.email}">user@example.com</code>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">Vítej zpátky, <span th:text="${account.firstName}">Marku</span>.</h1>
+            <p class="rk-page__sub">
+                <span th:text="${#temporals.format(#temporals.createNow(), 'EEEE, d. MMMM')}">neděle, 24. května</span>
+                · pokračuj v tréninkovém režimu
             </p>
         </div>
+        <div class="rk-page__actions">
+            <a class="btn btn-outline" th:href="@{/diary}">Můj deník</a>
+            <a class="btn btn-accent btn-icon" th:href="@{/diary/new}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                Nový trénink
+            </a>
+        </div>
     </div>
 
+    <!-- Recent trainings + quick actions -->
     <div class="row g-4">
-        <div class="col-md-6 col-lg-4">
-            <a th:href="@{/diary}" class="text-decoration-none text-dark">
-                <div class="card h-100 dashboard-card">
-                    <div class="card-body">
-                        <h5 class="card-title">📓 Můj deník</h5>
-                        <p class="card-text text-muted">
-                            Záznamy tvých tréninků, cviky, sety, RPE…
-                        </p>
-                        <span class="badge bg-success">Aktivní</span>
-                    </div>
-                </div>
-            </a>
-        </div>
 
-        <div class="col-md-6 col-lg-4">
-            <a th:href="@{/analysis}" class="text-decoration-none text-dark">
-                <div class="card h-100 dashboard-card">
-                    <div class="card-body">
-                        <h5 class="card-title">📊 Statistiky</h5>
-                        <p class="card-text text-muted">
-                            PR, volume, RPE trend, body part split…
-                        </p>
-                        <span class="badge bg-success">Aktivní</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <!-- LEFT: Recent trainings -->
+        <div class="col-lg-8">
+            <div class="rk-section-head">
+                <h2>Poslední tréninky</h2>
+                <a th:href="@{/diary}" class="meta" style="color: var(--rk-primary); font-weight: 500;">Všechny →</a>
+            </div>
 
-        <div class="col-md-6 col-lg-4" sec:authorize="hasRole('ADMIN')">
-            <a th:href="@{/admin/accounts}" class="text-decoration-none text-dark">
-                <div class="card h-100 border-primary dashboard-card">
-                    <div class="card-body">
-                        <h5 class="card-title">⚙️ Admin sekce</h5>
-                        <p class="card-text text-muted">
-                            Správa klientů a skupinových tréninků.
-                        </p>
-                        <span class="badge bg-success">Aktivní</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
+            <div class="rk-empty rk-card" th:if="${recentTrainings.isEmpty()}">
+                <h3>Zatím žádný trénink</h3>
+                <p>Začni s prvním záznamem do svého deníku.</p>
+                <a th:href="@{/diary/new}" class="btn btn-accent">Založ první trénink</a>
+            </div>
 
-    <div class="mt-5" th:if="${!recentTrainings.isEmpty()}">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Poslední tréninky</h3>
-            <a th:href="@{/diary}" class="btn btn-outline-primary btn-sm">Všechny →</a>
-        </div>
-        <div class="row g-3">
-            <div th:each="t : ${recentTrainings}" class="col-md-4">
-                <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
-                    <div class="card h-100 training-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title mb-0" th:text="${t.name} ?: 'Trénink'">Trénink</h5>
-                                <span class="badge bg-secondary"
-                                      th:text="${#temporals.format(t.trainingDate, 'dd.MM.')}">23.05.</span>
-                            </div>
-                            <p class="text-muted small mb-0">
-                                <span th:text="${t.exercises.size()}">3</span> cviků
-                                <span th:if="${t.rpe != null}">
-                                    · RPE <span th:text="${t.rpe}">7</span>
-                                </span>
-                            </p>
+            <div class="rk-stack-3" th:unless="${recentTrainings.isEmpty()}">
+                <article th:each="t : ${recentTrainings}" class="rk-workout"
+                         th:onclick="|location.href='@{/diary/{id}(id=${t.id})}'|"
+                         th:with="rpeVal=${t.rpe != null ? t.rpe : 0}">
+                    <div class="rk-workout__date">
+                        <div class="day" th:text="${#temporals.format(t.trainingDate, 'dd')}">23</div>
+                        <div class="mon" th:text="${#strings.toUpperCase(#temporals.format(t.trainingDate, 'MMM'))}">KVĚ</div>
+                    </div>
+                    <div class="rk-workout__main">
+                        <div class="rk-workout__title" th:text="${t.name} ?: 'Trénink'">Trénink</div>
+                        <div class="rk-workout__tags" th:if="${t.tags != null and !t.tags.isEmpty()}">
+                            <span th:each="tag : ${t.tags}"
+                                  th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
+                                  th:text="${tag.name}">Strength</span>
+                        </div>
+                        <div class="rk-workout__meta">
+                            <span th:if="${t.startTime != null}">
+                                <span th:text="${#temporals.format(t.startTime, 'HH:mm')}">17:30</span><span th:if="${t.endTime != null}">—<span th:text="${#temporals.format(t.endTime, 'HH:mm')}">18:35</span></span>
+                            </span>
+                            <span>· <b th:text="${t.exercises.size()} + ' cviků'">4 cviky</b></span>
                         </div>
                     </div>
+                    <div class="rk-workout__aside">
+                        <div th:if="${t.rpe != null}" class="rk-rpe" th:style="|--rpe:${rpeVal};|">
+                            <span class="rk-rpe__bar"></span>
+                            <span th:text="|RPE ${t.rpe}|">RPE 8</span>
+                        </div>
+                        <span th:if="${t.difficulty != null}"
+                              th:class="|rk-badge ${t.difficulty.name() == 'HARD' ? 'rk-badge--danger' : ''}|"
+                              th:text="${t.difficulty}">MEDIUM</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <!-- RIGHT: Quick actions + dnes v gymu -->
+        <div class="col-lg-4">
+            <div class="rk-section-head"><h2>Rychlé akce</h2></div>
+            <div class="rk-stack-3">
+
+                <a class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/diary}">
+                    <div class="rk-row" style="justify-content: space-between;">
+                        <div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📓 Můj deník</div>
+                            <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">Záznamy, cviky, série, RPE</div>
+                        </div>
+                        <span style="color: var(--rk-primary); font-size: 22px;">→</span>
+                    </div>
                 </a>
+
+                <a class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/analysis}">
+                    <div class="rk-row" style="justify-content: space-between;">
+                        <div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📊 Statistiky</div>
+                            <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">PR, objem, RPE trend, body part split</div>
+                        </div>
+                        <span style="color: var(--rk-primary); font-size: 22px;">→</span>
+                    </div>
+                </a>
+
+                <a sec:authorize="!hasRole('ADMIN')"
+                   class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;"
+                   th:href="@{/my-plan}">
+                    <div class="rk-row" style="justify-content: space-between;">
+                        <div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📋 Můj plán</div>
+                            <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">Plán od trenéra v markdownu</div>
+                        </div>
+                        <span style="color: var(--rk-primary); font-size: 22px;">→</span>
+                    </div>
+                </a>
+
+                <a sec:authorize="hasRole('ADMIN')"
+                   class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;"
+                   th:href="@{/admin/accounts}">
+                    <div class="rk-row" style="justify-content: space-between;">
+                        <div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">⚙️ Admin sekce</div>
+                            <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">Klienti, skupinové, šablony</div>
+                        </div>
+                        <span style="color: var(--rk-primary); font-size: 22px;">→</span>
+                    </div>
+                </a>
+
+                <!-- Dnes v gymu (skupinové) -->
+                <div th:if="${!todayGroupTrainings.isEmpty()}"
+                     class="rk-card"
+                     style="padding: var(--sp-4); background: var(--rk-ink); color:#F1EFE9; border-color: var(--rk-ink);">
+                    <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4); color:#F1EFE9;">
+                        🏋️ Dnes v gymu
+                    </div>
+                    <div style="font-size: var(--fs-sm); color:#C9C5BB; margin-top: 4px;" th:each="g : ${todayGroupTrainings}">
+                        <span th:if="${g.startTime != null}" th:text="${#temporals.format(g.startTime, 'HH:mm')}">18:00</span>
+                        · <strong style="color:#F1EFE9;" th:text="${g.name} ?: 'Skupinový trénink'">Kettlebell Strength</strong>
+                    </div>
+                    <a th:href="@{/diary}" class="btn btn-accent btn-sm" style="margin-top: 12px;">Do deníku</a>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="alert alert-info mt-5" role="alert" th:if="${recentTrainings.isEmpty()}">
-        <strong>Vítej!</strong> Klikni na „Můj deník" nebo
-        <a th:href="@{/diary/new}" class="alert-link">založ první trénink</a>.
-    </div>
-
-    <!-- ==================== Dnes v gymu (skupinové tréninky) ==================== -->
-    <div class="mt-5" th:if="${!todayGroupTrainings.isEmpty()}">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">🏋️ Dnes v gymu</h3>
-            <a th:href="@{/diary}" class="btn btn-outline-primary btn-sm">Do deníku →</a>
-        </div>
-        <div class="row g-3">
-            <div th:each="t : ${todayGroupTrainings}" class="col-md-6 col-lg-4">
-                <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
-                    <div class="card h-100 training-card border-primary">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title mb-0" th:text="${t.name} ?: 'Skupinový trénink'">Trénink</h5>
-                                <span class="badge bg-primary">Dnes</span>
-                            </div>
-                            <p class="text-muted small mb-1" th:if="${t.startTime != null}">
-                                <span th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span>
-                                <span th:if="${t.endTime != null}">
-                                    – <span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span>
-                                </span>
-                            </p>
-                            <p class="text-muted small mb-0">
-                                <span th:text="${t.exercises.size()}">3</span> cviků
-                                · Trenér: <strong th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '?'}">Trenér</strong>
-                            </p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
 
 </main>
 

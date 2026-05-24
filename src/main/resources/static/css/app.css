@@ -1,73 +1,190 @@
-/* Custom styling nad Bootstrap 5. */
+/* =====================================================================
+   Custom doplnky nad ragnarok design system (design-tokens + components).
+   ===================================================================== */
 
-/* Větší základní písmo pro pohodlnější čtení na velkých obrazovkách. */
-html {
-    font-size: 17px;
+/* ---- Navbar: mobile collapse + logout button ---- */
+.rk-nav__mobile-wrap {
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    background: #0A0A0A;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    z-index: 49;
+}
+.rk-nav__mobile {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: var(--sp-3) var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.rk-nav__mobile .rk-nav__link {
+    display: block;
+    padding: 10px 12px;
+}
+.rk-nav__mobile-sep {
+    height: 1px;
+    background: rgba(255,255,255,.1);
+    margin: var(--sp-2) 0;
+}
+.rk-btn-logout {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.18);
+    color: #C9C5BB;
+    font-family: var(--rk-font-body);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: var(--rad-sm);
+    cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+}
+.rk-btn-logout:hover {
+    background: rgba(255,255,255,.06);
+    color: #F1EFE9;
+    border-color: rgba(255,255,255,.32);
 }
 
-@media (min-width: 1600px) {
-    html { font-size: 18px; }
+/* ---- Dropdown menu (admin) — override Bootstrap for Forge look ---- */
+.rk-nav .dropdown-menu {
+    background: #161A21;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--rad-md);
+    padding: 6px;
+    box-shadow: var(--sh-3);
+    min-width: 220px;
+}
+.rk-nav .dropdown-item {
+    color: #C9C5BB;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    border-radius: var(--rad-sm);
+    padding: 8px 10px;
+}
+.rk-nav .dropdown-item:hover,
+.rk-nav .dropdown-item:focus {
+    background: rgba(255,255,255,.06);
+    color: #F1EFE9;
+}
+.rk-nav__link.dropdown-toggle::after {
+    margin-left: 4px;
+    vertical-align: 1px;
 }
 
-@media (min-width: 2200px) {
-    html { font-size: 20px; }
+/* ---- Markdown body (Coach plans) ---- */
+.markdown-body {
+    font-size: var(--fs-body);
+    line-height: var(--lh-normal);
+    color: var(--rk-ink);
 }
-
-body {
-    background-color: #f7f7f9;
+.markdown-body h1 { font-size: var(--fs-h1); margin: var(--sp-5) 0 var(--sp-3); }
+.markdown-body h2 { font-size: var(--fs-h2); margin: var(--sp-5) 0 var(--sp-3); }
+.markdown-body h3 { font-size: var(--fs-h3); margin: var(--sp-4) 0 var(--sp-2); }
+.markdown-body h4 { font-size: var(--fs-h4); margin: var(--sp-4) 0 var(--sp-2); }
+.markdown-body p  { margin: 0 0 var(--sp-3); }
+.markdown-body ul,
+.markdown-body ol { padding-left: var(--sp-5); margin: 0 0 var(--sp-3); }
+.markdown-body li { margin-bottom: 4px; }
+.markdown-body strong { color: var(--rk-ink); font-weight: 700; }
+.markdown-body a { color: var(--rk-primary); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body code {
+    background: var(--rk-surface-2);
+    padding: 2px 6px;
+    border-radius: var(--rad-xs);
+    font-family: var(--rk-font-mono);
+    font-size: 0.875em;
 }
-
-/* Rozšířený container, ať obsah nesedí na 4K monitorech v úzkém centrálním sloupci. */
-.container {
-    max-width: 1600px;
+.markdown-body pre {
+    background: #0E1116;
+    color: #E3E0D8;
+    padding: var(--sp-4);
+    border-radius: var(--rad-md);
+    overflow-x: auto;
 }
-
-@media (min-width: 2200px) {
-    .container { max-width: 1800px; }
+.markdown-body pre code { background: transparent; padding: 0; color: inherit; }
+.markdown-body blockquote {
+    border-left: 3px solid var(--rk-primary);
+    padding: var(--sp-2) var(--sp-4);
+    margin: 0 0 var(--sp-3);
+    color: var(--rk-muted);
+    background: var(--rk-primary-soft);
+    border-radius: 0 var(--rad-sm) var(--rad-sm) 0;
 }
+.markdown-body hr { border: 0; border-top: 1px solid var(--rk-border); margin: var(--sp-5) 0; }
 
-/* Hezčí karty */
-.card {
-    border: none;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+/* ---- Tabulky obecne (admin lists) ---- */
+.rk-table {
+    width: 100%;
+    background: var(--rk-bg-elev);
+    border: 1px solid var(--rk-border);
+    border-radius: var(--rad-lg);
+    overflow: hidden;
+    box-shadow: var(--sh-1);
+    border-collapse: separate;
+    border-spacing: 0;
 }
-
-.card .card-title {
-    font-size: 1.25rem;
+.rk-table th {
+    text-align: left;
+    padding: var(--sp-3) var(--sp-4);
     font-weight: 600;
-    margin-bottom: 0.75rem;
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rk-muted);
+    background: var(--rk-surface-2);
+    border-bottom: 1px solid var(--rk-border);
 }
-
-.card .card-body {
-    padding: 1.5rem;
+.rk-table td {
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--rk-line-faint);
+    font-size: var(--fs-sm);
+    vertical-align: middle;
 }
+.rk-table tr:last-child td { border-bottom: 0; }
+.rk-table tr:hover td { background: var(--rk-bg); }
+.rk-table .num { font-family: var(--rk-font-mono); }
 
-/* Větší dashboard headline */
-main h1 {
-    font-size: 2rem;
-    font-weight: 700;
+/* ---- Alerts (override Bootstrap with Forge look) ---- */
+.alert {
+    border-radius: var(--rad-md);
+    border: 1px solid transparent;
+    padding: var(--sp-3) var(--sp-4);
+    font-size: var(--fs-sm);
+    margin-bottom: var(--sp-4);
 }
+.alert-success { background: var(--rk-success-soft); color: var(--rk-success); border-color: color-mix(in oklch, var(--rk-success) 25%, transparent); }
+.alert-danger  { background: var(--rk-danger-soft);  color: var(--rk-danger);  border-color: color-mix(in oklch, var(--rk-danger) 25%, transparent); }
+.alert-warning { background: var(--rk-warning-soft); color: var(--rk-warning); border-color: color-mix(in oklch, var(--rk-warning) 25%, transparent); }
+.alert-info    { background: var(--rk-info-soft);    color: var(--rk-info);    border-color: color-mix(in oklch, var(--rk-info) 25%, transparent); }
 
-main h3 {
-    font-size: 1.5rem;
+/* ---- Breadcrumb (Bootstrap-compat) ---- */
+.breadcrumb {
+    font-size: var(--fs-sm);
+    color: var(--rk-muted);
+    margin-bottom: var(--sp-3);
+    background: transparent;
+    padding: 0;
 }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--rk-muted-2); }
+.breadcrumb-item a { color: var(--rk-muted); }
+.breadcrumb-item a:hover { color: var(--rk-primary); }
+.breadcrumb-item.active { color: var(--rk-ink); }
 
-/* Navbar — jemně */
-.navbar-brand {
-    font-size: 1.15rem;
-}
-
-.navbar-brand strong {
-    letter-spacing: 0.5px;
-}
-
-main {
-    flex: 1 0 auto;
-}
-
-footer {
-    flex-shrink: 0;
+/* ---- Group training badge tweak ---- */
+.rk-group-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--rad-pill);
+    background: var(--rk-primary-soft);
+    color: var(--rk-primary);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 /* ================== Timer modal (Phase 4) ================== */
@@ -75,14 +192,15 @@ footer {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    color: white;
+    background: rgba(10, 11, 13, 0.96);
+    color: #F1EFE9;
     z-index: 9999;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 2rem;
     text-align: center;
+    font-family: var(--rk-font-display);
 }
 #timerTitle {
     font-size: 1.5rem;
@@ -92,11 +210,12 @@ footer {
 #timerPhase {
     font-size: 2rem;
     font-weight: 600;
-    color: #5ac6ff;
+    color: var(--rk-primary);
     margin-bottom: 1rem;
     min-height: 2.4rem;
 }
 #timerDisplay {
+    font-family: var(--rk-font-mono);
     font-size: 12rem;
     font-weight: 700;
     line-height: 1;

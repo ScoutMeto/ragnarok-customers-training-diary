@@ -4,76 +4,128 @@
       lang="cs">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title th:text="${title} ?: 'Ragnarok Training Diary'">Ragnarok Training Diary</title>
+
+    <!-- Early theme apply (FOUC prevention) -->
+    <script>
+        try {
+            var t = localStorage.getItem('rk-theme')
+                  || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            var a = localStorage.getItem('rk-accent') || 'forge';
+            document.documentElement.setAttribute('data-theme', t);
+            document.documentElement.setAttribute('data-accent', a);
+        } catch (e) {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.setAttribute('data-accent', 'forge');
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+
+    <!-- Ragnarok design system -->
+    <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 
-<body>
+<body class="rk-app">
 
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/}">
-            <strong>Ragnarok</strong> <span class="text-secondary">Training Diary</span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-            <span class="navbar-toggler-icon"></span>
+<!-- =============== NAVBAR =============== -->
+<nav th:fragment="navbar(active)" class="rk-nav">
+    <div class="rk-nav__inner">
+        <button class="rk-nav__burger d-md-none" type="button"
+                data-bs-toggle="collapse" data-bs-target="#mobileNav"
+                aria-label="Menu" sec:authorize="isAuthenticated()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M3 12h18M3 18h18"/>
+            </svg>
         </button>
-        <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav me-auto" sec:authorize="isAuthenticated()">
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/dashboard}">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/diary}">Můj deník</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/analysis}">Statistiky</a>
-                </li>
-                <li class="nav-item" sec:authorize="!hasRole('ADMIN')">
-                    <a class="nav-link" th:href="@{/my-plan}">Můj plán</a>
-                </li>
-                <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link dropdown-toggle" href="#" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" th:href="@{/admin/accounts}">Účty</a></li>
-                        <li><a class="dropdown-item" th:href="@{/admin/group-trainings}">Skupinové tréninky</a></li>
-                        <li><a class="dropdown-item" th:href="@{/admin/training-templates}">Šablony tréninků</a></li>
-                        <li><a class="dropdown-item" th:href="@{/admin/overview}">Gym overview</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <span class="navbar-text me-3">
-                        Přihlášen: <strong sec:authentication="principal.nickname">user</strong>
-                    </span>
-                </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-light btn-sm">Odhlásit</button>
-                    </form>
-                </li>
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="btn btn-outline-light btn-sm me-2" th:href="@{/login}">Přihlásit</a>
-                </li>
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="btn btn-light btn-sm" th:href="@{/register}">Registrace</a>
-                </li>
-            </ul>
+
+        <a class="rk-brand" th:href="@{/}">
+            <span class="rk-brand__mark">R</span>
+            Ragnarok <span class="rk-brand__sub d-none d-sm-inline">Training Diary</span>
+        </a>
+
+        <div class="rk-nav__links d-none d-md-flex" sec:authorize="isAuthenticated()">
+            <a class="rk-nav__link" th:href="@{/dashboard}"
+               th:classappend="${active == 'dashboard'} ? ' active'">Dashboard</a>
+            <a class="rk-nav__link" th:href="@{/diary}"
+               th:classappend="${active == 'diary'} ? ' active'">Můj deník</a>
+            <a class="rk-nav__link" th:href="@{/analysis}"
+               th:classappend="${active == 'analysis'} ? ' active'">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/my-plan}"
+               sec:authorize="!hasRole('ADMIN')"
+               th:classappend="${active == 'my-plan'} ? ' active'">Můj plán</a>
+
+            <div class="dropdown" sec:authorize="hasRole('ADMIN')">
+                <a class="rk-nav__link dropdown-toggle" href="#" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false"
+                   th:classappend="${active != null and #strings.startsWith(active, 'admin')} ? ' active'">
+                    Admin
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/admin/accounts}">Účty</a></li>
+                    <li><a class="dropdown-item" th:href="@{/admin/group-trainings}">Skupinové tréninky</a></li>
+                    <li><a class="dropdown-item" th:href="@{/admin/training-templates}">Šablony tréninků</a></li>
+                    <li><a class="dropdown-item" th:href="@{/admin/overview}">Gym overview</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="rk-nav__spacer"></div>
+
+        <div class="rk-nav__user" sec:authorize="isAuthenticated()">
+            <span class="label d-none d-md-inline">
+                Přihlášen <strong sec:authentication="principal.nickname">user</strong>
+            </span>
+            <div class="rk-avatar"
+                 th:text="${#strings.toUpperCase(#strings.substring(#authentication.principal.firstName, 0, 1))}">M</div>
+            <form th:action="@{/logout}" method="post" class="d-none d-md-inline ms-2">
+                <button type="submit" class="rk-btn-logout" title="Odhlásit">Odhlásit</button>
+            </form>
+        </div>
+        <div class="rk-nav__user" sec:authorize="!isAuthenticated()">
+            <a class="rk-nav__link" th:href="@{/login}">Přihlásit</a>
+            <a class="btn btn-accent btn-sm" th:href="@{/register}">Registrace</a>
+        </div>
+    </div>
+
+    <!-- Mobile collapse menu -->
+    <div class="collapse rk-nav__mobile-wrap" id="mobileNav" sec:authorize="isAuthenticated()">
+        <div class="rk-nav__mobile">
+            <a class="rk-nav__link" th:href="@{/dashboard}">Dashboard</a>
+            <a class="rk-nav__link" th:href="@{/diary}">Můj deník</a>
+            <a class="rk-nav__link" th:href="@{/analysis}">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/my-plan}" sec:authorize="!hasRole('ADMIN')">Můj plán</a>
+            <div sec:authorize="hasRole('ADMIN')" class="rk-nav__mobile-sep"></div>
+            <a class="rk-nav__link" th:href="@{/admin/accounts}" sec:authorize="hasRole('ADMIN')">Účty</a>
+            <a class="rk-nav__link" th:href="@{/admin/group-trainings}" sec:authorize="hasRole('ADMIN')">Skupinové tréninky</a>
+            <a class="rk-nav__link" th:href="@{/admin/training-templates}" sec:authorize="hasRole('ADMIN')">Šablony tréninků</a>
+            <a class="rk-nav__link" th:href="@{/admin/overview}" sec:authorize="hasRole('ADMIN')">Gym overview</a>
+            <div class="rk-nav__mobile-sep"></div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="rk-nav__link" style="background:none;border:0;width:100%;text-align:left;">Odhlásit</button>
+            </form>
         </div>
     </div>
 </nav>
 
-<footer th:fragment="footer" class="footer mt-auto py-3 bg-light border-top">
-    <div class="container text-muted small">
-        Ragnarok Training Diary &middot;
-        <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span>
-    </div>
+<!-- =============== FOOTER =============== -->
+<footer th:fragment="footer" class="rk-footer">
+    Ragnarok Training Diary ·
+    <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span>
 </footer>
 
+<!-- =============== SCRIPTS =============== -->
 <div th:fragment="scripts">
     <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
 </div>
