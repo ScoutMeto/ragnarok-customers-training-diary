@@ -38,6 +38,9 @@
                     </p>
                 </div>
                 <div class="d-flex gap-2">
+                    <a th:if="${account.role.name() == 'USER'}"
+                       th:href="@{/admin/accounts/{id}/coach-plans(id=${account.id})}"
+                       class="btn btn-outline-success btn-sm">📋 Plány od trenéra</a>
                     <a th:href="@{/admin/accounts/{id}/edit(id=${account.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
                     <form th:action="@{/admin/accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu anonymizovat tento účet? Tréninky zůstanou v DB ale účet se nesmí přihlásit.');">

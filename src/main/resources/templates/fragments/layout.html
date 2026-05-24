@@ -31,6 +31,9 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/analysis}">Statistiky</a>
                 </li>
+                <li class="nav-item" sec:authorize="!hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/my-plan}">Můj plán</a>
+                </li>
                 <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Admin</a>

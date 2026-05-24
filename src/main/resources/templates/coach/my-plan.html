@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Můj plán')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <h1 class="mb-1">📋 Můj plán od trenéra</h1>
+    <p class="text-muted mb-4">Trenérova doporučení a strukturovaný plán na týdny/měsíce dopředu.</p>
+
+    <!-- Aktivní plán -->
+    <div th:if="${activePlan != null}" class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge bg-success mb-2">Aktivní</span>
+                    <h2 class="mb-1" th:text="${activePlan.title}">Název</h2>
+                    <p class="text-muted mb-0">
+                        <strong>Platnost:</strong>
+                        <span th:text="${#temporals.format(activePlan.validFrom, 'dd.MM.yyyy')}">od</span>
+                        –
+                        <span th:text="${activePlan.validTo != null ? #temporals.format(activePlan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+                        · Od trenéra <strong th:text="${activePlan.author.firstName} + ' ' + ${activePlan.author.lastName}">Trenér</strong>
+                    </p>
+                </div>
+            </div>
+            <hr>
+            <div class="markdown-body" th:utext="${activeBodyHtml}">
+                <!-- Vyrenderovaný markdown -->
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${activePlan == null}" class="alert alert-info">
+        Zatím nemáš aktivní plán od trenéra. Pokud si ho přejete, ozvi se trenérovi.
+    </div>
+
+    <!-- Historie -->
+    <h3 class="mt-4 mb-3">Historie plánů</h3>
+    <p class="text-muted small" th:if="${allPlans.size() <= 1}">Žádné historické plány.</p>
+    <table class="table" th:if="${allPlans.size() > 1}">
+        <thead>
+        <tr>
+            <th>Název</th>
+            <th>Období</th>
+            <th>Autor</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${allPlans}" th:if="${activePlan == null or p.id != activePlan.id}">
+            <td><a th:href="@{/my-plan/{id}(id=${p.id})}" th:text="${p.title}">Název</a></td>
+            <td>
+                <span th:text="${#temporals.format(p.validFrom, 'dd.MM.yyyy')}">od</span>
+                –
+                <span th:text="${p.validTo != null ? #temporals.format(p.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+            </td>
+            <td th:text="${p.author.firstName} + ' ' + ${p.author.lastName}">Autor</td>
+        </tr>
+        </tbody>
+    </table>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
