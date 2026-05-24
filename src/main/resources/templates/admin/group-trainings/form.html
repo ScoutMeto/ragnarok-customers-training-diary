@@ -253,6 +253,29 @@
                         </table>
                     </div>
 
+                    <div class="type-config type-superset type-complex mt-4" style="display:none">
+                        <h6 class="mb-2">Schéma (kompozitní)</h6>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" th:name="|exercises[${exStat.index}].composite.rounds|" th:value="${ex.composite?.rounds} ?: 3" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Shared kg (Complex)</label><input type="number" step="0.25" th:name="|exercises[${exStat.index}].composite.sharedWeightKg|" th:value="${ex.composite?.sharedWeightKg}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" th:name="|exercises[${exStat.index}].composite.restBetweenRoundsS|" th:value="${ex.composite?.restBetweenRoundsS}" class="form-control form-control-sm"></div>
+                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].composite.notes|" th:value="${ex.composite?.notes}" class="form-control form-control-sm"></div>
+                        </div>
+                        <table class="table table-sm">
+                            <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th></tr></thead>
+                            <tbody>
+                            <tr th:each="i : ${#numbers.sequence(0, 5)}">
+                                <td th:text="${i + 1}">1</td>
+                                <td><input type="text" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].name|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).name : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].reps|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).reps : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" step="0.25" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].weightKg|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).weightKg : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="number" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].restAfterSeconds|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).restAfterSeconds : ''}" class="form-control form-control-sm"></td>
+                                <td><input type="text" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].note|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).note : ''}" class="form-control form-control-sm"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div class="type-config type-amrap mt-4" style="display:none">
                         <h6 class="mb-2">AMRAP schéma</h6>
                         <div class="row g-2">
@@ -387,6 +410,28 @@
                         <td><input type="number" step="0.25" th:attr="data-name='circuit.steps[' + ${i} + '].weightKg'" class="form-control form-control-sm"></td>
                         <td><input type="number" th:attr="data-name='circuit.steps[' + ${i} + '].restSeconds'" class="form-control form-control-sm"></td>
                         <td><input type="text" th:attr="data-name='circuit.steps[' + ${i} + '].note'" class="form-control form-control-sm"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="type-config type-superset type-complex mt-4" style="display:none">
+                <h6 class="mb-2">Schéma (kompozitní)</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="composite.rounds" value="3" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Shared kg</label><input type="number" step="0.25" data-name="composite.sharedWeightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" data-name="composite.restBetweenRoundsS" class="form-control form-control-sm"></div>
+                    <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="composite.notes" class="form-control form-control-sm"></div>
+                </div>
+                <table class="table table-sm">
+                    <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po</th><th>Pozn.</th></tr></thead>
+                    <tbody>
+                    <tr th:each="i : ${#numbers.sequence(0, 5)}">
+                        <td th:text="${i + 1}">1</td>
+                        <td><input type="text" th:attr="data-name='composite.steps[' + ${i} + '].name'" class="form-control form-control-sm"></td>
+                        <td><input type="number" th:attr="data-name='composite.steps[' + ${i} + '].reps'" class="form-control form-control-sm"></td>
+                        <td><input type="number" step="0.25" th:attr="data-name='composite.steps[' + ${i} + '].weightKg'" class="form-control form-control-sm"></td>
+                        <td><input type="number" th:attr="data-name='composite.steps[' + ${i} + '].restAfterSeconds'" class="form-control form-control-sm"></td>
+                        <td><input type="text" th:attr="data-name='composite.steps[' + ${i} + '].note'" class="form-control form-control-sm"></td>
                     </tr>
                     </tbody>
                 </table>

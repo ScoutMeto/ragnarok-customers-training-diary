@@ -58,6 +58,10 @@ public class TrainingExerciseInput {
     @Valid
     private NumericSeriesConfigInput numericSeries;
 
+    /** Sdílený pro Superset a Complex. */
+    @Valid
+    private CompositeSetConfigInput composite;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

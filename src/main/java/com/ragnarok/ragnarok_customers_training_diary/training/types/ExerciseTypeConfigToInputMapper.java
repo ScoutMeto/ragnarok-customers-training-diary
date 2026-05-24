@@ -10,6 +10,9 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.CompositeSetConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
@@ -41,6 +44,28 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getNumericSeriesConfig() != null) {
             input.setNumericSeries(toNumericSeriesInput(ex.getNumericSeriesConfig()));
         }
+        if (ex.getCompositeSetConfig() != null) {
+            input.setComposite(toCompositeInput(ex.getCompositeSetConfig()));
+        }
+    }
+
+    private CompositeSetConfigInput toCompositeInput(CompositeSetConfigEntity e) {
+        CompositeSetConfigInput in = new CompositeSetConfigInput();
+        in.setRounds(e.getRounds());
+        in.setSharedWeightKg(e.getSharedWeightKg());
+        in.setRestBetweenRoundsS(e.getRestBetweenRoundsS());
+        in.setNotes(e.getNotes());
+        for (CompositeSetStepEntity s : e.getSteps()) {
+            CompositeSetConfigInput.StepInput si = new CompositeSetConfigInput.StepInput();
+            si.setOrderIndex(s.getOrderIndex());
+            si.setName(s.getName());
+            si.setReps(s.getReps());
+            si.setWeightKg(s.getWeightKg());
+            si.setRestAfterSeconds(s.getRestAfterSeconds());
+            si.setNote(s.getNote());
+            in.getSteps().add(si);
+        }
+        return in;
     }
 
     private NumericSeriesConfigInput toNumericSeriesInput(NumericSeriesConfigEntity e) {

@@ -169,6 +169,32 @@
                      class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
             </div>
 
+            <!-- Composite (Superset / Complex) display -->
+            <div th:if="${ex.compositeSetConfig != null}" class="alert alert-info py-2 mb-2">
+                <strong th:text="${ex.type}">SUPERSET</strong> ·
+                <span th:text="${ex.compositeSetConfig.rounds}">3</span> kol
+                <span th:if="${ex.compositeSetConfig.sharedWeightKg != null}">
+                    · shared <span th:text="${ex.compositeSetConfig.sharedWeightKg}">16</span> kg
+                </span>
+                <span th:if="${ex.compositeSetConfig.restBetweenRoundsS != null}">
+                    · pauza mezi koly <span th:text="${ex.compositeSetConfig.restBetweenRoundsS}">60</span> s
+                </span>
+                <div th:if="${ex.compositeSetConfig.notes != null and !ex.compositeSetConfig.notes.isEmpty()}"
+                     class="small text-muted mt-1" th:text="${ex.compositeSetConfig.notes}"></div>
+                <table class="table table-sm mb-0 mt-2" th:if="${!ex.compositeSetConfig.steps.isEmpty()}">
+                    <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Kg</th><th>Rest po (s)</th></tr></thead>
+                    <tbody>
+                    <tr th:each="s, st : ${ex.compositeSetConfig.steps}">
+                        <td th:text="${st.count}">1</td>
+                        <td th:text="${s.name}">Squat</td>
+                        <td th:text="${s.reps} ?: '—'">5</td>
+                        <td th:text="${s.weightKg} ?: '—'">—</td>
+                        <td th:text="${s.restAfterSeconds} ?: '—'">15</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Numeric series (Ladder/Stepladder/Pyramid) display -->
             <div th:if="${ex.numericSeriesConfig != null}" class="alert alert-info py-2 mb-2">
                 <strong th:text="${ex.type}">LADDER</strong>

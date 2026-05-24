@@ -11,6 +11,9 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.dto.CompositeSetConfigInput;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
+import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
@@ -40,6 +43,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setAmrapConfig(null);
         exercise.setCircuitConfig(null);
         exercise.setNumericSeriesConfig(null);
+        exercise.setCompositeSetConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -50,8 +54,8 @@ public class ExerciseTypeConfigMapper {
             case AMRAP -> applyAmrap(exercise, input.getAmrap());
             case CIRCUIT -> applyCircuit(exercise, input.getCircuit());
             case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
+            case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
             case FREEFORM, CUSTOMIZING, STRAIGHT_SETS -> { /* žádný extra config */ }
-            default -> { /* TODO P3.4+ */ }
         }
     }
 
@@ -183,6 +187,37 @@ public class ExerciseTypeConfigMapper {
         }
 
         exercise.setCircuitConfig(cfg);
+    }
+
+    // ----- COMPOSITE (Superset / Complex) -----
+
+    private void applyComposite(TrainingExerciseEntity exercise, CompositeSetConfigInput in) {
+        if (in == null || in.getRounds() == null) return;
+
+        CompositeSetConfigEntity cfg = new CompositeSetConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setRounds(in.getRounds());
+        cfg.setSharedWeightKg(in.getSharedWeightKg());
+        cfg.setRestBetweenRoundsS(in.getRestBetweenRoundsS());
+        cfg.setNotes(in.getNotes());
+
+        if (in.getSteps() != null) {
+            int idx = 0;
+            for (CompositeSetConfigInput.StepInput s : in.getSteps()) {
+                if (s.getName() == null || s.getName().isBlank()) continue;
+                CompositeSetStepEntity step = new CompositeSetStepEntity();
+                step.setCompositeConfig(cfg);
+                step.setOrderIndex(idx++);
+                step.setName(s.getName().trim());
+                step.setReps(s.getReps());
+                step.setWeightKg(s.getWeightKg());
+                step.setRestAfterSeconds(s.getRestAfterSeconds());
+                step.setNote(s.getNote());
+                cfg.getSteps().add(step);
+            }
+        }
+
+        exercise.setCompositeSetConfig(cfg);
     }
 
     // ----- NUMERIC SERIES (Ladder / Stepladder / Pyramid) -----
