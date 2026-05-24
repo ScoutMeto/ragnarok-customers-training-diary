@@ -105,6 +105,13 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Markdown rendering (Phase 8 — CoachPlan body) -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>0.24.0</version>
+        </dependency>
+
         <!-- Webjars: Bootstrap 5 -->
         <dependency>
             <groupId>org.webjars</groupId>

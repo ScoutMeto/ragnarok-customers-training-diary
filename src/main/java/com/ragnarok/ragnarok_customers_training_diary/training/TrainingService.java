@@ -179,6 +179,119 @@ public class TrainingService {
         trainingRepository.delete(training);
     }
 
+    // -----------------------------------------------------------------------------
+    // TEMPLATE — šablony (Phase 8)
+    // -----------------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listAllTemplates() {
+        return trainingRepository.findByVisibilityOrderByCreatedAtDesc(TrainingVisibility.TEMPLATE);
+    }
+
+    @Transactional(readOnly = true)
+    public TrainingEntity getTemplate(Long id) {
+        TrainingEntity t = trainingRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Šablona (id=" + id + ") nenalezena."));
+        if (t.getVisibility() != TrainingVisibility.TEMPLATE) {
+            throw new IllegalArgumentException("Trénink není šablona.");
+        }
+        return t;
+    }
+
+    public TrainingEntity createTemplate(AccountEntity creator, TrainingInput input) {
+        validateExerciseNaming(input);
+
+        TrainingEntity training = new TrainingEntity();
+        training.setVisibility(TrainingVisibility.TEMPLATE);
+        training.setOwner(null);
+        training.setCreatedBy(creator);
+        applyTrainingFields(training, input);
+        applyExercises(training, input.getExercises());
+        applyTagsForGroup(training, input.getTagIds());  // jen systémové tagy
+
+        return trainingRepository.save(training);
+    }
+
+    public TrainingEntity updateTemplate(Long templateId, TrainingInput input) {
+        validateExerciseNaming(input);
+        TrainingEntity training = getTemplate(templateId);
+
+        applyTrainingFields(training, input);
+        training.getExercises().clear();
+        applyExercises(training, input.getExercises());
+        applyTagsForGroup(training, input.getTagIds());
+
+        return trainingRepository.save(training);
+    }
+
+    public void deleteTemplate(Long templateId) {
+        TrainingEntity training = getTemplate(templateId);
+        trainingRepository.delete(training);
+    }
+
+    /**
+     * Přiřadí šablonu konkrétnímu klientovi na konkrétní datum. Vytvoří se nový
+     * PRIVATE trénink jako kopie šablony s {@link TrainingEntity#sourceTemplate}
+     * odkazem. Klient si pak může vyplnit svoje výkony do setů.
+     *
+     * @return nově vytvořený PRIVATE trénink
+     */
+    public TrainingEntity assignTemplateToClient(Long templateId, AccountEntity client,
+                                                  java.time.LocalDate date,
+                                                  com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper toInputMapper) {
+        TrainingEntity template = getTemplate(templateId);
+
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(date);
+        input.setStartTime(template.getStartTime());
+        input.setEndTime(template.getEndTime());
+        input.setName(template.getName() != null ? template.getName() : "Trénink od trenéra");
+        input.setDifficulty(template.getDifficulty());
+        input.setRpe(null); // klient si vyplní vlastní
+        input.setNotes(template.getNotes());
+
+        // Tagy: jen systémové (custom tagy patří někomu jinému)
+        java.util.Set<Long> systemTagIds = new java.util.HashSet<>();
+        for (TrainingTagEntity t : template.getTags()) {
+            if (t.isSystem()) systemTagIds.add(t.getId());
+        }
+        input.setTagIds(systemTagIds);
+
+        // Cviky + per-type configs jako šablona (klient může přepsat při vyplňování)
+        for (TrainingExerciseEntity sourceEx : template.getExercises()) {
+            TrainingExerciseInput exInput = new TrainingExerciseInput();
+            exInput.setType(sourceEx.getType());
+            exInput.setCatalogItemId(sourceEx.getCatalogItem() != null ? sourceEx.getCatalogItem().getId() : null);
+            exInput.setCustomName(sourceEx.getCustomName());
+            exInput.setNotes(sourceEx.getNotes());
+            // RPE klient vyplní sám
+            for (var s : sourceEx.getSets()) {
+                SetInput si = new SetInput();
+                si.setWeightKg(s.getWeightKg());
+                si.setReps(s.getReps());
+                // RPE necháme prázdné — klient si je vyplní
+                exInput.getSets().add(si);
+            }
+            toInputMapper.fillInput(exInput, sourceEx);
+            input.getExercises().add(exInput);
+        }
+
+        TrainingEntity created = create(client, input);
+        created.setSourceTemplate(template);
+        return trainingRepository.save(created);
+    }
+
+    /**
+     * Tréninky daného klienta, které byly přiřazeny z šablony (admin view).
+     */
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listTrainingsFromTemplate(Long templateId) {
+        // JPA derived query: findBy SourceTemplate_Id
+        return trainingRepository.findAll().stream()
+                .filter(t -> t.getSourceTemplate() != null && t.getSourceTemplate().getId().equals(templateId))
+                .toList();
+    }
+
     /**
      * Zkopíruje GROUP trénink do klientova osobního deníku jako nový PRIVATE záznam.
      * Nový trénink dostane stejné cviky, sety, tagy (jen systémové) a per-type configs,
