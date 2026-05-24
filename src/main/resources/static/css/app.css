@@ -69,3 +69,53 @@ main {
 footer {
     flex-shrink: 0;
 }
+
+/* ================== Timer modal (Phase 4) ================== */
+#timerModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+#timerTitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1rem;
+}
+#timerPhase {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #5ac6ff;
+    margin-bottom: 1rem;
+    min-height: 2.4rem;
+}
+#timerDisplay {
+    font-size: 12rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1rem;
+}
+#timerSub {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.75);
+    min-height: 1.8rem;
+    margin-bottom: 2rem;
+}
+#timerModal .btn {
+    font-size: 1.2rem;
+    padding: 0.6rem 1.4rem;
+    margin: 0 0.5rem;
+}
+@media (max-width: 768px) {
+    #timerDisplay { font-size: 7rem; }
+    #timerPhase { font-size: 1.4rem; }
+    #timerSub { font-size: 1.1rem; }
+}
