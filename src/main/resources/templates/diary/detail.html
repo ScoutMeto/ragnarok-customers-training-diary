@@ -113,6 +113,19 @@
                     <span class="badge bg-info text-dark"
                           th:if="${ex.rpe != null}"
                           th:text="'RPE ' + ${ex.rpe}">RPE 7</span>
+                    <!-- Spustit timer — jen pro typy, které jdou timeoute -->
+                    <button type="button" class="btn btn-sm btn-success ms-2"
+                            th:if="${ex.emomConfig != null}"
+                            th:attr="data-timer-emom=${ex.id}">⏱ Spustit</button>
+                    <button type="button" class="btn btn-sm btn-success ms-2"
+                            th:if="${ex.tabataConfig != null}"
+                            th:attr="data-timer-tabata=${ex.id}">⏱ Spustit</button>
+                    <button type="button" class="btn btn-sm btn-success ms-2"
+                            th:if="${ex.amrapConfig != null}"
+                            th:attr="data-timer-amrap=${ex.id}">⏱ Spustit</button>
+                    <button type="button" class="btn btn-sm btn-success ms-2"
+                            th:if="${ex.circuitConfig != null}"
+                            th:attr="data-timer-circuit=${ex.id}">⏱ Spustit</button>
                 </div>
             </div>
 
@@ -362,8 +375,88 @@
 
 </main>
 
+<!-- ============== Timer modal (Phase 4) ============== -->
+<div id="timerModal">
+    <div id="timerTitle">Timer</div>
+    <div id="timerPhase"></div>
+    <div id="timerDisplay">00:00</div>
+    <div id="timerSub"></div>
+    <div>
+        <button type="button" class="btn btn-warning" id="timerBtnPause">Pauza</button>
+        <button type="button" class="btn btn-outline-light" id="timerBtnMute">🔊</button>
+        <button type="button" class="btn btn-danger" id="timerBtnClose">Zavřít</button>
+    </div>
+</div>
+
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script th:src="@{/js/timer.js}"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Per-exercise timer configs předané do JS jako mapy id -> config
+    window.__timerConfigs = {
+        emom: {},
+        tabata: {},
+        amrap: {},
+        circuit: {}
+    };
+    /*]]>*/
+</script>
+<!-- Generujeme JS data inline pro každý cvik (jen ty s validní config) -->
+<th:block th:each="ex : ${training.exercises}">
+    <script th:if="${ex.emomConfig != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.__timerConfigs.emom[/*[[${ex.id}]]*/ 0] = {
+            totalMinutes: /*[[${ex.emomConfig.totalMinutes}]]*/ 10,
+            intervalSeconds: /*[[${ex.emomConfig.intervalSeconds}]]*/ 60,
+            defaultReps: /*[[${ex.emomConfig.defaultReps}]]*/ null,
+            defaultWeightKg: /*[[${ex.emomConfig.defaultWeightKg}]]*/ null,
+            minuteOverrides: /*[[${ex.emomConfig.minuteOverrides}]]*/ []
+        };
+        /*]]>*/
+    </script>
+    <script th:if="${ex.tabataConfig != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.__timerConfigs.tabata[/*[[${ex.id}]]*/ 0] = {
+            rounds: /*[[${ex.tabataConfig.rounds}]]*/ 8,
+            workSeconds: /*[[${ex.tabataConfig.workSeconds}]]*/ 20,
+            restSeconds: /*[[${ex.tabataConfig.restSeconds}]]*/ 10,
+            defaultReps: /*[[${ex.tabataConfig.defaultReps}]]*/ null,
+            defaultWeightKg: /*[[${ex.tabataConfig.defaultWeightKg}]]*/ null
+        };
+        /*]]>*/
+    </script>
+    <script th:if="${ex.amrapConfig != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.__timerConfigs.amrap[/*[[${ex.id}]]*/ 0] = {
+            timecapSeconds: /*[[${ex.amrapConfig.timecapSeconds}]]*/ 480,
+            targetRepsPerRound: /*[[${ex.amrapConfig.targetRepsPerRound}]]*/ null
+        };
+        /*]]>*/
+    </script>
+    <script th:if="${ex.circuitConfig != null}" th:inline="javascript">
+        /*<![CDATA[*/
+        window.__timerConfigs.circuit[/*[[${ex.id}]]*/ 0] = {
+            rounds: /*[[${ex.circuitConfig.rounds}]]*/ 3,
+            restBetweenRoundsS: /*[[${ex.circuitConfig.restBetweenRoundsS}]]*/ null,
+            steps: /*[[${ex.circuitConfig.steps}]]*/ []
+        };
+        /*]]>*/
+    </script>
+</th:block>
+<script>
+    // Click handlers pro 'Spustit' tlačítka
+    document.addEventListener('click', function (e) {
+        const t = e.target;
+        if (!t.matches('button[data-timer-emom],button[data-timer-tabata],button[data-timer-amrap],button[data-timer-circuit]')) return;
+        const id = t.dataset.timerEmom || t.dataset.timerTabata || t.dataset.timerAmrap || t.dataset.timerCircuit;
+        if (t.dataset.timerEmom) TrainingTimer.runEmom(window.__timerConfigs.emom[id]);
+        else if (t.dataset.timerTabata) TrainingTimer.runTabata(window.__timerConfigs.tabata[id]);
+        else if (t.dataset.timerAmrap) TrainingTimer.runAmrap(window.__timerConfigs.amrap[id]);
+        else if (t.dataset.timerCircuit) TrainingTimer.runCircuit(window.__timerConfigs.circuit[id]);
+    });
+</script>
 
 </body>
 </html>
