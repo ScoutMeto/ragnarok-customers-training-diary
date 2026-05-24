@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Admin: šablony tréninků')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active">Šablony tréninků</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Šablony tréninků</h1>
+        <a th:href="@{/admin/training-templates/new}" class="btn btn-primary">+ Nová šablona</a>
+    </div>
+
+    <p class="text-muted mb-4">
+        Šablona = předpřipravený trénink (cviky + sety + configs). Po vytvoření ji
+        <strong>přiřadíš konkrétnímu klientovi na konkrétní datum</strong> → vznikne mu
+        v deníku PRIVATE trénink s odkazem na zdrojovou šablonu.
+    </p>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <p class="text-muted" th:if="${templates.isEmpty()}">Žádné šablony.</p>
+
+    <table class="table align-middle" th:unless="${templates.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Název</th>
+            <th>Cviků</th>
+            <th>Autor</th>
+            <th>Vytvořeno</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="t : ${templates}">
+            <td><strong th:text="${t.name} ?: 'Šablona'">Název</strong></td>
+            <td th:text="${t.exercises.size()}">3</td>
+            <td th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '—'}">Trenér</td>
+            <td th:text="${#temporals.format(t.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
+            <td class="text-end">
+                <a th:href="@{/admin/training-templates/{id}/assign(id=${t.id})}" class="btn btn-sm btn-success">📤 Přiřadit</a>
+                <a th:href="@{/admin/training-templates/{id}/edit(id=${t.id})}" class="btn btn-sm btn-outline-primary">Upravit</a>
+                <form th:action="@{/admin/training-templates/{id}/delete(id=${t.id})}" method="post" class="d-inline"
+                      onsubmit="return confirm('Smazat tuto šablonu?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
