@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Admin: gym overview')}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4 flex-grow-1">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active">Gym overview</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-1">⚙️ Gym overview</h1>
+    <p class="text-muted mb-4">Souhrn aktivit napříč všemi klienty.</p>
+
+    <!-- Period -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Období</label>
+                    <select id="periodSelect" class="form-select">
+                        <option value="7">7 dní</option>
+                        <option value="30" selected>30 dní</option>
+                        <option value="90">90 dní</option>
+                        <option value="365">Rok</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button id="refreshBtn" class="btn btn-primary w-100">🔄 Načíst</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted small mb-1">Aktivní klienti</p>
+                <h2 class="mb-0" id="kpiClients">—</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted small mb-1">Osobní tréninky</p>
+                <h2 class="mb-0" id="kpiPrivate">—</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted small mb-1">Skupinové tréninky</p>
+                <h2 class="mb-0" id="kpiGroup">—</h2>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted small mb-1">Total volume (kg)</p>
+                <h2 class="mb-0" id="kpiVolume">—</h2>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Top active clients -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">Top aktivní klienti</h3>
+            <table class="table table-sm align-middle">
+                <thead>
+                <tr><th>#</th><th>Jméno</th><th>Email</th><th class="text-end">Počet tréninků</th></tr>
+                </thead>
+                <tbody id="topClientsTbody">
+                <tr><td colspan="4" class="text-muted">Načítám…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+(function() {
+    function isoDaysAgo(n) {
+        const d = new Date();
+        d.setDate(d.getDate() - n);
+        return d.toISOString().slice(0, 10);
+    }
+    function isoToday() { return new Date().toISOString().slice(0, 10); }
+
+    function load() {
+        const days = parseInt(document.getElementById('periodSelect').value, 10);
+        const from = isoDaysAgo(days);
+        const to = isoToday();
+        fetch(`/api/analysis/admin/overview?from=${from}&to=${to}`, { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+            .then(data => {
+                document.getElementById('kpiClients').textContent = data.activeClients;
+                document.getElementById('kpiPrivate').textContent = data.totalPrivateTrainings;
+                document.getElementById('kpiGroup').textContent = data.totalGroupTrainings;
+                document.getElementById('kpiVolume').textContent = data.gymTotalVolumeKg
+                    ? parseFloat(data.gymTotalVolumeKg).toLocaleString('cs-CZ', { maximumFractionDigits: 0 })
+                    : '0';
+                const tbody = document.getElementById('topClientsTbody');
+                tbody.innerHTML = '';
+                if (!data.topActiveClients || data.topActiveClients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">Žádní aktivní klienti v tomto období.</td></tr>';
+                    return;
+                }
+                data.topActiveClients.forEach((c, i) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${i + 1}</td>
+                                    <td>${c.firstName} ${c.lastName}</td>
+                                    <td>${c.email}</td>
+                                    <td class="text-end">${c.trainingCount}</td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => {
+                console.error('Admin overview load error', err);
+                alert('Chyba při načítání: ' + err);
+            });
+    }
+    document.getElementById('refreshBtn').addEventListener('click', load);
+    load();
+})();
+</script>
+
+</body>
+</html>
