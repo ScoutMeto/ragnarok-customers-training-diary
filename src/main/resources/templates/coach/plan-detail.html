@@ -1,28 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Plán')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('my-plan')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a th:href="@{/my-plan}">Můj plán</a></li>
-            <li class="breadcrumb-item active" th:text="${plan.title}">Plán</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <a th:href="@{/my-plan}">Můj plán</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${plan.title}">Plán</span>
+    </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h1 class="mb-1" th:text="${plan.title}">Název</h1>
-            <p class="text-muted mb-3">
+    <div class="rk-card" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__body">
+            <h1 style="font-size: var(--fs-h1); margin-bottom: 6px;" th:text="${plan.title}">Název</h1>
+            <p class="text-muted" style="margin: 0 0 var(--sp-3); font-size: var(--fs-sm);">
                 <strong>Platnost:</strong>
-                <span th:text="${#temporals.format(plan.validFrom, 'dd.MM.yyyy')}">od</span>
+                <span class="num" th:text="${#temporals.format(plan.validFrom, 'dd.MM.yyyy')}">od</span>
                 –
-                <span th:text="${plan.validTo != null ? #temporals.format(plan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
-                · Od trenéra <strong th:text="${plan.author.firstName} + ' ' + ${plan.author.lastName}">Trenér</strong>
+                <span class="num" th:text="${plan.validTo != null ? #temporals.format(plan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+                · Od trenéra <strong th:text="${plan.author.firstName + ' ' + plan.author.lastName}">Trenér</strong>
             </p>
             <hr>
             <div class="markdown-body" th:utext="${bodyHtml}"></div>

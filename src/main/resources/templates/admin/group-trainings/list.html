@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Admin: skupinové tréninky')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-group')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item active" aria-current="page">Skupinové tréninky</li>
-        </ol>
-    </nav>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Skupinové tréninky</h1>
-        <a th:href="@{/admin/group-trainings/new}" class="btn btn-primary">+ Nový skupinový trénink</a>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <span class="current">Skupinové tréninky</span>
     </div>
 
-    <p class="text-muted mb-4">
-        Skupinové tréninky vidí <strong>všichni klienti</strong> v deníku/dashboardu pro daný den.
-        Klient nemůže upravovat (je read-only), ale může komentovat a logovat si vlastní trénink vedle.
-    </p>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">Skupinové tréninky</h1>
+            <p class="rk-page__sub">
+                Vidí všichni klienti v deníku/dashboardu pro daný den.
+            </p>
+        </div>
+        <div class="rk-page__actions">
+            <a th:href="@{/admin/group-trainings/new}" class="btn btn-accent btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+                Nový skupinový trénink
+            </a>
+        </div>
+    </div>
 
     <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
     <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
 
-    <p class="text-muted" th:if="${trainings.isEmpty()}">Žádné skupinové tréninky.</p>
+    <div th:if="${trainings.isEmpty()}" class="rk-empty rk-card">
+        <h3>Žádné skupinové tréninky</h3>
+        <p>Vytvoř první skupinový trénink pro klienty.</p>
+    </div>
 
-    <table class="table align-middle" th:unless="${trainings.isEmpty()}">
+    <table class="rk-table" th:unless="${trainings.isEmpty()}">
         <thead>
         <tr>
             <th>Datum</th>
@@ -43,30 +50,26 @@
         </thead>
         <tbody>
         <tr th:each="t : ${trainings}">
-            <td th:text="${#temporals.format(t.trainingDate, 'EEE dd.MM.yyyy')}">po 23.05.2026</td>
-            <td>
-                <span th:if="${t.startTime != null}"
-                      th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span>
-                <span th:if="${t.endTime != null}">
-                    – <span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span>
-                </span>
+            <td class="num" th:text="${#temporals.format(t.trainingDate, 'EEE dd.MM.yyyy')}">po 23.05.2026</td>
+            <td class="num text-muted">
+                <span th:if="${t.startTime != null}" th:text="${#temporals.format(t.startTime, 'HH:mm')}">10:00</span><span
+                  th:if="${t.endTime != null}">—<span th:text="${#temporals.format(t.endTime, 'HH:mm')}">11:00</span></span>
             </td>
             <td>
-                <a th:href="@{/diary/{id}(id=${t.id})}" th:text="${t.name} ?: 'Trénink'">Trénink</a>
+                <a th:href="@{/diary/{id}(id=${t.id})}" style="color: var(--rk-ink); font-weight: 600;" th:text="${t.name} ?: 'Trénink'">Trénink</a>
             </td>
-            <td th:text="${t.exercises.size()}">3</td>
-            <td th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '—'}">Trenér</td>
+            <td class="num" th:text="${t.exercises.size()}">3</td>
+            <td class="text-muted" th:text="${t.createdBy != null ? t.createdBy.firstName + ' ' + t.createdBy.lastName : '—'}">Trenér</td>
             <td>
                 <span th:each="tag : ${t.tags}"
-                      class="badge me-1"
-                      th:style="'background-color: ' + (${tag.color} ?: '#6c757d')"
+                      th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
                       th:text="${tag.name}">Tag</span>
             </td>
             <td class="text-end">
-                <a th:href="@{/admin/group-trainings/{id}/edit(id=${t.id})}" class="btn btn-sm btn-outline-primary">Upravit</a>
+                <a th:href="@{/admin/group-trainings/{id}/edit(id=${t.id})}" class="btn btn-outline btn-sm">Upravit</a>
                 <form th:action="@{/admin/group-trainings/{id}/delete(id=${t.id})}" method="post" class="d-inline"
                       onsubmit="return confirm('Opravdu smazat tento skupinový trénink?');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                    <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
                 </form>
             </td>
         </tr>

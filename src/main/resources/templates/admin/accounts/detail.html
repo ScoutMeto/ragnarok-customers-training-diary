@@ -1,82 +1,95 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Admin: účet')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-accounts')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts}">Účty</a></li>
-            <li class="breadcrumb-item active" aria-current="page"
-                th:text="${account.lastName} + ' ' + ${account.firstName}">Příjmení Jméno</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts}">Účty</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${account.lastName + ' ' + account.firstName}">Příjmení Jméno</span>
+    </div>
 
     <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <h1 class="mb-1">
-                        <span th:text="${account.firstName} + ' ' + ${account.lastName}">Jméno Příjmení</span>
-                        <small class="text-muted" th:text="'(' + ${account.nickname} + ')'">(nick)</small>
-                    </h1>
-                    <p class="text-muted mb-0">
-                        <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
-                        <strong>Telefon:</strong> <span th:text="${account.phone} ?: '—'">—</span><br>
-                        <strong>Role:</strong>
-                        <span class="badge"
-                              th:classappend="${account.role.name() == 'ADMIN'} ? 'bg-warning text-dark' : 'bg-secondary'"
-                              th:text="${account.role}">USER</span><br>
-                        <strong>Vytvořen:</strong>
-                        <span th:text="${#temporals.format(account.createdAt, 'dd.MM.yyyy HH:mm')}">23.05.2026 10:00</span>
-                    </p>
+    <div class="rk-card" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__body">
+            <div class="rk-row" style="justify-content: space-between; align-items: flex-start;">
+                <div class="rk-row" style="gap: var(--sp-4); flex: 1;">
+                    <div class="rk-avatar" style="width: 64px; height: 64px; font-size: 24px;"
+                         th:text="${#strings.toUpperCase(#strings.substring(account.firstName, 0, 1))} + ${#strings.toUpperCase(#strings.substring(account.lastName, 0, 1))}">MK</div>
+                    <div>
+                        <h1 style="font-size: var(--fs-h1); margin-bottom: 6px;">
+                            <span th:text="${account.firstName + ' ' + account.lastName}">Jméno Příjmení</span>
+                        </h1>
+                        <p class="text-muted" style="margin: 0; font-size: var(--fs-sm); line-height: 1.7;">
+                            <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
+                            <strong>Telefon:</strong> <span th:text="${account.phone} ?: '—'">—</span><br>
+                            <strong>Přezdívka:</strong> <span th:text="${account.nickname}">nick</span> ·
+                            <strong>Role:</strong>
+                            <span th:class="|rk-badge ${account.role.name() == 'ADMIN' ? 'rk-badge--accent' : ''}|"
+                                  th:text="${account.role}">USER</span> ·
+                            <strong>Vytvořen:</strong>
+                            <span class="num" th:text="${#temporals.format(account.createdAt, 'dd.MM.yyyy HH:mm')}">23.05.2026 10:00</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap" style="justify-content: flex-end;">
                     <a th:if="${account.role.name() == 'USER'}"
                        th:href="@{/admin/accounts/{id}/coach-plans(id=${account.id})}"
-                       class="btn btn-outline-success btn-sm">📋 Plány od trenéra</a>
-                    <a th:href="@{/admin/accounts/{id}/edit(id=${account.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
+                       class="btn btn-accent btn-sm btn-icon">📋 Plány od trenéra</a>
+                    <a th:href="@{/admin/accounts/{id}/edit(id=${account.id})}" class="btn btn-outline btn-sm">Upravit</a>
                     <form th:action="@{/admin/accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu anonymizovat tento účet? Tréninky zůstanou v DB ale účet se nesmí přihlásit.');">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Anonymizovat</button>
+                        <button type="submit" class="btn btn-danger-outline btn-sm">Anonymizovat</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <h3 class="mb-3">Deník (<span th:text="${trainings.size()}">0</span>)</h3>
-
-    <div th:if="${trainings.isEmpty()}" class="text-muted">
-        Tento klient zatím nemá žádné tréninky.
+    <div class="rk-section-head">
+        <h2>Deník</h2>
+        <span class="meta">
+            <span class="num" th:text="${trainings.size()}">0</span> tréninků
+        </span>
     </div>
 
-    <div th:unless="${trainings.isEmpty()}" class="row g-3">
-        <div th:each="t : ${trainings}" class="col-md-6 col-lg-4">
-            <a th:href="@{/diary/{id}(id=${t.id})}" class="text-decoration-none text-dark">
-                <div class="card h-100 training-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0" th:text="${t.name} ?: 'Trénink'">Trénink</h5>
-                            <span class="badge bg-secondary"
-                                  th:text="${#temporals.format(t.trainingDate, 'dd.MM.yyyy')}">23.05.2026</span>
-                        </div>
-                        <p class="text-muted small mb-0">
-                            <span th:text="${t.exercises.size()}">3</span> cviků
-                            <span th:if="${t.rpe != null}">
-                                · RPE <span th:text="${t.rpe}">7</span>
-                            </span>
-                        </p>
-                    </div>
+    <div th:if="${trainings.isEmpty()}" class="rk-empty rk-card">
+        <p>Tento klient zatím nemá žádné tréninky.</p>
+    </div>
+
+    <div class="rk-stack-3" th:unless="${trainings.isEmpty()}">
+        <article th:each="t : ${trainings}" class="rk-workout"
+                 th:onclick="|location.href='@{/diary/{id}(id=${t.id})}'|"
+                 th:with="rpeVal=${t.rpe != null ? t.rpe : 0}">
+            <div class="rk-workout__date">
+                <div class="day" th:text="${#temporals.format(t.trainingDate, 'dd')}">23</div>
+                <div class="mon" th:text="${#strings.toUpperCase(#temporals.format(t.trainingDate, 'MMM'))}">KVĚ</div>
+            </div>
+            <div class="rk-workout__main">
+                <div class="rk-workout__title" th:text="${t.name} ?: 'Trénink'">Trénink</div>
+                <div class="rk-workout__tags" th:if="${t.tags != null and !t.tags.isEmpty()}">
+                    <span th:each="tag : ${t.tags}"
+                          th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
+                          th:text="${tag.name}">Tag</span>
                 </div>
-            </a>
-        </div>
+                <div class="rk-workout__meta">
+                    <span>· <b th:text="${t.exercises.size()} + ' cviků'">4 cviky</b></span>
+                </div>
+            </div>
+            <div class="rk-workout__aside">
+                <div th:if="${t.rpe != null}" class="rk-rpe" th:style="|--rpe:${rpeVal};|">
+                    <span class="rk-rpe__bar"></span>
+                    <span th:text="|RPE ${t.rpe}|">RPE 8</span>
+                </div>
+            </div>
+        </article>
     </div>
 
 </main>

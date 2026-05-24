@@ -1,305 +1,252 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Trénink')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('diary')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a th:href="@{/diary}">Můj deník</a></li>
-            <li class="breadcrumb-item active" aria-current="page" th:text="${training.name} ?: 'Trénink'">Trénink</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <a th:href="@{/diary}">Můj deník</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${training.name} ?: 'Trénink'">Trénink</span>
+    </div>
 
-    <div th:if="${flashSuccess}" class="alert alert-success" role="alert" th:text="${flashSuccess}"></div>
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
 
-    <div class="card mb-4" th:classappend="${isGroup} ? 'border-primary' : ''">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <h1 class="mb-1">
+    <!-- ========== Hlavička tréninku ========== -->
+    <div th:class="|rk-card ${isGroup ? 'rk-card--accent' : ''}|" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__body">
+            <div class="rk-row" style="justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1; min-width: 0;">
+                    <h1 style="font-size: var(--fs-h1); margin-bottom: 6px;">
                         <span th:text="${training.name} ?: 'Trénink'">Trénink</span>
-                        <span th:if="${isGroup}" class="badge bg-primary ms-2" style="font-size: 0.5em; vertical-align: middle;">Skupinový</span>
+                        <span th:if="${isGroup}" class="rk-group-pill" style="margin-left:10px; vertical-align:middle;">Skupinový</span>
                     </h1>
-                    <p class="text-muted mb-0">
+                    <p class="text-muted" style="margin: 0; font-size: var(--fs-sm);">
                         <span th:text="${#temporals.format(training.trainingDate, 'EEEE, d. M. yyyy')}">úterý, 23. 5. 2026</span>
                         <span th:if="${training.startTime != null}">
-                            ·
-                            <span th:text="${#temporals.format(training.startTime, 'HH:mm')}">10:00</span>
-                            <span th:if="${training.endTime != null}">
-                                –
-                                <span th:text="${#temporals.format(training.endTime, 'HH:mm')}">11:00</span>
-                            </span>
+                            · <span class="num" th:text="${#temporals.format(training.startTime, 'HH:mm')}">10:00</span><span
+                              th:if="${training.endTime != null}">—<span class="num" th:text="${#temporals.format(training.endTime, 'HH:mm')}">11:00</span></span>
                         </span>
                         <span th:if="${isGroup and training.createdBy != null}">
-                            · Trenér:
-                            <strong th:text="${training.createdBy.firstName} + ' ' + ${training.createdBy.lastName}">Trenér</strong>
+                            · Trenér <strong th:text="${training.createdBy.firstName + ' ' + training.createdBy.lastName}">Trenér</strong>
                         </span>
                     </p>
                 </div>
 
-                <!-- PRIVATE + owner: edit/delete -->
+                <!-- Akce dle kontextu -->
                 <div class="d-flex gap-2" th:if="${isOwner}">
-                    <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
+                    <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline btn-sm">Upravit</a>
                     <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu smazat tento trénink?');">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
+                        <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
                     </form>
                 </div>
 
-                <!-- GROUP + admin: edit/delete přes admin sekci -->
                 <div class="d-flex gap-2"
                      th:if="${isGroup and currentUser.role.name() == 'ADMIN'}">
-                    <a th:href="@{/admin/group-trainings/{id}/edit(id=${training.id})}" class="btn btn-outline-primary btn-sm">Upravit</a>
+                    <a th:href="@{/admin/group-trainings/{id}/edit(id=${training.id})}" class="btn btn-outline btn-sm">Upravit</a>
                     <form th:action="@{/admin/group-trainings/{id}/delete(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu smazat tento skupinový trénink?');">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
+                        <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
                     </form>
                 </div>
 
-                <!-- PRIVATE + admin (cizí klient): jen info, žádné akce -->
-                <div th:if="${not isOwner and not isGroup}" class="text-muted small">
-                    <em>Náhled trenéra</em> — komentáře přidáš níže.
-                </div>
-
-                <!-- GROUP + klient: info + copy-to-my-diary -->
                 <div th:if="${isGroup and currentUser.role.name() != 'ADMIN'}" class="d-flex flex-column align-items-end gap-2">
-                    <em class="text-muted small">Skupinový trénink — můžeš okomentovat níže.</em>
                     <form th:action="@{/diary/{id}/copy(id=${training.id})}" method="post" class="d-inline"
-                          onsubmit="return confirm('Zkopírovat tento trénink do tvého deníku? Pak si můžeš zaznamenat své výkony.');">
-                        <button type="submit" class="btn btn-outline-success btn-sm">📥 Zkopírovat do mého deníku</button>
+                          onsubmit="return confirm('Zkopírovat tento trénink do tvého deníku?');">
+                        <button type="submit" class="btn btn-accent btn-sm btn-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Zkopírovat k sobě
+                        </button>
                     </form>
+                </div>
+
+                <div th:if="${not isOwner and not isGroup}" class="text-muted" style="font-size: var(--fs-sm); font-style: italic;">
+                    Náhled trenéra
                 </div>
             </div>
 
-            <div class="mb-3">
-                <span class="badge bg-warning text-dark me-1"
-                      th:if="${training.difficulty != null}"
+            <!-- Badges / tags / RPE -->
+            <div class="rk-row" style="margin-top: var(--sp-4); gap: 8px;">
+                <span th:if="${training.difficulty != null}"
+                      th:class="|rk-badge ${training.difficulty.name() == 'HARD' ? 'rk-badge--danger' : (training.difficulty.name() == 'LIGHT' ? 'rk-badge--success' : '')}|"
                       th:text="${training.difficulty}">MEDIUM</span>
-                <span class="badge bg-info text-dark me-1"
-                      th:if="${training.rpe != null}"
-                      th:text="'RPE ' + ${training.rpe}">RPE 7</span>
+                <span th:if="${training.rpe != null}" class="rk-badge num" th:text="'RPE ' + ${training.rpe}">RPE 7</span>
                 <span th:each="tag : ${training.tags}"
-                      class="badge me-1"
-                      th:style="'background-color: ' + (${tag.color} ?: '#6c757d')"
+                      th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
                       th:text="${tag.name}">Tag</span>
             </div>
 
             <p th:if="${training.notes != null and !training.notes.isEmpty()}"
-               class="mb-0 text-muted"
-               style="white-space: pre-wrap"
+               class="text-muted"
+               style="white-space: pre-wrap; margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-4); background: var(--rk-bg); border-radius: var(--rad-md); border: 1px dashed var(--rk-border); font-size: var(--fs-sm);"
                th:text="${training.notes}">Notes</p>
         </div>
     </div>
 
-    <h3 class="mb-3">Cviky</h3>
-
-    <div th:if="${training.exercises.isEmpty()}" class="text-muted">
-        Žádné cviky v tomto tréninku.
+    <!-- ========== Cviky ========== -->
+    <div class="rk-section-head">
+        <h2>Cviky</h2>
+        <span class="meta">
+            <span class="num" th:text="${training.exercises.size()}">0</span> cviků
+        </span>
     </div>
 
-    <div th:each="ex, exStat : ${training.exercises}" class="card mb-3">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="mb-0">
-                    <span class="text-muted me-2" th:text="${exStat.count} + '.'">1.</span>
+    <div th:if="${training.exercises.isEmpty()}" class="rk-empty rk-card">
+        <p>Žádné cviky v tomto tréninku.</p>
+    </div>
+
+    <div class="rk-stack-4">
+        <div th:each="ex, exStat : ${training.exercises}" class="rk-ex">
+            <div class="rk-ex__head">
+                <div class="rk-ex__title">
+                    <span class="rk-ex__num" th:text="${exStat.count}">1</span>
                     <span th:text="${ex.displayName}">Cvik</span>
-                </h5>
-                <div>
-                    <span class="badge bg-light text-dark" th:text="${ex.type}">FREEFORM</span>
-                    <span class="badge bg-info text-dark"
-                          th:if="${ex.rpe != null}"
-                          th:text="'RPE ' + ${ex.rpe}">RPE 7</span>
-                    <!-- Spustit timer — jen pro typy, které jdou timeoute -->
-                    <button type="button" class="btn btn-sm btn-success ms-2"
+                </div>
+                <div class="rk-row" style="gap: 6px;">
+                    <span class="rk-badge" th:text="${ex.type}">FREEFORM</span>
+                    <span th:if="${ex.rpe != null}" class="rk-badge num" th:text="'RPE ' + ${ex.rpe}">RPE 7</span>
+                    <button type="button" class="btn btn-accent btn-sm btn-icon"
                             th:if="${ex.emomConfig != null}"
                             th:attr="data-timer-emom=${ex.id}">⏱ Spustit</button>
-                    <button type="button" class="btn btn-sm btn-success ms-2"
+                    <button type="button" class="btn btn-accent btn-sm btn-icon"
                             th:if="${ex.tabataConfig != null}"
                             th:attr="data-timer-tabata=${ex.id}">⏱ Spustit</button>
-                    <button type="button" class="btn btn-sm btn-success ms-2"
+                    <button type="button" class="btn btn-accent btn-sm btn-icon"
                             th:if="${ex.amrapConfig != null}"
                             th:attr="data-timer-amrap=${ex.id}">⏱ Spustit</button>
-                    <button type="button" class="btn btn-sm btn-success ms-2"
+                    <button type="button" class="btn btn-accent btn-sm btn-icon"
                             th:if="${ex.circuitConfig != null}"
                             th:attr="data-timer-circuit=${ex.id}">⏱ Spustit</button>
                 </div>
             </div>
 
-            <p class="text-muted small mb-2"
-               th:if="${ex.catalogItem != null}">
-                <span th:if="${ex.catalogItem.bodyRegion != null}"
-                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
-                <span th:if="${ex.catalogItem.movementPattern != null}"
-                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
-                <span th:if="${ex.catalogItem.equipment != null}"
-                      class="badge bg-light text-dark me-1" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
-            </p>
+            <div class="rk-ex__tags" th:if="${ex.catalogItem != null}">
+                <span th:if="${ex.catalogItem.bodyRegion != null}" class="rk-badge" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
+                <span th:if="${ex.catalogItem.movementPattern != null}" class="rk-badge" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
+                <span th:if="${ex.catalogItem.equipment != null}" class="rk-badge" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
+            </div>
+
+            <!-- EMOM -->
+            <div th:if="${ex.emomConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>EMOM</strong> ·
+                <span class="num" th:text="${ex.emomConfig.totalMinutes}">10</span>&nbsp;min,
+                interval <span class="num" th:text="${ex.emomConfig.intervalSeconds}">60</span>&nbsp;s
+                <span th:if="${ex.emomConfig.defaultReps != null}">· default <b class="num" th:text="${ex.emomConfig.defaultReps}">5</b> reps</span>
+                <span th:if="${ex.emomConfig.defaultWeightKg != null}">· <b class="num" th:text="${ex.emomConfig.defaultWeightKg}">24</b> kg</span>
+            </div>
+            <table class="rk-series" th:if="${ex.emomConfig != null and !ex.emomConfig.minuteOverrides.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Min</th><th>Reps</th><th>Kg</th><th>Pozn.</th></tr></thead>
+                <tbody>
+                <tr th:each="o : ${ex.emomConfig.minuteOverrides}">
+                    <td th:text="${o.minuteIndex}">1</td>
+                    <td th:text="${o.reps} ?: '—'">5</td>
+                    <td th:text="${o.weightKg} ?: '—'">24</td>
+                    <td th:text="${o.note} ?: ''"></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Tabata -->
+            <div th:if="${ex.tabataConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>Tabata</strong> ·
+                <span class="num" th:text="${ex.tabataConfig.rounds}">8</span> kol ×
+                <span class="num" th:text="${ex.tabataConfig.workSeconds}">20</span>&nbsp;s práce /
+                <span class="num" th:text="${ex.tabataConfig.restSeconds}">10</span>&nbsp;s pauza
+                <span th:if="${ex.tabataConfig.defaultReps != null}">· default <b class="num" th:text="${ex.tabataConfig.defaultReps}">5</b> reps</span>
+                <span th:if="${ex.tabataConfig.defaultWeightKg != null}">· <b class="num" th:text="${ex.tabataConfig.defaultWeightKg}">16</b> kg</span>
+            </div>
+
+            <!-- Straight Sets -->
+            <div th:if="${ex.straightSetsConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>Straight Sets</strong> ·
+                <span class="num" th:text="${ex.straightSetsConfig.setCount}">3</span> ×
+                <span class="num" th:text="${ex.straightSetsConfig.repsPerSet} ?: '?'">8</span>
+                <span th:if="${ex.straightSetsConfig.weightKg != null}">· <b class="num" th:text="${ex.straightSetsConfig.weightKg}">24</b> kg</span>
+                <span th:if="${ex.straightSetsConfig.restSeconds != null}">· pauza <span class="num" th:text="${ex.straightSetsConfig.restSeconds}">120</span>&nbsp;s</span>
+            </div>
+
+            <!-- Composite (Superset / Complex) -->
+            <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong th:text="${ex.type}">SUPERSET</strong> ·
+                <span class="num" th:text="${ex.compositeSetConfig.rounds}">3</span> kol
+                <span th:if="${ex.compositeSetConfig.sharedWeightKg != null}">· shared <b class="num" th:text="${ex.compositeSetConfig.sharedWeightKg}">16</b> kg</span>
+                <span th:if="${ex.compositeSetConfig.restBetweenRoundsS != null}">· pauza mezi koly <span class="num" th:text="${ex.compositeSetConfig.restBetweenRoundsS}">60</span>&nbsp;s</span>
+            </div>
+            <table class="rk-series" th:if="${ex.compositeSetConfig != null and !ex.compositeSetConfig.steps.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Kg</th><th>Rest po (s)</th></tr></thead>
+                <tbody>
+                <tr th:each="s, st : ${ex.compositeSetConfig.steps}">
+                    <td th:text="${st.count}">1</td>
+                    <td th:text="${s.name}">Squat</td>
+                    <td th:text="${s.reps} ?: '—'">5</td>
+                    <td th:text="${s.weightKg} ?: '—'">—</td>
+                    <td th:text="${s.restAfterSeconds} ?: '—'">15</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Numeric series (Ladder/Stepladder/Pyramid) -->
+            <div th:if="${ex.numericSeriesConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong th:text="${ex.type}">LADDER</strong>
+                <span th:if="${ex.numericSeriesConfig.peakValue != null}">· peak <b class="num" th:text="${ex.numericSeriesConfig.peakValue}">5</b></span>
+                <span th:if="${ex.numericSeriesConfig.stepSize != null}">· krok <b class="num" th:text="${ex.numericSeriesConfig.stepSize}">1</b></span>
+                <span th:if="${ex.numericSeriesConfig.weightKg != null}">· <b class="num" th:text="${ex.numericSeriesConfig.weightKg}">24</b> kg</span>
+                <span th:if="${ex.numericSeriesConfig.restSecondsBetween != null}">· pauza <span class="num" th:text="${ex.numericSeriesConfig.restSecondsBetween}">15</span>&nbsp;s</span>
+                <span th:if="${ex.numericSeriesConfig.repSequenceCsv != null and !ex.numericSeriesConfig.repSequenceCsv.isEmpty()}"
+                      style="margin-left: 8px;">
+                    · sekvence <code th:text="${ex.numericSeriesConfig.repSequenceCsv}">1,2,3,5,8</code>
+                </span>
+            </div>
+
+            <!-- Circuit -->
+            <div th:if="${ex.circuitConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>Circuit</strong> ·
+                <span class="num" th:text="${ex.circuitConfig.rounds}">3</span> kol
+                <span th:if="${ex.circuitConfig.restBetweenRoundsS != null}">· pauza mezi koly <span class="num" th:text="${ex.circuitConfig.restBetweenRoundsS}">60</span>&nbsp;s</span>
+            </div>
+            <table class="rk-series" th:if="${ex.circuitConfig != null and !ex.circuitConfig.steps.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Sek</th><th>Kg</th><th>Rest</th></tr></thead>
+                <tbody>
+                <tr th:each="s, st : ${ex.circuitConfig.steps}">
+                    <td th:text="${st.count}">1</td>
+                    <td th:text="${s.name}">Swing</td>
+                    <td th:text="${s.reps} ?: '—'">10</td>
+                    <td th:text="${s.durationSeconds} ?: '—'">30</td>
+                    <td th:text="${s.weightKg} ?: '—'">24</td>
+                    <td th:text="${s.restSeconds} ?: '—'">15</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- AMRAP -->
+            <div th:if="${ex.amrapConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>AMRAP</strong> ·
+                time-cap <span class="num" th:text="${ex.amrapConfig.timecapSeconds}">480</span>&nbsp;s
+                <span th:if="${ex.amrapConfig.targetRepsPerRound != null}">· target <b class="num" th:text="${ex.amrapConfig.targetRepsPerRound}">10</b> reps/kolo</span>
+                <span th:if="${ex.amrapConfig.targetWeightKg != null}">· <b class="num" th:text="${ex.amrapConfig.targetWeightKg}">24</b> kg</span>
+                <span th:if="${ex.amrapConfig.roundsCompleted != null}" class="rk-badge rk-badge--success" style="margin-left: 8px;">
+                    ✓ <span class="num" th:text="${ex.amrapConfig.roundsCompleted}">8</span> kol<span
+                      th:if="${ex.amrapConfig.extraReps != null and ex.amrapConfig.extraReps > 0}">
+                        + <span class="num" th:text="${ex.amrapConfig.extraReps}">3</span></span>
+                </span>
+            </div>
 
             <p th:if="${ex.notes != null and !ex.notes.isEmpty()}"
-               class="text-muted small"
-               style="white-space: pre-wrap"
+               class="text-muted"
+               style="white-space: pre-wrap; padding: 0 var(--sp-5) var(--sp-3); font-size: var(--fs-sm);"
                th:text="${ex.notes}">Notes</p>
 
-            <!-- EMOM display -->
-            <div th:if="${ex.emomConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong>EMOM</strong> ·
-                <span th:text="${ex.emomConfig.totalMinutes}">10</span> min,
-                interval <span th:text="${ex.emomConfig.intervalSeconds}">60</span> s ·
-                <span th:if="${ex.emomConfig.defaultReps != null}">
-                    default <span th:text="${ex.emomConfig.defaultReps}">5</span> reps
-                </span>
-                <span th:if="${ex.emomConfig.defaultWeightKg != null}">
-                    · <span th:text="${ex.emomConfig.defaultWeightKg}">24</span> kg
-                </span>
-                <div th:if="${ex.emomConfig.notes != null and !ex.emomConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.emomConfig.notes}"></div>
-                <table class="table table-sm mb-0 mt-2" th:if="${!ex.emomConfig.minuteOverrides.isEmpty()}">
-                    <thead><tr><th>Minuta</th><th>Reps</th><th>Kg</th><th>Pozn.</th></tr></thead>
-                    <tbody>
-                    <tr th:each="o : ${ex.emomConfig.minuteOverrides}">
-                        <td th:text="${o.minuteIndex}">1</td>
-                        <td th:text="${o.reps} ?: '—'">5</td>
-                        <td th:text="${o.weightKg} ?: '—'">24</td>
-                        <td th:text="${o.note} ?: ''"></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Tabata display -->
-            <div th:if="${ex.tabataConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong>Tabata</strong> ·
-                <span th:text="${ex.tabataConfig.rounds}">8</span> kol ×
-                <span th:text="${ex.tabataConfig.workSeconds}">20</span>s práce /
-                <span th:text="${ex.tabataConfig.restSeconds}">10</span>s pauza
-                <span th:if="${ex.tabataConfig.defaultReps != null}">
-                    · default <span th:text="${ex.tabataConfig.defaultReps}">5</span> reps
-                </span>
-                <span th:if="${ex.tabataConfig.defaultWeightKg != null}">
-                    · <span th:text="${ex.tabataConfig.defaultWeightKg}">16</span> kg
-                </span>
-                <div th:if="${ex.tabataConfig.notes != null and !ex.tabataConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.tabataConfig.notes}"></div>
-            </div>
-
-            <!-- Straight Sets display -->
-            <div th:if="${ex.straightSetsConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong>Straight Sets</strong> ·
-                <span th:text="${ex.straightSetsConfig.setCount}">3</span> ×
-                <span th:text="${ex.straightSetsConfig.repsPerSet} ?: '?'">8</span>
-                <span th:if="${ex.straightSetsConfig.weightKg != null}">
-                    · <span th:text="${ex.straightSetsConfig.weightKg}">24</span> kg
-                </span>
-                <span th:if="${ex.straightSetsConfig.restSeconds != null}">
-                    · pauza <span th:text="${ex.straightSetsConfig.restSeconds}">120</span> s
-                </span>
-                <div th:if="${ex.straightSetsConfig.notes != null and !ex.straightSetsConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.straightSetsConfig.notes}"></div>
-            </div>
-
-            <!-- Composite (Superset / Complex) display -->
-            <div th:if="${ex.compositeSetConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong th:text="${ex.type}">SUPERSET</strong> ·
-                <span th:text="${ex.compositeSetConfig.rounds}">3</span> kol
-                <span th:if="${ex.compositeSetConfig.sharedWeightKg != null}">
-                    · shared <span th:text="${ex.compositeSetConfig.sharedWeightKg}">16</span> kg
-                </span>
-                <span th:if="${ex.compositeSetConfig.restBetweenRoundsS != null}">
-                    · pauza mezi koly <span th:text="${ex.compositeSetConfig.restBetweenRoundsS}">60</span> s
-                </span>
-                <div th:if="${ex.compositeSetConfig.notes != null and !ex.compositeSetConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.compositeSetConfig.notes}"></div>
-                <table class="table table-sm mb-0 mt-2" th:if="${!ex.compositeSetConfig.steps.isEmpty()}">
-                    <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Kg</th><th>Rest po (s)</th></tr></thead>
-                    <tbody>
-                    <tr th:each="s, st : ${ex.compositeSetConfig.steps}">
-                        <td th:text="${st.count}">1</td>
-                        <td th:text="${s.name}">Squat</td>
-                        <td th:text="${s.reps} ?: '—'">5</td>
-                        <td th:text="${s.weightKg} ?: '—'">—</td>
-                        <td th:text="${s.restAfterSeconds} ?: '—'">15</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Numeric series (Ladder/Stepladder/Pyramid) display -->
-            <div th:if="${ex.numericSeriesConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong th:text="${ex.type}">LADDER</strong>
-                <span th:if="${ex.numericSeriesConfig.peakValue != null}">
-                    · peak <span th:text="${ex.numericSeriesConfig.peakValue}">5</span>
-                </span>
-                <span th:if="${ex.numericSeriesConfig.stepSize != null}">
-                    · krok <span th:text="${ex.numericSeriesConfig.stepSize}">1</span>
-                </span>
-                <span th:if="${ex.numericSeriesConfig.weightKg != null}">
-                    · <span th:text="${ex.numericSeriesConfig.weightKg}">24</span> kg
-                </span>
-                <span th:if="${ex.numericSeriesConfig.restSecondsBetween != null}">
-                    · pauza <span th:text="${ex.numericSeriesConfig.restSecondsBetween}">15</span> s
-                </span>
-                <div th:if="${ex.numericSeriesConfig.repSequenceCsv != null and !ex.numericSeriesConfig.repSequenceCsv.isEmpty()}"
-                     class="mt-1">
-                    <strong>Sekvence:</strong>
-                    <code th:text="${ex.numericSeriesConfig.repSequenceCsv}">1,2,3,5,8</code>
-                </div>
-                <div th:if="${ex.numericSeriesConfig.notes != null and !ex.numericSeriesConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.numericSeriesConfig.notes}"></div>
-            </div>
-
-            <!-- Circuit display -->
-            <div th:if="${ex.circuitConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong>Circuit</strong> ·
-                <span th:text="${ex.circuitConfig.rounds}">3</span> kol
-                <span th:if="${ex.circuitConfig.restBetweenRoundsS != null}">
-                    · pauza mezi koly <span th:text="${ex.circuitConfig.restBetweenRoundsS}">60</span> s
-                </span>
-                <div th:if="${ex.circuitConfig.notes != null and !ex.circuitConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.circuitConfig.notes}"></div>
-                <table class="table table-sm mb-0 mt-2" th:if="${!ex.circuitConfig.steps.isEmpty()}">
-                    <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Sek</th><th>Kg</th><th>Rest</th></tr></thead>
-                    <tbody>
-                    <tr th:each="s, st : ${ex.circuitConfig.steps}">
-                        <td th:text="${st.count}">1</td>
-                        <td th:text="${s.name}">Swing</td>
-                        <td th:text="${s.reps} ?: '—'">10</td>
-                        <td th:text="${s.durationSeconds} ?: '—'">30</td>
-                        <td th:text="${s.weightKg} ?: '—'">24</td>
-                        <td th:text="${s.restSeconds} ?: '—'">15</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- AMRAP display -->
-            <div th:if="${ex.amrapConfig != null}" class="alert alert-info py-2 mb-2">
-                <strong>AMRAP</strong> ·
-                time-cap <span th:text="${ex.amrapConfig.timecapSeconds}">480</span> s
-                <span th:if="${ex.amrapConfig.targetRepsPerRound != null}">
-                    · target <span th:text="${ex.amrapConfig.targetRepsPerRound}">10</span> reps/kolo
-                </span>
-                <span th:if="${ex.amrapConfig.targetWeightKg != null}">
-                    · <span th:text="${ex.amrapConfig.targetWeightKg}">24</span> kg
-                </span>
-                <span th:if="${ex.amrapConfig.roundsCompleted != null}"
-                      class="badge bg-success ms-2">
-                    Výsledek: <span th:text="${ex.amrapConfig.roundsCompleted}">8</span> kol
-                    <span th:if="${ex.amrapConfig.extraReps != null and ex.amrapConfig.extraReps > 0}">
-                        + <span th:text="${ex.amrapConfig.extraReps}">3</span> reps
-                    </span>
-                </span>
-                <div th:if="${ex.amrapConfig.notes != null and !ex.amrapConfig.notes.isEmpty()}"
-                     class="small text-muted mt-1" th:text="${ex.amrapConfig.notes}"></div>
-            </div>
-
-            <table class="table table-sm mb-0" th:if="${!ex.sets.isEmpty()}">
+            <table class="rk-series" th:if="${!ex.sets.isEmpty()}" style="margin: 0 var(--sp-5) var(--sp-4);">
                 <thead>
                 <tr>
-                    <th style="width: 60px;">#</th>
+                    <th class="row-num">#</th>
                     <th>Váha (kg)</th>
                     <th>Opakování</th>
                     <th>RPE</th>
@@ -308,7 +255,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="s, sStat : ${ex.sets}">
-                    <td th:text="${sStat.count}">1</td>
+                    <td class="row-num" th:text="${sStat.count}">1</td>
                     <td th:text="${s.weightKg} ?: '—'">20</td>
                     <td th:text="${s.reps} ?: '—'">10</td>
                     <td th:text="${s.rpe} ?: '—'">7</td>
@@ -319,48 +266,51 @@
         </div>
     </div>
 
-    <!-- ==================== Komentáře ==================== -->
-    <h3 class="mt-5 mb-3">Komentáře</h3>
+    <!-- ========== Komentáře ========== -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2>Komentáře</h2>
+        <span class="meta">
+            <span class="num" th:text="${comments.size()}">0</span> komentářů
+        </span>
+    </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <div th:if="${comments.isEmpty()}" class="text-muted small">
+    <div class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__body">
+            <div th:if="${comments.isEmpty()}" class="text-muted" style="font-size: var(--fs-sm);">
                 Zatím žádné komentáře.
             </div>
 
             <div th:each="c, cStat : ${comments}"
-                 class="comment-item"
-                 th:classappend="${cStat.last} ? '' : 'border-bottom pb-3 mb-3'">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <div>
-                        <strong th:text="${c.author.firstName} + ' ' + ${c.author.lastName}">Jméno</strong>
-                        <span class="badge ms-1"
-                              th:classappend="${c.author.role.name() == 'ADMIN'} ? 'bg-warning text-dark' : 'bg-light text-dark'"
-                              th:text="${c.author.role}">USER</span>
-                        <span class="text-muted small ms-1" th:text="'<' + ${c.author.email} + '>'">&lt;mail&gt;</span>
+                 th:style="${cStat.last} ? '' : 'border-bottom: 1px solid var(--rk-line-faint); padding-bottom: var(--sp-3); margin-bottom: var(--sp-3);'">
+                <div class="rk-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div class="rk-row" style="gap: 8px;">
+                        <div class="rk-avatar" style="width: 28px; height: 28px; background: var(--rk-ink); color: #F1EFE9;"
+                             th:text="${#strings.toUpperCase(#strings.substring(c.author.firstName, 0, 1))}">M</div>
+                        <div>
+                            <strong th:text="${c.author.firstName} + ' ' + ${c.author.lastName}">Jméno</strong>
+                            <span th:if="${c.author.role.name() == 'ADMIN'}" class="rk-badge rk-badge--accent" style="margin-left: 4px;">TRENÉR</span>
+                        </div>
                     </div>
-                    <small class="text-muted"
+                    <small class="text-muted num"
                            th:text="${#temporals.format(c.createdAt, 'dd.MM.yyyy HH:mm')}">23.05.2026 10:00</small>
                 </div>
-                <p class="mb-1" style="white-space: pre-wrap" th:text="${c.text}">Text komentáře</p>
+                <p style="white-space: pre-wrap; margin: 8px 0 0; padding-left: 36px;" th:text="${c.text}">Text komentáře</p>
                 <form th:if="${currentUser.id == c.author.id or currentUser.role.name() == 'ADMIN'}"
                       th:action="@{/diary/{id}/comments/{cid}/delete(id=${training.id}, cid=${c.id})}"
-                      method="post" class="d-inline"
+                      method="post" style="padding-left: 36px; margin-top: 4px;"
                       onsubmit="return confirm('Smazat komentář?');">
-                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">Smazat</button>
+                    <button type="submit" class="btn btn-ghost btn-sm" style="color: var(--rk-danger); padding: 2px 6px;">Smazat</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Form pro nový komentář:
-         - PRIVATE: jen owner nebo admin
-         - GROUP: kdokoliv -->
-    <div th:if="${isOwner or isGroup or currentUser.role.name() == 'ADMIN'}" class="card mb-3">
-        <div class="card-body">
-            <form th:action="@{/diary/{id}/comments(id=${training.id})}" method="post">
-                <div class="mb-2">
-                    <label for="commentText" class="form-label">
+    <!-- Form pro nový komentář -->
+    <div th:if="${isOwner or isGroup or currentUser.role.name() == 'ADMIN'}" class="rk-card">
+        <div class="rk-card__body">
+            <form th:action="@{/diary/{id}/comments(id=${training.id})}" method="post" class="rk-stack-3">
+                <div class="rk-field">
+                    <label for="commentText" class="rk-label">
                         <span th:if="${isGroup}">Tvůj komentář k lekci</span>
                         <span th:if="${isOwner and not isGroup}">Tvoje poznámka</span>
                         <span th:if="${not isOwner and not isGroup}">Zpětná vazba od trenéra</span>
@@ -368,7 +318,9 @@
                     <textarea id="commentText" name="text" class="form-control" rows="2" required
                               placeholder="napsat komentář..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Přidat komentář</button>
+                <div>
+                    <button type="submit" class="btn btn-accent btn-sm">Přidat komentář</button>
+                </div>
             </form>
         </div>
     </div>
@@ -382,9 +334,9 @@
     <div id="timerDisplay">00:00</div>
     <div id="timerSub"></div>
     <div>
-        <button type="button" class="btn btn-warning" id="timerBtnPause">Pauza</button>
-        <button type="button" class="btn btn-outline-light" id="timerBtnMute">🔊</button>
-        <button type="button" class="btn btn-danger" id="timerBtnClose">Zavřít</button>
+        <button type="button" class="btn btn-accent" id="timerBtnPause">Pauza</button>
+        <button type="button" class="btn btn-outline" id="timerBtnMute" style="color:#F1EFE9; border-color: rgba(255,255,255,.3);">🔊</button>
+        <button type="button" class="btn btn-danger-outline" id="timerBtnClose" style="color:#F1EFE9; border-color: rgba(255,255,255,.3);">Zavřít</button>
     </div>
 </div>
 
@@ -394,16 +346,9 @@
 <script th:src="@{/js/timer.js}"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Per-exercise timer configs předané do JS jako mapy id -> config
-    window.__timerConfigs = {
-        emom: {},
-        tabata: {},
-        amrap: {},
-        circuit: {}
-    };
+    window.__timerConfigs = { emom: {}, tabata: {}, amrap: {}, circuit: {} };
     /*]]>*/
 </script>
-<!-- Generujeme JS data inline pro každý cvik (jen ty s validní config) -->
 <th:block th:each="ex : ${training.exercises}">
     <script th:if="${ex.emomConfig != null}" th:inline="javascript">
         /*<![CDATA[*/
@@ -446,10 +391,9 @@
     </script>
 </th:block>
 <script>
-    // Click handlers pro 'Spustit' tlačítka
     document.addEventListener('click', function (e) {
-        const t = e.target;
-        if (!t.matches('button[data-timer-emom],button[data-timer-tabata],button[data-timer-amrap],button[data-timer-circuit]')) return;
+        const t = e.target.closest('button[data-timer-emom],button[data-timer-tabata],button[data-timer-amrap],button[data-timer-circuit]');
+        if (!t) return;
         const id = t.dataset.timerEmom || t.dataset.timerTabata || t.dataset.timerAmrap || t.dataset.timerCircuit;
         if (t.dataset.timerEmom) TrainingTimer.runEmom(window.__timerConfigs.emom[id]);
         else if (t.dataset.timerTabata) TrainingTimer.runTabata(window.__timerConfigs.tabata[id]);

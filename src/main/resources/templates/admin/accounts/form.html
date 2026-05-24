@@ -1,85 +1,108 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head(${editing} ? 'Admin: úprava účtu' : 'Admin: nový účet')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-accounts')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts}">Účty</a></li>
-            <li class="breadcrumb-item active" aria-current="page"
-                th:text="${editing} ? 'Úprava' : 'Nový'">Nový</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts}">Účty</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${editing} ? 'Úprava' : 'Nový'">Nový</span>
+    </div>
 
-    <h1 class="mb-4" th:text="${editing} ? 'Úprava účtu' : 'Nový účet'">Nový účet</h1>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title" th:text="${editing} ? 'Úprava účtu' : 'Nový účet'">Nový účet</h1>
+        </div>
+    </div>
 
     <form th:action="${editing} ? @{/admin/accounts/{id}(id=${form.id})} : @{/admin/accounts}"
           th:object="${form}" method="post">
 
-        <div class="card mb-4">
-            <div class="card-body">
+        <div class="rk-card" style="margin-bottom: var(--sp-5);">
+            <div class="rk-card__body">
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+                    <div th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="firstName" class="form-label">Jméno *</label>
-                        <input type="text" id="firstName" th:field="*{firstName}" class="form-control"
-                               th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
-                        <div class="invalid-feedback" th:errors="*{firstName}"></div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="firstName">Jméno <span class="req">*</span></label>
+                            <input type="text" id="firstName" th:field="*{firstName}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('firstName')} ? ' is-invalid'">
+                            <p class="rk-help" style="color: var(--rk-danger);" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></p>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="lastName" class="form-label">Příjmení *</label>
-                        <input type="text" id="lastName" th:field="*{lastName}" class="form-control"
-                               th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
-                        <div class="invalid-feedback" th:errors="*{lastName}"></div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="lastName">Příjmení <span class="req">*</span></label>
+                            <input type="text" id="lastName" th:field="*{lastName}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('lastName')} ? ' is-invalid'">
+                            <p class="rk-help" style="color: var(--rk-danger);" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></p>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="nickname" class="form-label">Přezdívka *</label>
-                        <input type="text" id="nickname" th:field="*{nickname}" class="form-control"
-                               th:classappend="${#fields.hasErrors('nickname')} ? 'is-invalid'">
-                        <div class="invalid-feedback" th:errors="*{nickname}"></div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="nickname">Přezdívka <span class="req">*</span></label>
+                            <input type="text" id="nickname" th:field="*{nickname}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('nickname')} ? ' is-invalid'">
+                            <p class="rk-help" style="color: var(--rk-danger);" th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}"></p>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label for="role" class="form-label">Role *</label>
-                        <select id="role" th:field="*{role}" class="form-select">
-                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">USER</option>
-                        </select>
+                        <div class="rk-field">
+                            <label class="rk-label" for="role">Role <span class="req">*</span></label>
+                            <select id="role" th:field="*{role}" class="form-select">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">USER</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-8">
-                        <label for="email" class="form-label">Email *</label>
-                        <input type="email" id="email" th:field="*{email}" class="form-control"
-                               th:readonly="${editing}"
-                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
-                        <div class="form-text" th:if="${editing}">Email nelze měnit po vytvoření.</div>
-                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="email">Email <span class="req">*</span></label>
+                            <input type="email" id="email" th:field="*{email}" class="form-control"
+                                   th:readonly="${editing}"
+                                   th:classappend="${#fields.hasErrors('email')} ? ' is-invalid'">
+                            <p class="rk-help" th:if="${editing}">Email nelze měnit po vytvoření.</p>
+                            <p class="rk-help" style="color: var(--rk-danger);" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="phone" class="form-label">Telefon</label>
-                        <input type="tel" id="phone" th:field="*{phone}" class="form-control">
+                        <div class="rk-field">
+                            <label class="rk-label" for="phone">Telefon</label>
+                            <input type="tel" id="phone" th:field="*{phone}" class="form-control">
+                        </div>
                     </div>
                     <div class="col-12">
-                        <label for="password" class="form-label">
-                            <span th:if="${editing}">Nové heslo (volitelné — prázdné = nezměnit)</span>
-                            <span th:unless="${editing}">Heslo *</span>
-                        </label>
-                        <input type="password" id="password" th:field="*{password}" class="form-control"
-                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
-                        <div class="form-text">Aspoň 8 znaků.</div>
-                        <div class="invalid-feedback" th:errors="*{password}"></div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="password">
+                                <span th:if="${editing}">Nové heslo</span>
+                                <span th:unless="${editing}">Heslo <span class="req">*</span></span>
+                            </label>
+                            <input type="password" id="password" th:field="*{password}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('password')} ? ' is-invalid'">
+                            <p class="rk-help" th:if="${editing}">Prázdné = nezměnit. Jinak aspoň 8 znaků.</p>
+                            <p class="rk-help" th:unless="${editing}">Aspoň 8 znaků.</p>
+                            <p class="rk-help" style="color: var(--rk-danger);" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-accent">
                 <span th:text="${editing} ? 'Uložit změny' : 'Vytvořit účet'">Vytvořit</span>
             </button>
             <a th:href="${editing} ? @{/admin/accounts/{id}(id=${form.id})} : @{/admin/accounts}"
-               class="btn btn-outline-secondary">Zrušit</a>
+               class="btn btn-outline">Zrušit</a>
         </div>
     </form>
 

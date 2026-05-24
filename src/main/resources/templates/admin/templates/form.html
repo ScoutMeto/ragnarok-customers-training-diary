@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head(${editingId != null} ? 'Upravit šablonu' : 'Nová šablona')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-templates')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/training-templates}">Šablony</a></li>
-            <li class="breadcrumb-item active" aria-current="page"
-                th:text="${editingId != null} ? 'Úprava' : 'Nová'">Nová</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/training-templates}">Šablony</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${editingId != null} ? 'Úprava' : 'Nová'">Nová</span>
+    </div>
 
-    <h1 class="mb-4" th:text="${editingId != null} ? 'Upravit šablonu' : 'Nová šablona tréninku'">Nová šablona</h1>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title" th:text="${editingId != null} ? 'Upravit šablonu' : 'Nová šablona tréninku'">Nová šablona</h1>
+        </div>
+    </div>
 
     <p class="text-muted mb-4">
         Šablona je <strong>předpřipravený trénink</strong> (cviky + sety + configs).
@@ -309,10 +312,10 @@
         <hr>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-accent btn-lg">
                 <span th:text="${editingId != null} ? 'Uložit změny' : 'Vytvořit šablonu'">Vytvořit šablonu</span>
             </button>
-            <a th:href="@{/admin/training-templates}" class="btn btn-outline-secondary">Zrušit</a>
+            <a th:href="@{/admin/training-templates}" class="btn btn-outline btn-lg">Zrušit</a>
         </div>
     </form>
 

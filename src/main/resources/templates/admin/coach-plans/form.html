@@ -1,58 +1,75 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Plán klienta')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-accounts')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts}">Účty</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts/{id}/coach-plans(id=${client.id})}"
-                                            th:text="${client.firstName} + ' ' + ${client.lastName}">Klient</a></li>
-            <li class="breadcrumb-item active" th:text="${plan != null ? 'Úprava' : 'Nový'}">Nový</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts}">Účty</a>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts/{id}/coach-plans(id=${client.id})}"
+           th:text="${client.firstName + ' ' + client.lastName}">Klient</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${plan != null ? 'Úprava' : 'Nový'}">Nový</span>
+    </div>
 
-    <h1 class="mb-4" th:text="${plan != null ? 'Upravit plán' : 'Nový plán'}">Nový plán</h1>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title" th:text="${plan != null ? 'Upravit plán' : 'Nový plán'}">Nový plán</h1>
+            <p class="rk-page__sub">
+                Pro klienta <strong th:text="${client.firstName + ' ' + client.lastName}">Klient</strong>
+            </p>
+        </div>
+    </div>
 
     <form th:action="${plan != null
                         ? @{/admin/accounts/{cid}/coach-plans/{pid}(cid=${client.id}, pid=${plan.id})}
                         : @{/admin/accounts/{cid}/coach-plans(cid=${client.id})}}"
           method="post">
 
-        <div class="card mb-4">
-            <div class="card-body">
+        <div class="rk-card" style="margin-bottom: var(--sp-5);">
+            <div class="rk-card__body">
                 <div class="row g-3">
                     <div class="col-md-12">
-                        <label for="title" class="form-label">Název plánu *</label>
-                        <input type="text" id="title" name="title" class="form-control"
-                               th:value="${plan?.title}" required maxlength="128"
-                               placeholder="např. 'Příprava na maraton — týden 1-4'">
+                        <div class="rk-field">
+                            <label class="rk-label" for="title">Název plánu <span class="req">*</span></label>
+                            <input type="text" id="title" name="title" class="form-control"
+                                   th:value="${plan?.title}" required maxlength="128"
+                                   placeholder="např. „Příprava na maraton — týden 1-4"">
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="validFrom" class="form-label">Platnost od *</label>
-                        <input type="date" id="validFrom" name="validFrom" class="form-control"
-                               th:value="${plan?.validFrom ?: today}" required>
+                        <div class="rk-field">
+                            <label class="rk-label" for="validFrom">Platnost od <span class="req">*</span></label>
+                            <input type="date" id="validFrom" name="validFrom" class="form-control num"
+                                   th:value="${plan?.validFrom ?: today}" required>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="validTo" class="form-label">Platnost do (nepovinné)</label>
-                        <input type="date" id="validTo" name="validTo" class="form-control"
-                               th:value="${plan?.validTo}">
-                        <div class="form-text">Prázdné = otevřená platnost</div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="validTo">Platnost do</label>
+                            <input type="date" id="validTo" name="validTo" class="form-control num"
+                                   th:value="${plan?.validTo}">
+                            <p class="rk-help">Prázdné = otevřená platnost</p>
+                        </div>
                     </div>
                     <div class="col-12">
-                        <label for="bodyMarkdown" class="form-label">Obsah plánu (markdown)</label>
-                        <textarea id="bodyMarkdown" name="bodyMarkdown" class="form-control"
-                                  rows="15" required style="font-family: monospace;"
-                                  th:text="${plan?.bodyMarkdown}"
-                                  placeholder="# Týden 1&#10;&#10;## Pondělí&#10;- KB swing 5×10 s 24 kg&#10;- Goblet squat 3×8&#10;&#10;## Středa&#10;..."></textarea>
-                        <div class="form-text">
-                            Podporuje markdown: <code>**tučně**</code>, <code># nadpis</code>,
-                            <code>## podnadpis</code>, seznam s <code>-</code>, atd.
+                        <div class="rk-field">
+                            <label class="rk-label" for="bodyMarkdown">Obsah plánu (markdown)</label>
+                            <textarea id="bodyMarkdown" name="bodyMarkdown" class="form-control"
+                                      rows="18" required
+                                      style="font-family: var(--rk-font-mono); font-size: var(--fs-sm);"
+                                      th:text="${plan?.bodyMarkdown}"
+                                      placeholder="# Týden 1&#10;&#10;## Pondělí&#10;- KB swing 5×10 s 24 kg&#10;- Goblet squat 3×8&#10;&#10;## Středa&#10;..."></textarea>
+                            <p class="rk-help">
+                                Podporuje markdown: <code>**tučně**</code>, <code># nadpis</code>,
+                                <code>## podnadpis</code>, seznam s <code>-</code>, atd.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -60,10 +77,10 @@
         </div>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary"
+            <button type="submit" class="btn btn-accent"
                     th:text="${plan != null ? 'Uložit změny' : 'Vytvořit plán'}">Vytvořit</button>
             <a th:href="@{/admin/accounts/{id}/coach-plans(id=${client.id})}"
-               class="btn btn-outline-secondary">Zrušit</a>
+               class="btn btn-outline">Zrušit</a>
         </div>
     </form>
 

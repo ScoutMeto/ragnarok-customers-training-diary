@@ -1,40 +1,40 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Plán klienta')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-accounts')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts/{id}/coach-plans(id=${client.id})}"
-                                            th:text="${client.firstName} + ' ' + ${client.lastName}">Klient</a></li>
-            <li class="breadcrumb-item active" th:text="${plan.title}">Plán</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts/{id}/coach-plans(id=${client.id})}"
+           th:text="${client.firstName + ' ' + client.lastName}">Klient</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${plan.title}">Plán</span>
+    </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <h1 class="mb-1" th:text="${plan.title}">Plán</h1>
-                    <p class="text-muted mb-0">
+    <div class="rk-card" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__body">
+            <div class="rk-row" style="justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h1 style="font-size: var(--fs-h1); margin-bottom: 6px;" th:text="${plan.title}">Plán</h1>
+                    <p class="text-muted" style="margin: 0; font-size: var(--fs-sm);">
                         <strong>Platnost:</strong>
-                        <span th:text="${#temporals.format(plan.validFrom, 'dd.MM.yyyy')}">od</span>
+                        <span class="num" th:text="${#temporals.format(plan.validFrom, 'dd.MM.yyyy')}">od</span>
                         –
-                        <span th:text="${plan.validTo != null ? #temporals.format(plan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
-                        · Autor: <strong th:text="${plan.author.firstName} + ' ' + ${plan.author.lastName}">Trenér</strong>
+                        <span class="num" th:text="${plan.validTo != null ? #temporals.format(plan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+                        · Autor <strong th:text="${plan.author.firstName + ' ' + plan.author.lastName}">Trenér</strong>
                     </p>
                 </div>
                 <div class="d-flex gap-2">
                     <a th:href="@{/admin/accounts/{cid}/coach-plans/{pid}/edit(cid=${client.id}, pid=${plan.id})}"
-                       class="btn btn-outline-primary btn-sm">Upravit</a>
+                       class="btn btn-outline btn-sm">Upravit</a>
                 </div>
             </div>
-            <hr>
+            <hr style="margin: var(--sp-4) 0;">
             <div class="markdown-body" th:utext="${bodyHtml}">
                 <!-- Vyrenderovaný markdown -->
             </div>

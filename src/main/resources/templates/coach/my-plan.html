@@ -1,65 +1,83 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Můj plán')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('my-plan')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <h1 class="mb-1">📋 Můj plán od trenéra</h1>
-    <p class="text-muted mb-4">Trenérova doporučení a strukturovaný plán na týdny/měsíce dopředu.</p>
+    <div class="rk-crumb">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current">Můj plán</span>
+    </div>
+
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">📋 Můj plán od trenéra</h1>
+            <p class="rk-page__sub">Doporučení a strukturovaný plán na týdny/měsíce dopředu.</p>
+        </div>
+    </div>
 
     <!-- Aktivní plán -->
-    <div th:if="${activePlan != null}" class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <span class="badge bg-success mb-2">Aktivní</span>
-                    <h2 class="mb-1" th:text="${activePlan.title}">Název</h2>
-                    <p class="text-muted mb-0">
+    <div th:if="${activePlan != null}" class="rk-card rk-card--accent" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__body">
+            <div class="rk-row" style="justify-content: space-between; align-items: flex-start; margin-bottom: var(--sp-3);">
+                <div style="flex: 1;">
+                    <span class="rk-badge rk-badge--accent" style="margin-bottom: 8px;">AKTIVNÍ</span>
+                    <h2 style="margin-top: 8px; margin-bottom: 6px;" th:text="${activePlan.title}">Název</h2>
+                    <p class="text-muted" style="margin: 0; font-size: var(--fs-sm);">
                         <strong>Platnost:</strong>
-                        <span th:text="${#temporals.format(activePlan.validFrom, 'dd.MM.yyyy')}">od</span>
+                        <span class="num" th:text="${#temporals.format(activePlan.validFrom, 'dd.MM.yyyy')}">od</span>
                         –
-                        <span th:text="${activePlan.validTo != null ? #temporals.format(activePlan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
-                        · Od trenéra <strong th:text="${activePlan.author.firstName} + ' ' + ${activePlan.author.lastName}">Trenér</strong>
+                        <span class="num" th:text="${activePlan.validTo != null ? #temporals.format(activePlan.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+                        · Od trenéra <strong th:text="${activePlan.author.firstName + ' ' + activePlan.author.lastName}">Trenér</strong>
                     </p>
                 </div>
             </div>
-            <hr>
+            <hr style="margin: var(--sp-4) 0;">
             <div class="markdown-body" th:utext="${activeBodyHtml}">
                 <!-- Vyrenderovaný markdown -->
             </div>
         </div>
     </div>
 
-    <div th:if="${activePlan == null}" class="alert alert-info">
-        Zatím nemáš aktivní plán od trenéra. Pokud si ho přejete, ozvi se trenérovi.
+    <div th:if="${activePlan == null}" class="rk-empty rk-card">
+        <h3>Žádný aktivní plán</h3>
+        <p>Pokud si přeješ plán od trenéra, ozvi se mu.</p>
     </div>
 
     <!-- Historie -->
-    <h3 class="mt-4 mb-3">Historie plánů</h3>
-    <p class="text-muted small" th:if="${allPlans.size() <= 1}">Žádné historické plány.</p>
-    <table class="table" th:if="${allPlans.size() > 1}">
-        <thead>
-        <tr>
-            <th>Název</th>
-            <th>Období</th>
-            <th>Autor</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="p : ${allPlans}" th:if="${activePlan == null or p.id != activePlan.id}">
-            <td><a th:href="@{/my-plan/{id}(id=${p.id})}" th:text="${p.title}">Název</a></td>
-            <td>
-                <span th:text="${#temporals.format(p.validFrom, 'dd.MM.yyyy')}">od</span>
-                –
-                <span th:text="${p.validTo != null ? #temporals.format(p.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
-            </td>
-            <td th:text="${p.author.firstName} + ' ' + ${p.author.lastName}">Autor</td>
-        </tr>
-        </tbody>
-    </table>
+    <div th:if="${allPlans.size() > 1}">
+        <div class="rk-section-head">
+            <h2>Historie plánů</h2>
+            <span class="meta">Starší plány od trenéra</span>
+        </div>
+        <table class="rk-table">
+            <thead>
+            <tr>
+                <th>Název</th>
+                <th>Období</th>
+                <th>Autor</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${allPlans}" th:if="${activePlan == null or p.id != activePlan.id}">
+                <td>
+                    <a th:href="@{/my-plan/{id}(id=${p.id})}"
+                       style="color: var(--rk-ink); font-weight: 600;" th:text="${p.title}">Název</a>
+                </td>
+                <td class="num text-muted">
+                    <span th:text="${#temporals.format(p.validFrom, 'dd.MM.yyyy')}">od</span>
+                    –
+                    <span th:text="${p.validTo != null ? #temporals.format(p.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
+                </td>
+                <td class="text-muted" th:text="${p.author.firstName + ' ' + p.author.lastName}">Autor</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
 </main>
 

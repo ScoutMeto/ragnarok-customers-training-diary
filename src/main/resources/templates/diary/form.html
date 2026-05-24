@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head(${editingId != null} ? 'Upravit trénink' : 'Nový trénink')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('diary')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a th:href="@{/diary}">Můj deník</a></li>
-            <li class="breadcrumb-item active" aria-current="page"
-                th:text="${editingId != null} ? 'Upravit trénink' : 'Nový trénink'">Nový trénink</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <a th:href="@{/diary}">Můj deník</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${editingId != null} ? 'Upravit trénink' : 'Nový trénink'">Nový trénink</span>
+    </div>
 
-    <h1 class="mb-4" th:text="${editingId != null} ? 'Upravit trénink' : 'Nový trénink'">Nový trénink</h1>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title" th:text="${editingId != null} ? 'Upravit trénink' : 'Nový trénink'">Nový trénink</h1>
+        </div>
+    </div>
 
     <form th:action="${editingId != null} ? @{/diary/{id}(id=${editingId})} : @{/diary}"
           th:object="${form}" method="post" id="trainingForm">
@@ -484,11 +486,11 @@
         <hr>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-accent btn-lg">
                 <span th:text="${editingId != null} ? 'Uložit změny' : 'Vytvořit trénink'">Uložit</span>
             </button>
             <a th:href="${editingId != null} ? @{/diary/{id}(id=${editingId})} : @{/diary}"
-               class="btn btn-outline-secondary">Zrušit</a>
+               class="btn btn-outline btn-lg">Zrušit</a>
         </div>
     </form>
 

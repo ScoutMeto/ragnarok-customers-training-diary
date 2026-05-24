@@ -1,32 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head th:replace="~{fragments/layout :: head('Plány klienta')}"></head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-accounts')}"></nav>
 
-<main class="container py-4 flex-grow-1">
+<main class="rk-page">
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts}">Účty</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/admin/accounts/{id}(id=${client.id})}"
-                                            th:text="${client.firstName} + ' ' + ${client.lastName}">Klient</a></li>
-            <li class="breadcrumb-item active">Plány od trenéra</li>
-        </ol>
-    </nav>
+    <div class="rk-crumb">
+        <span>Admin</span>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts}">Účty</a>
+        <span class="sep">/</span>
+        <a th:href="@{/admin/accounts/{id}(id=${client.id})}"
+           th:text="${client.firstName + ' ' + client.lastName}">Klient</a>
+        <span class="sep">/</span>
+        <span class="current">Plány od trenéra</span>
+    </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">📋 Plány od trenéra</h1>
-        <a th:href="@{/admin/accounts/{id}/coach-plans/new(id=${client.id})}" class="btn btn-primary">+ Nový plán</a>
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">📋 Plány od trenéra</h1>
+            <p class="rk-page__sub">
+                Pro klienta <strong th:text="${client.firstName + ' ' + client.lastName}">Klient</strong>
+            </p>
+        </div>
+        <div class="rk-page__actions">
+            <a th:href="@{/admin/accounts/{id}/coach-plans/new(id=${client.id})}" class="btn btn-accent btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+                Nový plán
+            </a>
+        </div>
     </div>
 
     <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
 
-    <p class="text-muted" th:if="${plans.isEmpty()}">Žádné plány zatím nejsou vytvořené.</p>
+    <div th:if="${plans.isEmpty()}" class="rk-empty rk-card">
+        <h3>Žádné plány zatím nejsou vytvořené</h3>
+        <p>Napiš pro tohoto klienta první markdown plán.</p>
+    </div>
 
-    <table class="table align-middle" th:unless="${plans.isEmpty()}">
+    <table class="rk-table" th:unless="${plans.isEmpty()}">
         <thead>
         <tr>
             <th>Název</th>
@@ -38,22 +52,26 @@
         </thead>
         <tbody>
         <tr th:each="p : ${plans}">
-            <td><a th:href="@{/admin/accounts/{cid}/coach-plans/{pid}(cid=${client.id}, pid=${p.id})}"
-                   th:text="${p.title}">Název</a></td>
             <td>
+                <a th:href="@{/admin/accounts/{cid}/coach-plans/{pid}(cid=${client.id}, pid=${p.id})}"
+                   style="color: var(--rk-ink); font-weight: 600;" th:text="${p.title}">Název</a>
+            </td>
+            <td class="num text-muted">
                 <span th:text="${#temporals.format(p.validFrom, 'dd.MM.yyyy')}">od</span>
                 –
                 <span th:text="${p.validTo != null ? #temporals.format(p.validTo, 'dd.MM.yyyy') : '∞'}">do</span>
             </td>
-            <td th:text="${p.author.firstName} + ' ' + ${p.author.lastName}">Autor</td>
-            <td th:text="${#temporals.format(p.createdAt, 'dd.MM.yyyy')}">23.05.</td>
+            <td class="text-muted" th:text="${p.author.firstName + ' ' + p.author.lastName}">Autor</td>
+            <td class="num text-muted" th:text="${#temporals.format(p.createdAt, 'dd.MM.yyyy')}">23.05.</td>
             <td class="text-end">
+                <a th:href="@{/admin/accounts/{cid}/coach-plans/{pid}(cid=${client.id}, pid=${p.id})}"
+                   class="btn btn-ghost btn-sm">Detail</a>
                 <a th:href="@{/admin/accounts/{cid}/coach-plans/{pid}/edit(cid=${client.id}, pid=${p.id})}"
-                   class="btn btn-sm btn-outline-primary">Upravit</a>
+                   class="btn btn-outline btn-sm">Upravit</a>
                 <form th:action="@{/admin/accounts/{cid}/coach-plans/{pid}/delete(cid=${client.id}, pid=${p.id})}"
                       method="post" class="d-inline"
                       onsubmit="return confirm('Smazat tento plán?');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                    <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
                 </form>
             </td>
         </tr>
