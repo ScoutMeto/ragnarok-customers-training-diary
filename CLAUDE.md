@@ -59,20 +59,37 @@ com.ragnarok.ragnarok_customers_training_diary/
 ├── training/               # Tréninkový deník (PRIVATE + GROUP)
 │   ├── TrainingEntity.java         # visibility=PRIVATE (klient) nebo GROUP (admin)
 │   ├── TrainingExerciseEntity.java # cvik v tréninku (XOR catalog_item / custom_name)
+│   │                               # + OneToOne per-type configs (emom/tabata/amrap/circuit/...)
 │   ├── ExerciseSetEntity.java      # set cviku (weight, reps, RPE, note — vše nullable)
 │   ├── TrainingDifficulty.java     # enum LIGHT/MEDIUM/HARD
 │   ├── TrainingVisibility.java     # enum PRIVATE/GROUP
-│   ├── TrainingExerciseType.java   # FREEFORM + budoucí EMOM/CIRCUIT/Tabata/...
+│   ├── TrainingExerciseType.java   # FREEFORM/CUSTOMIZING/EMOM/TABATA/AMRAP/CIRCUIT/
+│   │                               # LADDER/STEPLADDER/PYRAMID/SUPERSET/COMPLEX/STRAIGHT_SETS
 │   ├── TrainingCommentEntity.java  # komentář (autor klient nebo admin)
 │   ├── *Repository.java
-│   ├── TrainingService.java        # business logic + ownership check + group ops
+│   ├── TrainingService.java        # business logic + ownership check + group ops + copyGroupToPrivate
 │   ├── TrainingCommentService.java
-│   ├── DiaryPageController.java    # /diary/** (Thymeleaf, klient + group view)
-│   └── dto/                # TrainingInput, TrainingExerciseInput, SetInput
+│   ├── DiaryPageController.java    # /diary/** (Thymeleaf, klient + group view + copy)
+│   ├── dto/                # TrainingInput, TrainingExerciseInput, SetInput, per-type configy
+│   └── types/                      # Per-type configy (Fáze 3)
+│       ├── ExerciseTypeConfigMapper.java  # apply DTO -> entity (dispatch dle type)
+│       ├── ExerciseTypeConfigToInputMapper.java  # opačně pro edit form
+│       ├── emom/    EmomConfig + EmomMinuteOverride
+│       ├── tabata/  TabataConfig + TabataRoundOverride
+│       ├── amrap/   AmrapConfig (cíl + výsledek v jedné entitě)
+│       ├── circuit/ CircuitConfig + CircuitStep + CircuitRoundRest
+│       ├── series/  NumericSeriesConfig (sdílený pro LADDER/STEPLADDER/PYRAMID)
+│       ├── composite/ CompositeSetConfig + CompositeSetStep (sdílený pro SUPERSET/COMPLEX)
+│       └── straight/ StraightSetsConfig
+├── analysis/               # Statistiky (Fáze 5)
+│   ├── AnalysisService.java        # JPQL agregace (volume, PR, RPE, body region, ...)
+│   ├── AnalysisRestController.java # /api/analysis/** (JSON pro Chart.js)
+│   └── AnalysisPageController.java # /analysis (klient) - + admin/overview je v admin/
 ├── admin/                  # Admin sekce (jen ROLE_ADMIN)
 │   ├── AdminAccountController.java       # /admin/accounts CRUD (soft-delete)
 │   ├── AdminAccountForm.java
-│   └── AdminGroupTrainingController.java # /admin/group-trainings CRUD
+│   ├── AdminGroupTrainingController.java # /admin/group-trainings CRUD
+│   └── AdminOverviewController.java      # /admin/overview gym-wide statistiky
 ├── web/                    # General Thymeleaf controllers
 │   ├── PageController.java         # /, /login, /register, /dashboard
 │   └── RegistrationForm.java
@@ -170,11 +187,11 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 |---|------|------|-----|
 | 0 | Foundation (account, security, Thymeleaf skeleton) | ✅ DONE | mergnuto do `develop` |
 | 1 | MVP diary (klient si zapíše trénink) | ✅ DONE | mergnuto do `develop` |
-| 2 | Trenér + GroupLessonPlan + komentáře | ✅ DONE | na `develop` |
-| 3 | Rozšířené typy cviků (EMOM, Circuit, Tabata, ...) | ⏳ NEXT | rovnou na `develop` |
-| 4 | Timer / stopky + wake lock | – | rovnou na `develop` |
-| 5 | TrainingAnalysisService (statistiky) | – | rovnou na `develop` |
-| 6 | Email notifikace | – | rovnou na `develop` |
+| 2 | Trenér + skupinové tréninky + komentáře | ✅ DONE | na `develop` |
+| 3 | Rozšířené typy cviků (10 typů — EMOM/Tabata/AMRAP/Circuit/Ladder/Stepladder/Pyramid/Superset/Complex/StraightSets) | ✅ DONE | na `develop` |
+| 4 | Timer / stopky + wake lock | ✅ DONE | na `develop` |
+| 5 | Statistiky (klient `/analysis` + admin `/admin/overview`) | ✅ DONE | na `develop` |
+| 6 | Email notifikace | ⏳ NEXT | rovnou na `develop` |
 | 7 | Integrace s rezervačním systémem (REST API) | – | rovnou na `develop` |
 | 8 | Individuální plány od trenéra (template + text) | – | rovnou na `develop` |
 

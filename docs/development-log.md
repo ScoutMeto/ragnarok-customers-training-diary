@@ -11,11 +11,11 @@
 |---|------|------|-----|
 | 0 | Foundation | ✅ DONE | mergnuto do `develop` |
 | 1 | MVP diary | ✅ DONE | mergnuto do `develop` |
-| 2 | Trenér + GroupLessonPlan + komentáře | ✅ DONE | na `develop` |
-| 3 | Rozšířené typy cviků | ⏳ **NEXT** | rovnou na `develop` |
-| 4 | Timer / stopky | – | rovnou na `develop` |
-| 5 | Statistiky | – | rovnou na `develop` |
-| 6 | Email notifikace | – | rovnou na `develop` |
+| 2 | Trenér + skupinové tréninky + komentáře | ✅ DONE | na `develop` |
+| 3 | Rozšířené typy cviků (10 typů) | ✅ DONE | na `develop` |
+| 4 | Timer / stopky | ✅ DONE | na `develop` |
+| 5 | Statistiky (klient + admin overview) | ✅ DONE | na `develop` |
+| 6 | Email notifikace | ⏳ **NEXT** | rovnou na `develop` |
 | 7 | Integrace s rezervacemi | – | rovnou na `develop` |
 | 8 | Individuální plány od trenéra | – | rovnou na `develop` |
 
@@ -162,94 +162,112 @@ jako klient. Detaily: viz `architecture.md` sekce "Group training visibility".
 
 ---
 
-## ⏳ Fáze 3 — Rozšířené typy cviků (NEXT)
+## ✅ Fáze 3 — Rozšířené typy cviků (DONE)
 
-**Cíl:** trenér uvidí všechny klienty a jejich deníky. Zveřejní plán skupinových lekcí. Klient
-vidí plán ±1 týden. Trenér komentuje konkrétní trénink klienta.
+**Cíl:** kromě FREEFORM přidat 10 typů cvičení s vlastní strukturou.
 
-### Scope
+**Architektonické rozhodnutí:** **normalizované tabulky per type** (1:1 s `training_exercise`
+přes shared PK MapsId). Sdílené tabulky pro skupiny podobných typů (NumericSeries pro
+Ladder/Stepladder/Pyramid; CompositeSet pro Superset/Complex).
 
-#### A) Admin sekce
-- `/admin/accounts` — seznam klientů (table view: jméno, email, telefon, count tréninků, poslední aktivita)
-- `/admin/accounts/{id}` — detail klienta + jeho deník (read-only view tréninků)
-- `/admin/accounts/new` — založit nový účet (USER nebo ADMIN; jen role ADMIN smí zakládat další ADMINy)
-- `/admin/accounts/{id}/edit` — editace profilu
-- `/admin/accounts/{id}/delete` — smazat účet (cascade smaže jeho tréninky)
-- Admin bypass v `TrainingService` — `getAnyTraining(admin, id)` ignoruje owner check
+### Co bylo dodáno
 
-#### B) `GroupLessonPlan` entita + UI
-- **V5 migrace**: `group_lesson_plan` (date, start_time, end_time, lesson_name, coach_id FK,
-  capacity, description, reservation_link?)
-- **V6 migrace** (nepovinné, pokud chceš recurring): `parent_group_lesson_plan_id` pro řadu opakovaných
-- **Admin UI** `/admin/lessons` — CRUD na plán lekcí (kalendář pohled)
-- **Klient UI** `/lessons` (nebo na dashboardu) — read-only kalendář, filter
-  `WHERE date BETWEEN now()-7d AND now()+7d`
-- **FullCalendar.io** pro kalendář (CDN nebo webjar)
+**5 commitů, 5 migrací (V7–V11):**
+- **V7** — EMOM, Tabata, AMRAP (`emom_config` + `emom_minute_override`, analogicky Tabata,
+  AMRAP s plánem i výsledkem v jedné entitě)
+- **V8** — Circuit (`circuit_config` + `circuit_step` + `circuit_round_rest`)
+- **V9** — Ladder/Stepladder/Pyramid (sdílená `numeric_series_config` se start/peak/step
+  nebo CSV override)
+- **V10** — Superset/Complex (sdílená `composite_set_config` + `composite_set_step`,
+  Complex má `shared_weight_kg`)
+- **V11** — Straight Sets (3×8, 5×5 atd.)
 
-#### C) Trenérovy komentáře k tréninku klienta
-- **V7 migrace**: `training_comment` (training_id FK, author_id FK na account, text, created_at)
-- Pod `/diary/{id}` detailem zobrazit komentáře + form pro přidání (jen pro admina nebo majitele)
-- E-mail notifikace? — odložit do Phase 6
+**Java:**
+- `training/types/{emom,tabata,amrap,circuit,series,composite,straight}/` balíčky
+- `ExerciseTypeConfigMapper` (apply DTO → entity, dispatch dle type)
+- `ExerciseTypeConfigToInputMapper` (opačně pro edit form)
+- TrainingExerciseEntity má 7 nových `@OneToOne` configs (cascade ALL + orphanRemoval)
 
-#### D) Tests
-- Admin smí číst trénink kteréhokoliv klienta
-- USER nesmí přistoupit na `/admin/**` (vrátí 403)
-- USER nesmí komentovat cizí trénink
+**UI:**
+- Dropdown typů ve formuláři (klient + admin group)
+- Per-type `.type-config.type-XYZ` sekce v form.html, JS přepíná viditelnost
+- 6–8 fixních řádků pro nested steps (Circuit, Composite) — prázdné se filtrují backend
+- Detail render per-type (info card s parametry + steps table)
 
-### Otevřené otázky pro Phase 2 (probrat s userem před začátkem)
-
-1. **Recurring group lessons?** Trenér zveřejní lekci jednorázově, nebo jako šablonu (každé pondělí 18:00)?
-2. **Kapacita lekce** — jen informativní, nebo má mít vazbu na rezervační systém?
-3. **Trenér v komentářích vidí jen jméno klienta, nebo full email?** GDPR-friendly view?
-4. **Smazání klienta** — soft delete (anonymizovat) nebo hard cascade?
+**Bonus:**
+- `POST /diary/{id}/copy` — klient zkopíruje GROUP trénink jako svůj PRIVATE s prázdnými
+  sety (šablona pro zaznamenání vlastních výkonů). Tlačítko „📥 Zkopírovat do mého deníku"
+  na detail group tréninku.
 
 ---
 
-## 📋 Fáze 3 — Detail (NEXT)
+## ✅ Fáze 4 — Timer / stopky (DONE)
 
-**Cíl:** kromě FREEFORM přidat EMOM, Circuit, Tabata, AMRAP, Ladder, Stepladder, Pyramid,
-Superset, Straight sets, Complex.
+**Cíl:** real-time průvodce tréninkem pro mobilní telefon.
 
-**Architektonické rozhodnutí (otevřené):** normalized tables per type (`emom_config`,
-`circuit_config`, ...) nebo `type_config JSONB`? Pravděpodobně normalized, viz `architecture.md`.
+### Co bylo dodáno
 
-**Per type:** vlastní Thymeleaf fragment, JS validace, výpočty (EMOM total reps =
-totalMinutes × defaultReps; Tabata countdown logic).
-
-**Pozn.:** trénink může mít smíchané typy (pyramid pro dřepy + AMRAP pro kliky) — model už podporuje.
-
----
-
-## 🕒 Fáze 4 — Timer / stopky (BUDOUCÍ)
-
-Pure-JS modul pro EMOM/Circuit/Tabata countdown. Wake Lock API
-(`navigator.wakeLock.request('screen')`) ať telefon nezhasne. Modal/fullscreen z detail/edit form.
-
----
-
-## 📊 Fáze 5 — Statistiky (BUDOUCÍ)
-
-`TrainingAnalysisService`:
-- `maxWeightForExercise(userId, catalogItemId, period)` — PR
-- `totalVolume(userId, period)` — Σ weight × reps
-- `setsPerBodyPart(userId, period)`, `setsPerMovementPattern(...)`
-- `rpeTrend(userId, period)` — týdenní průměr
-- `prHistory(userId, catalogItemId)` — vývoj PR v čase
-- `frequencyHeatmap(userId, period)` — kalendářní heat-mapa (GitHub style)
-- **+ navíc dle požadavku trenéra:**
-  - Vývoj objemu kg/reps/sets pro vybraný cvik
-  - Volume per difficulty (lehký/střední/těžký)
-  - RPE rozložení v dnech: kalendářní heatmap + line chart (vedle sebe, user volí měsíc/rok)
-
-Chart.js. Stránka `/analysis` s formulářem (metric × period × cvik).
+- **`static/js/timer.js`** — `TrainingTimer.runEmom/runTabata/runCircuit/runAmrap`
+- **Web Audio API beep** při přechodu fází (short 880Hz, long 660Hz)
+- **navigator.wakeLock.request('screen')** — telefon nezhasne
+- **Fullscreen modal** s velkým mm:ss displejem (12rem, mobile 7rem)
+- **Mute toggle** (per-session)
+- **Pauza/Pokračovat/Zavřít** tlačítka
+- Per-typ stavový stroj:
+  - EMOM: countdown v aktuální minutě, beep při nové minutě, optional minute override
+  - Tabata: cyklus work/rest × R kol, displej PRÁCE vs Pauza
+  - AMRAP: countdown od timecapu, beep v posledních 10 s
+  - Circuit: generuje sekvenci [work, rest, work, rest, ..., roundRest] dle steps[]
+- Integrace v `diary/detail.html`: tlačítko „⏱ Spustit" u každého cviku s validní config
 
 ---
 
-## 📧 Fáze 6 — Email notifikace (BUDOUCÍ)
+## ✅ Fáze 5 — Statistiky (DONE)
+
+**Cíl:** data, kvůli kterým si klient appku oblíbí + admin overview.
+
+### Co bylo dodáno
+
+**`AnalysisService`** (JPQL agregace přímo na entity):
+- `totalVolumeByDay` — SUM(weight × reps) per den
+- `maxWeightForExercise` — PR pro daný cvik
+- `prHistory` — vývoj max-weight v čase
+- `setsPerBodyRegion` / `setsPerMovementPattern` — bar chart distribuce
+- `rpeTrend` — průměrné RPE per den
+- `frequencyHeatmap` — počet tréninků per den (GitHub-style heatmap)
+- `volumePerDifficulty` — objem podle LIGHT/MEDIUM/HARD
+- `rpePerDay` — RPE per den pro kalendářní heatmap
+- `adminOverview` — gym-wide: aktivní klienti, počet tréninků (private/group),
+  total volume, top 10 nejaktivnějších klientů
+
+**REST API `/api/analysis/*`** — 9 endpointů + `/admin/overview` (ROLE_ADMIN guard)
+
+**Klient UI `/analysis`:**
+- Period filter (7/30/90/365 dní + vlastní rozsah)
+- Chart.js (z CDN): 6 grafů (line + bar) + HTML heatmap
+- Tooltip na heatmap cell ukazuje datum + počet + RPE
+
+**Admin UI `/admin/overview`:**
+- 4 KPI karty: aktivní klienti, osobní tréninky, skupinové, total volume
+- Top 10 aktivních klientů (tabulka)
+
+**Pravidla pro počítání:**
+- Statistiky **pouze z PRIVATE** tréninků daného klienta
+- Pokud klient absolvoval GROUP a chce ho započítat, použije Phase 3.5 „Zkopírovat do
+  mého deníku" → vytvoří se PRIVATE kopie
+
+### Stav testů
+```
+37/37 zelených (7 + 8 + 9 + 8 + 5 nových AnalysisSmokeTest)
+```
+
+---
+
+## ⏳ Fáze 6 — Email notifikace (NEXT)
 
 Spring Mail (Gmail SMTP nebo Mailgun přes env vars). `@Scheduled` cron každý večer pošle
-upomínku klientům, kteří mají na zítra GroupLessonPlan. Per-account `email_notifications_enabled` flag
-(už existuje na `account`).
+upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
+`email_notifications_enabled` flag (už existuje na `account` od Phase 2).
 
 ---
 
