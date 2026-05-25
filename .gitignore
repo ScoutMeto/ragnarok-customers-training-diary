@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local config (NESDÍLET — obsahuje secrets jako Gmail app password, ...) ###
+src/main/resources/application-local.properties
+.env
+.env.local

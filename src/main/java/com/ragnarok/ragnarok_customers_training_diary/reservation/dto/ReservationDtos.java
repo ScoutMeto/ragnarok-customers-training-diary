@@ -23,6 +23,11 @@ public final class ReservationDtos {
     /**
      * Z rezervačního: {@code PartialTrainingResponseDTO}.
      * Vrací jen partial reservation (bez emailů a telefonů).
+     *
+     * <p>Důležité: rezervační systém v root vrací {@code numberOfTotalFreeSlots = 0}
+     * (bug nebo nepoužitý field) — skutečná kapacita a počet rezervací jsou v
+     * {@link #extendedProps}. Použij convenience metody {@link #capacity()},
+     * {@link #bookedSlots()}, {@link #freeSlots()}, {@link #coachName()}.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record TrainingResponse(
@@ -33,7 +38,51 @@ public final class ReservationDtos {
             int numberOfTotalFreeSlots,
             List<PartialReservation> reservations,
             Map<String, Object> extendedProps
-    ) {}
+    ) {
+        /** Jméno trenéra z {@code extendedProps.coachName}, nebo {@code null}. */
+        public String coachName() {
+            return extString("coachName");
+        }
+
+        /** Celková kapacita lekce z {@code extendedProps.numberOfFreeSlots}. */
+        public int capacity() {
+            return extInt("numberOfFreeSlots");
+        }
+
+        /** Součet {@code numberOfBookedEntries} přes všechny rezervace lekce. */
+        public int bookedSlots() {
+            if (reservations == null) return 0;
+            return reservations.stream()
+                    .mapToInt(PartialReservation::numberOfBookedEntries)
+                    .sum();
+        }
+
+        /** Reálná volná místa = capacity - booked (nikdy záporné). */
+        public int freeSlots() {
+            return Math.max(0, capacity() - bookedSlots());
+        }
+
+        /** {@code true} pokud lekce nemá volná místa. */
+        public boolean isFull() {
+            return freeSlots() == 0;
+        }
+
+        // -- helpers --
+        private String extString(String key) {
+            if (extendedProps == null) return null;
+            Object v = extendedProps.get(key);
+            return v != null ? v.toString() : null;
+        }
+        private int extInt(String key) {
+            if (extendedProps == null) return 0;
+            Object v = extendedProps.get(key);
+            if (v instanceof Number n) return n.intValue();
+            if (v instanceof String s) {
+                try { return Integer.parseInt(s); } catch (NumberFormatException ignored) {}
+            }
+            return 0;
+        }
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PartialReservation(

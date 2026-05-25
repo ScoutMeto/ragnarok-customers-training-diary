@@ -6,6 +6,7 @@ import com.ragnarok.ragnarok_customers_training_diary.reservation.dto.Reservatio
 import com.ragnarok.ragnarok_customers_training_diary.reservation.dto.ReservationDtos.TrainingResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +31,22 @@ public class ReservationService {
     }
 
     /**
-     * Vrátí nadcházející lekce v rezervačním systému (default: dnes + 7 dní dopředu).
+     * Vrátí nadcházející lekce v rezervačním systému (default: dnes + 7 dní dopředu),
+     * seřazené chronologicky od nejbližší. Lekce, které už proběhly (end &lt; now),
+     * jsou odfiltrované.
      */
     public List<TrainingResponse> listUpcomingTrainings(int daysAhead) {
         LocalDate today = LocalDate.now();
         LocalDateTime from = today.atStartOfDay();
         LocalDateTime to = today.plusDays(daysAhead).atTime(23, 59);
-        return client.listTrainings(from, to);
+        LocalDateTime now = LocalDateTime.now();
+
+        return client.listTrainings(from, to).stream()
+                // Skipuj proběhlé lekce (end před teď)
+                .filter(t -> t.end() == null || t.end().isAfter(now))
+                .sorted(Comparator.comparing(TrainingResponse::start,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
     }
 
     /**
