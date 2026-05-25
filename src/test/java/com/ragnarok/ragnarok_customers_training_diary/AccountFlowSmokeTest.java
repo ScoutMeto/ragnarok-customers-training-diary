@@ -120,6 +120,12 @@ class AccountFlowSmokeTest {
                                  "nickname":"login","firstName":"Login","lastName":"Test"}"""))
                 .andExpect(status().isCreated());
 
+        // Phase 6: simuluj potvrzení emailu (testujeme login confirmed accountu)
+        var acc = accountRepository.findByEmail("login@example.com").orElseThrow();
+        acc.setEmailConfirmed(true);
+        acc.setEmailConfirmationCode(null);
+        accountRepository.save(acc);
+
         // 2. Pošli form-login a ověř redirect + autentikovaný stav
         mockMvc.perform(formLogin("/login").user("login@example.com").password("tajneheslo"))
                 .andExpect(authenticated())

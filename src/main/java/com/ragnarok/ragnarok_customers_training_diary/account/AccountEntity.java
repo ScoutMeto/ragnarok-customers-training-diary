@@ -59,6 +59,34 @@ public class AccountEntity implements UserDetails {
     @Column(name = "email_notifications_enabled", nullable = false)
     private boolean emailNotificationsEnabled = true;
 
+    // -------- Phase 6: email confirmation --------
+    /** {@code true} po úspěšném zadání 6místného kódu z emailu. */
+    @Column(name = "email_confirmed", nullable = false)
+    private boolean emailConfirmed = false;
+
+    /** Aktuální 6místný kód odeslaný na email. {@code null} po potvrzení. */
+    @Column(name = "email_confirmation_code", length = 8)
+    private String emailConfirmationCode;
+
+    @Column(name = "email_confirmation_code_sent_at")
+    private LocalDateTime emailConfirmationCodeSentAt;
+
+    @Column(name = "email_confirmation_code_expires_at")
+    private LocalDateTime emailConfirmationCodeExpiresAt;
+
+    // -------- Phase 6: notifikační preference --------
+    @Column(name = "notif_group_training_reminder", nullable = false)
+    private boolean notifGroupTrainingReminder = true;
+
+    @Column(name = "notif_new_plan_assigned", nullable = false)
+    private boolean notifNewPlanAssigned = true;
+
+    @Column(name = "notif_new_comment", nullable = false)
+    private boolean notifNewComment = true;
+
+    @Column(name = "notif_welcome", nullable = false)
+    private boolean notifWelcome = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -109,9 +137,16 @@ public class AccountEntity implements UserDetails {
         return true;
     }
 
-    /** Soft-deleted účet se nemůže přihlásit. */
+    /**
+     * Účet je enabled, pokud není soft-deleted ANI nepotvrzený emailem.
+     * Nepotvrzené účty se nesmí přihlásit — chrání nás před boty.
+     * <p>
+     * Pozn: pro lepší UX místo "Disabled" hlášky uživateli se v
+     * {@link AccountUserDetailsService} a {@code AuthenticationFailureHandler}
+     * detekuje rozdíl a uživatel je redirectnut na /confirm-email.
+     */
     @Override
     public boolean isEnabled() {
-        return deletedAt == null;
+        return deletedAt == null && emailConfirmed;
     }
 }
