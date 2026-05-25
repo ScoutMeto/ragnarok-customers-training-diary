@@ -148,6 +148,7 @@ class AccountFlowSmokeTest {
 
     @Test
     void registerForm_persistsViaThymeleafPost() throws Exception {
+        // Phase 6: po registraci redirect na /confirm-email (ne /login?registered)
         mockMvc.perform(post("/register")
                         .with(csrf())
                         .param("email", "form@example.com")
@@ -157,8 +158,11 @@ class AccountFlowSmokeTest {
                         .param("lastName", "User")
                         .param("phone", ""))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login?registered"));
+                .andExpect(redirectedUrl("/confirm-email"));
 
-        assertThat(accountRepository.existsByEmail("form@example.com")).isTrue();
+        // Účet existuje, ale je nepotvrzený a má kód
+        var saved = accountRepository.findByEmail("form@example.com").orElseThrow();
+        assertThat(saved.isEmailConfirmed()).isFalse();
+        assertThat(saved.getEmailConfirmationCode()).hasSize(6);
     }
 }

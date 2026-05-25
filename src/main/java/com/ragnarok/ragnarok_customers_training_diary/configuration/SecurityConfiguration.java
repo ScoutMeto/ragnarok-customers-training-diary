@@ -29,6 +29,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         // Statika a veřejné stránky
                         .requestMatchers("/", "/login", "/register", "/error").permitAll()
+                        .requestMatchers("/confirm-email", "/confirm-email/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/webjars/**", "/images/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // API endpointy pro registraci (anonymous přístup)

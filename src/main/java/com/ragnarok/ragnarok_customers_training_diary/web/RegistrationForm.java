@@ -38,4 +38,10 @@ public class RegistrationForm {
 
     @Size(max = 32, message = "Telefon je moc dlouhý")
     private String phone;
+
+    // Phase 6: notifikační preference (default true)
+    private boolean notifGroupTrainingReminder = true;
+    private boolean notifNewPlanAssigned = true;
+    private boolean notifNewComment = true;
+    private boolean notifWelcome = true;
 }

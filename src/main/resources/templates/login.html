@@ -21,9 +21,15 @@
                         Vítej zpátky. Zadej email a heslo.
                     </p>
 
-                    <div th:if="${param.error}" class="alert alert-danger">Neplatný email nebo heslo.</div>
+                    <div th:if="${param.error}" class="alert alert-danger">
+                        Neplatný email nebo heslo. Pokud jsi se právě registroval(a),
+                        nejdřív <a th:href="@{/confirm-email}" style="color: var(--rk-danger); font-weight: 600;">potvrď svůj email</a>.
+                    </div>
                     <div th:if="${param.logout}" class="alert alert-info">Byl jsi odhlášen.</div>
                     <div th:if="${param.registered}" class="alert alert-success">Účet vytvořen, můžeš se přihlásit.</div>
+                    <div th:if="${param.confirmed}" class="alert alert-success">
+                        ✅ Email potvrzen — můžeš se přihlásit.
+                    </div>
 
                     <form th:action="@{/login}" method="post" class="rk-stack-4">
                         <div class="rk-field">

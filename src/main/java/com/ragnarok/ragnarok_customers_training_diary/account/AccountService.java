@@ -22,10 +22,14 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailConfirmationService emailConfirmationService;
 
-    public AccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+    public AccountService(AccountRepository accountRepository,
+                          PasswordEncoder passwordEncoder,
+                          EmailConfirmationService emailConfirmationService) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailConfirmationService = emailConfirmationService;
     }
 
     // -----------------------------------------------------------------------------
@@ -51,8 +55,26 @@ public class AccountService {
         account.setLastName(request.lastName());
         account.setPhone(request.phone());
         account.setRole(AccountRole.USER);
+        // Phase 6: nově registrovaný účet je nepotvrzený — login musí čekat na kód z mailu
+        account.setEmailConfirmed(false);
+        // Default notification preferences (může overridem nastavit z formu)
+        if (request.notifGroupTrainingReminder() != null) {
+            account.setNotifGroupTrainingReminder(request.notifGroupTrainingReminder());
+        }
+        if (request.notifNewPlanAssigned() != null) {
+            account.setNotifNewPlanAssigned(request.notifNewPlanAssigned());
+        }
+        if (request.notifNewComment() != null) {
+            account.setNotifNewComment(request.notifNewComment());
+        }
+        if (request.notifWelcome() != null) {
+            account.setNotifWelcome(request.notifWelcome());
+        }
 
-        return accountRepository.save(account);
+        AccountEntity saved = accountRepository.save(account);
+        // Spustí confirmation flow — pošle 6místný kód
+        emailConfirmationService.startConfirmation(saved);
+        return saved;
     }
 
     // -----------------------------------------------------------------------------
@@ -70,7 +92,7 @@ public class AccountService {
                 .orElseThrow(() -> new NotFoundException("Účet (id=" + id + ") nenalezen."));
     }
 
-    /** Admin vytvoří nový účet (klient nebo další admin). */
+    /** Admin vytvoří nový účet (klient nebo další admin). Automaticky potvrzený. */
     @Transactional
     public AccountEntity createByAdmin(RegistrationRequest request, AccountRole role) {
         if (accountRepository.existsByEmail(request.email())) {
@@ -85,6 +107,8 @@ public class AccountService {
         account.setLastName(request.lastName());
         account.setPhone(request.phone());
         account.setRole(role);
+        // Admin-vytvořené účty obcházejí email confirmation flow
+        account.setEmailConfirmed(true);
 
         return accountRepository.save(account);
     }

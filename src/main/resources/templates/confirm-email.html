@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Potvrzení emailu')}"></head>
+<body>
+
+<div class="rk-app">
+    <div class="rk-auth">
+        <div class="rk-auth__card">
+            <div class="rk-auth__brand">
+                <span style="display:inline-flex; align-items:center; gap:10px;">
+                    <span class="rk-brand__mark" style="width:32px; height:32px; font-size:18px;">R</span>
+                    Ragnarok
+                </span>
+                <span class="sub">Potvrzení emailu</span>
+            </div>
+
+            <div class="rk-card">
+                <div class="rk-card__body">
+                    <h2 style="font-size: var(--fs-h2); margin-bottom: var(--sp-2);">📬 Zkontroluj svůj inbox</h2>
+                    <p class="text-muted" style="margin-bottom: var(--sp-5); font-size: var(--fs-sm);">
+                        Poslali jsme ti <strong>6místný kód</strong> na zadanou emailovou adresu.
+                        Najdi ho v inboxu (pokud nedorazil, mrkni do spam složky) a zadej ho sem.
+                    </p>
+
+                    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                    <form th:action="@{/confirm-email}" method="post" class="rk-stack-4">
+                        <div class="rk-field">
+                            <label class="rk-label" for="email">Email</label>
+                            <input class="form-control" id="email" name="email" type="email"
+                                   th:value="${email}" required autocomplete="email">
+                        </div>
+                        <div class="rk-field">
+                            <label class="rk-label" for="code">Potvrzovací kód <span class="req">*</span></label>
+                            <input class="form-control num" id="code" name="code" type="text"
+                                   placeholder="123456" required
+                                   maxlength="8" autocomplete="one-time-code"
+                                   inputmode="numeric" pattern="[0-9]{6}"
+                                   style="font-size: var(--fs-h2); letter-spacing: 0.3em; text-align: center;"
+                                   autofocus>
+                            <p class="rk-help">6 číslic. Kód platí 60 minut.</p>
+                        </div>
+                        <button class="btn btn-accent btn-lg btn-block" type="submit">Potvrdit účet</button>
+                    </form>
+
+                    <hr>
+                    <form th:action="@{/confirm-email/resend}" method="post" class="text-center">
+                        <input type="hidden" name="email" th:value="${email}">
+                        <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--sp-3);">
+                            Nedorazil ti kód?
+                        </p>
+                        <button type="submit" class="btn btn-outline btn-sm">📨 Poslat nový kód</button>
+                    </form>
+
+                    <hr>
+                    <p class="text-center text-muted" style="font-size: var(--fs-sm); margin: 0;">
+                        <a th:href="@{/login}" style="color: var(--rk-primary); font-weight: 600;">← Zpět na přihlášení</a>
+                    </p>
+                </div>
+            </div>
+
+            <p class="text-center text-muted" style="font-size: var(--fs-xs); margin-top: var(--sp-4);">
+                Ragnarok Training Diary ·
+                <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2026</span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

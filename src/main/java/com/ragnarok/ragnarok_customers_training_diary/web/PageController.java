@@ -59,7 +59,8 @@ public class PageController {
     public String submitRegistration(
             @Valid @ModelAttribute("form") RegistrationForm form,
             BindingResult bindingResult,
-            Model model) {
+            Model model,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             return "register";
@@ -72,14 +73,20 @@ public class PageController {
                     form.getNickname(),
                     form.getFirstName(),
                     form.getLastName(),
-                    form.getPhone()
+                    form.getPhone(),
+                    form.isNotifGroupTrainingReminder(),
+                    form.isNotifNewPlanAssigned(),
+                    form.isNotifNewComment(),
+                    form.isNotifWelcome()
             ));
         } catch (EmailAlreadyTakenException ex) {
             bindingResult.rejectValue("email", "email.taken", "Účet s tímto emailem už existuje.");
             return "register";
         }
 
-        return "redirect:/login?registered";
+        // Phase 6: po registraci redirect na confirm-email s předvyplněným emailem
+        redirectAttributes.addFlashAttribute("registeredEmail", form.getEmail());
+        return "redirect:/confirm-email";
     }
 
     @GetMapping("/dashboard")
