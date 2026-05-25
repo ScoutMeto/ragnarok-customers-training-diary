@@ -21,10 +21,13 @@ public class CoachPlanService {
 
     private final CoachPlanRepository repository;
     private final AccountRepository accountRepository;
+    private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
 
-    public CoachPlanService(CoachPlanRepository repository, AccountRepository accountRepository) {
+    public CoachPlanService(CoachPlanRepository repository, AccountRepository accountRepository,
+                             com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
         this.repository = repository;
         this.accountRepository = accountRepository;
+        this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -70,7 +73,13 @@ public class CoachPlanService {
         plan.setBodyMarkdown(bodyMarkdown);
         plan.setValidFrom(validFrom);
         plan.setValidTo(validTo);
-        return repository.save(plan);
+        CoachPlanEntity saved = repository.save(plan);
+
+        // Phase 6: notifikace klientovi že má nový plán
+        emailService.sendNewPlanAssignedNotification(client, "plán od trenéra",
+                title, author.getFirstName() + " " + author.getLastName());
+
+        return saved;
     }
 
     public CoachPlanEntity update(Long id, String title, String bodyMarkdown,

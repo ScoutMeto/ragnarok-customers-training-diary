@@ -34,16 +34,19 @@ public class TrainingService {
     private final ExerciseCatalogItemRepository catalogRepository;
     private final TrainingTagRepository tagRepository;
     private final ExerciseTypeConfigMapper typeConfigMapper;
+    private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
 
     public TrainingService(
             TrainingRepository trainingRepository,
             ExerciseCatalogItemRepository catalogRepository,
             TrainingTagRepository tagRepository,
-            ExerciseTypeConfigMapper typeConfigMapper) {
+            ExerciseTypeConfigMapper typeConfigMapper,
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
         this.trainingRepository = trainingRepository;
         this.catalogRepository = catalogRepository;
         this.tagRepository = tagRepository;
         this.typeConfigMapper = typeConfigMapper;
+        this.emailService = emailService;
     }
 
     // =============================================================================
@@ -278,7 +281,16 @@ public class TrainingService {
 
         TrainingEntity created = create(client, input);
         created.setSourceTemplate(template);
-        return trainingRepository.save(created);
+        TrainingEntity saved = trainingRepository.save(created);
+
+        // Phase 6: notifikace klientovi že má nový tréninkový plán
+        String trainerName = template.getCreatedBy() != null
+                ? template.getCreatedBy().getFirstName() + " " + template.getCreatedBy().getLastName()
+                : null;
+        emailService.sendNewPlanAssignedNotification(client, "šablonu tréninku",
+                template.getName(), trainerName);
+
+        return saved;
     }
 
     /**

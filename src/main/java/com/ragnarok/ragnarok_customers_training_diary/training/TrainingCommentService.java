@@ -4,6 +4,7 @@ import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
 import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
 import com.ragnarok.ragnarok_customers_training_diary.common.NotFoundException;
+import com.ragnarok.ragnarok_customers_training_diary.mail.EmailService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +22,14 @@ public class TrainingCommentService {
 
     private final TrainingCommentRepository commentRepository;
     private final TrainingRepository trainingRepository;
+    private final EmailService emailService;
 
     public TrainingCommentService(TrainingCommentRepository commentRepository,
-                                  TrainingRepository trainingRepository) {
+                                  TrainingRepository trainingRepository,
+                                  EmailService emailService) {
         this.commentRepository = commentRepository;
         this.trainingRepository = trainingRepository;
+        this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +60,24 @@ public class TrainingCommentService {
         comment.setTraining(training);
         comment.setAuthor(author);
         comment.setText(text.trim());
-        return commentRepository.save(comment);
+        TrainingCommentEntity saved = commentRepository.save(comment);
+
+        // Phase 6: notifikace druhé strany. Soukromý trénink → vlastníkovi (pokud komentuje admin).
+        // Skupinový → trenérovi (createdBy). Nikdy nepošlu notifikaci sám sobě.
+        AccountEntity recipient = null;
+        if (!isGroup && training.getOwner() != null
+                && !training.getOwner().getId().equals(author.getId())) {
+            recipient = training.getOwner();
+        } else if (isGroup && training.getCreatedBy() != null
+                && !training.getCreatedBy().getId().equals(author.getId())) {
+            recipient = training.getCreatedBy();
+        }
+        if (recipient != null) {
+            emailService.sendNewCommentNotification(recipient, author,
+                    training.getName(), training.getId(), saved.getText());
+        }
+
+        return saved;
     }
 
     public void deleteComment(AccountEntity user, Long commentId) {
