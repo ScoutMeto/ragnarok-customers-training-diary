@@ -62,6 +62,9 @@
                th:classappend="${active == 'diary'} ? ' active'">Můj deník</a>
             <a class="rk-nav__link" th:href="@{/analysis}"
                th:classappend="${active == 'analysis'} ? ' active'">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/reservations}"
+               sec:authorize="!hasRole('ADMIN')"
+               th:classappend="${active == 'reservations'} ? ' active'">Rezervace</a>
             <a class="rk-nav__link" th:href="@{/my-plan}"
                sec:authorize="!hasRole('ADMIN')"
                th:classappend="${active == 'my-plan'} ? ' active'">Můj plán</a>

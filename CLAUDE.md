@@ -209,7 +209,8 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan markdown) | ✅ DONE | na `develop` |
 | — | UI redesign (Forge design system, Phase R) | ✅ DONE | na `develop` |
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
-| 7 | Integrace s rezervačním systémem (REST API) | ⏳ DEFERRED | rovnou na `develop` |
+| 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
+| 7.2 | Rezervace: cancel + "moje rezervace" + historie (vyžaduje admin přístup do rezervačního systému) | ⏳ TODO | rovnou na `develop` |
 
 **Branching strategie:** `develop` = veškerý vývoj. `master` = stable release (zatím se nepoužívá,
 mergnutí ze `develop` proběhne ručně při stabilizaci verze pro produkci).

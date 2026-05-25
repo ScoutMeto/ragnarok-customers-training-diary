@@ -103,6 +103,18 @@
 
                 <a sec:authorize="!hasRole('ADMIN')"
                    class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;"
+                   th:href="@{/reservations}">
+                    <div class="rk-row" style="justify-content: space-between;">
+                        <div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📅 Rezervace lekcí</div>
+                            <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">Zapsat se na skupinovou lekci v gymu</div>
+                        </div>
+                        <span style="color: var(--rk-primary); font-size: 22px;">→</span>
+                    </div>
+                </a>
+
+                <a sec:authorize="!hasRole('ADMIN')"
+                   class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;"
                    th:href="@{/my-plan}">
                     <div class="rk-row" style="justify-content: space-between;">
                         <div>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Rezervace lekcí')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('reservations')}"></nav>
+
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current">Rezervace</span>
+    </div>
+
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">📅 Rezervace lekcí</h1>
+            <p class="rk-page__sub">
+                Lekce v gymu na <span class="num" th:text="${daysAhead}">7</span> dní dopředu.
+                Klikni na „Zapsat se" — rezervaci pošleme s tvými údaji
+                (<span th:text="${currentEmail}">user@example.cz</span>).
+            </p>
+        </div>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <div th:if="${trainings.isEmpty()}" class="rk-empty rk-card">
+        <h3>Žádné nadcházející lekce</h3>
+        <p>V rezervačním systému nejsou na nejbližší týden naplánované žádné lekce.</p>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            Pokud to vidíš dlouhodobě, něco je s rezervačním systémem — ozvi se trenérovi.
+        </p>
+    </div>
+
+    <div class="rk-stack-3" th:unless="${trainings.isEmpty()}">
+        <article th:each="t : ${trainings}" class="rk-workout"
+                 th:with="
+                    free=${t.numberOfTotalFreeSlots()},
+                    isFull=${free <= 0},
+                    started=${t.start() != null and t.start().isBefore(T(java.time.LocalDateTime).now())}">
+            <div class="rk-workout__date">
+                <div class="day" th:text="${t.start() != null ? #temporals.format(t.start(), 'dd') : '?'}">23</div>
+                <div class="mon" th:text="${t.start() != null ? #strings.toUpperCase(#temporals.format(t.start(), 'MMM')) : ''}">KVĚ</div>
+            </div>
+            <div class="rk-workout__main">
+                <div class="rk-workout__title" th:text="${t.title()} ?: 'Lekce'">Lekce</div>
+                <div class="rk-workout__meta">
+                    <span th:if="${t.start() != null}">
+                        <span class="num" th:text="${#temporals.format(t.start(), 'HH:mm')}">18:00</span><span
+                          th:if="${t.end() != null}">—<span class="num" th:text="${#temporals.format(t.end(), 'HH:mm')}">19:00</span></span>
+                    </span>
+                    <span>· <b>
+                        <span class="num" th:text="${free}">10</span>
+                        <span th:text="${free == 1 ? 'volné místo' : (free >= 2 and free <= 4 ? 'volná místa' : 'volných míst')}">volných míst</span>
+                    </b></span>
+                    <span th:if="${t.reservations() != null and !t.reservations().isEmpty()}">
+                        · <span class="num" th:text="${t.reservations().size()}">3</span> rezervací
+                    </span>
+                </div>
+            </div>
+            <div class="rk-workout__aside" style="cursor: default;">
+                <span th:if="${isFull}" class="rk-badge rk-badge--danger">OBSAZENO</span>
+                <span th:if="${!isFull and !started}" class="rk-badge rk-badge--success" style="background: var(--rk-success-soft); color: var(--rk-success);">
+                    VOLNO
+                </span>
+                <span th:if="${started and !isFull}" class="rk-badge">PROBÍHÁ</span>
+
+                <form th:if="${!isFull and !started}"
+                      th:action="@{/reservations/book}" method="post"
+                      onsubmit="return confirm('Zapsat se na tuto lekci? Tvoje údaje budou poslány do rezervačního systému.');">
+                    <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
+                    <input type="hidden" name="slots" value="1">
+                    <button type="submit" class="btn btn-accent btn-sm btn-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+                        Zapsat se
+                    </button>
+                </form>
+            </div>
+        </article>
+    </div>
+
+    <div style="margin-top: var(--sp-6); padding: var(--sp-4); background: var(--rk-surface-2); border-radius: var(--rad-md); font-size: var(--fs-sm); color: var(--rk-muted);">
+        <strong style="color: var(--rk-ink);">ℹ️ Poznámka:</strong>
+        Rezervace se vytvářejí v externím rezervačním systému gymu. Pokud potřebuješ
+        <strong>zrušit</strong> nebo <strong>upravit</strong> rezervaci, zatím ji napiš trenérovi
+        (email nebo telefon) — diary ti to v této verzi neumožní. Plánujeme to do další iterace.
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>
