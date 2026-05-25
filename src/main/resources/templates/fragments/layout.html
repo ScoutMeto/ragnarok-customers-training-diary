@@ -87,8 +87,12 @@
             <span class="label d-none d-md-inline">
                 Přihlášen <strong sec:authentication="principal.nickname">user</strong>
             </span>
-            <div class="rk-avatar"
-                 th:text="${#strings.toUpperCase(#strings.substring(#authentication.principal.firstName, 0, 1))}">M</div>
+            <a th:href="@{/settings}" class="d-none d-md-inline-block" title="Nastavení účtu"
+               style="text-decoration: none;">
+                <div class="rk-avatar"
+                     th:text="${#strings.toUpperCase(#strings.substring(#authentication.principal.firstName, 0, 1))}"
+                     style="cursor: pointer;">M</div>
+            </a>
             <form th:action="@{/logout}" method="post" class="d-none d-md-inline ms-2">
                 <button type="submit" class="rk-btn-logout" title="Odhlásit">Odhlásit</button>
             </form>

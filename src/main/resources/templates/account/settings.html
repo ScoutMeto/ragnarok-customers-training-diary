@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Nastavení účtu')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('settings')}"></nav>
+
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current">Nastavení</span>
+    </div>
+
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">Nastavení účtu</h1>
+            <p class="rk-page__sub">
+                Přihlášen jako <strong th:text="${account.email}">user@example.cz</strong>
+            </p>
+        </div>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+
+    <!-- Notifikace -->
+    <div class="rk-card" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__head">
+            <div class="rk-card__title">📧 Notifikace na email</div>
+        </div>
+        <div class="rk-card__body">
+            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--sp-4);">
+                Vyber si, kdy ti chceme poslat email. Můžeš to kdykoliv změnit.
+            </p>
+
+            <form th:action="@{/settings/notifications}" method="post" class="rk-stack-3">
+                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
+                    <input type="checkbox" name="notifGroupTrainingReminder" value="true"
+                           th:checked="${account.notifGroupTrainingReminder}"
+                           class="form-check-input" style="margin-top: 4px;">
+                    <span>
+                        <strong style="font-size: var(--fs-body);">Připomínka skupinového tréninku</strong>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                            Každý večer v 18:00 mail, pokud zítra je v gymu skupinový trénink.
+                        </span>
+                    </span>
+                </label>
+
+                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
+                    <input type="checkbox" name="notifNewPlanAssigned" value="true"
+                           th:checked="${account.notifNewPlanAssigned}"
+                           class="form-check-input" style="margin-top: 4px;">
+                    <span>
+                        <strong style="font-size: var(--fs-body);">Nová šablona nebo plán od trenéra</strong>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                            Když ti trenér přiřadí trénink (šablonu) nebo napíše nový textový plán.
+                        </span>
+                    </span>
+                </label>
+
+                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
+                    <input type="checkbox" name="notifNewComment" value="true"
+                           th:checked="${account.notifNewComment}"
+                           class="form-check-input" style="margin-top: 4px;">
+                    <span>
+                        <strong style="font-size: var(--fs-body);">Nové komentáře</strong>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                            Když někdo okomentuje tvůj trénink (trenér nebo jiný klient na skupinový).
+                        </span>
+                    </span>
+                </label>
+
+                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
+                    <input type="checkbox" name="notifWelcome" value="true"
+                           th:checked="${account.notifWelcome}"
+                           class="form-check-input" style="margin-top: 4px;">
+                    <span>
+                        <strong style="font-size: var(--fs-body);">Uvítací mail po registraci</strong>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                            Jednorázový welcome mail po potvrzení emailu (jen pro nové účty).
+                        </span>
+                    </span>
+                </label>
+
+                <div style="margin-top: var(--sp-3);">
+                    <button type="submit" class="btn btn-accent">Uložit nastavení</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Informace o účtu (read-only zatím) -->
+    <div class="rk-card">
+        <div class="rk-card__head">
+            <div class="rk-card__title">Informace o účtu</div>
+        </div>
+        <div class="rk-card__body">
+            <p class="text-muted" style="margin: 0; font-size: var(--fs-sm); line-height: 1.7;">
+                <strong>Jméno:</strong> <span th:text="${account.firstName + ' ' + account.lastName}">Marek Test</span><br>
+                <strong>Přezdívka:</strong> <span th:text="${account.nickname}">nick</span><br>
+                <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
+                <strong>Telefon:</strong> <span th:text="${account.phone} ?: '—'">—</span><br>
+                <strong>Role:</strong>
+                <span th:class="|rk-badge ${account.role.name() == 'ADMIN' ? 'rk-badge--accent' : ''}|"
+                      th:text="${account.role}">USER</span>
+            </p>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

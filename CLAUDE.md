@@ -196,7 +196,7 @@ Při startu se v `AdminInitializer` vytvoří admin účet, pokud ještě neexis
 Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, atd.
 **Na Railway nastavit silnější heslo!**
 
-## 8. Stav fází (k 2026-05-24)
+## 8. Stav fází (k 2026-05-25)
 
 | # | Fáze | Stav | Kde |
 |---|------|------|-----|
@@ -207,7 +207,8 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 4 | Timer / stopky + wake lock | ✅ DONE | na `develop` |
 | 5 | Statistiky (klient `/analysis` + admin `/admin/overview`) | ✅ DONE | na `develop` |
 | 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan markdown) | ✅ DONE | na `develop` |
-| 6 | Email notifikace | ⏳ DEFERRED (po Phase 8, dle user request) | rovnou na `develop` |
+| — | UI redesign (Forge design system, Phase R) | ✅ DONE | na `develop` |
+| 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7 | Integrace s rezervačním systémem (REST API) | ⏳ DEFERRED | rovnou na `develop` |
 
 **Branching strategie:** `develop` = veškerý vývoj. `master` = stable release (zatím se nepoužívá,
