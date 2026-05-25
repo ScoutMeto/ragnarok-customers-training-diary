@@ -79,7 +79,7 @@ public class ReservationService {
 
         CreateReservationResponse resp = client.createReservation(req);
         log.info("[reservation] created reservation_id={} for client account_id={} training={}",
-                resp.reservation_id(), account.getId(), trainingId);
-        return resp.reservation_id();
+                resp.reservationId(), account.getId(), trainingId);
+        return resp.reservationId();
     }
 }

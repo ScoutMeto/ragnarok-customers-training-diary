@@ -119,7 +119,7 @@ public class ReservationClient {
                 throw new ReservationException("Rezervační systém vrátil prázdnou odpověď.");
             }
             log.info("[reservation] created reservation id={} for training={} email={}",
-                    response.reservation_id(), response.trainingId(), request.userEmail());
+                    response.reservationId(), response.trainingId(), request.userEmail());
             return response;
         } catch (HttpStatusCodeException ex) {
             HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());

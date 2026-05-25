@@ -53,19 +53,24 @@ class Phase7FeaturesTest {
     void listUpcoming_delegatesToClient_returnsResult() {
         TrainingResponse t = new TrainingResponse(
                 1L, "KB strength", LocalDateTime.now().plusDays(1),
-                LocalDateTime.now().plusDays(1).plusHours(1), 5, List.of(), null);
+                LocalDateTime.now().plusDays(1).plusHours(1), 5, List.of(),
+                java.util.Map.of("numberOfFreeSlots", 8, "coachName", "Matej"));
         when(client.listTrainings(any(), any())).thenReturn(List.of(t));
 
         List<TrainingResponse> result = service.listUpcomingTrainings(7);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).title()).isEqualTo("KB strength");
-        assertThat(result.get(0).numberOfTotalFreeSlots()).isEqualTo(5);
+        assertThat(result.get(0).capacity()).isEqualTo(8);
+        assertThat(result.get(0).freeSlots()).isEqualTo(8); // capacity 8 - booked 0
+        assertThat(result.get(0).coachName()).isEqualTo("Matej");
         verify(client, times(1)).listTrainings(any(), any());
     }
 
     @Test
     void createReservation_buildsRequestFromAccountAndReturnsId() {
+        // CreateReservationResponse fields: reservationId, trainingId, firstName,
+        // secondName, userEmail, telephoneNumber, numberOfBookedEntries
         when(client.createReservation(any())).thenReturn(new CreateReservationResponse(
                 999L, 123L, "Marek", "Novák", "marek@example.cz", "+420777111222", 1));
 

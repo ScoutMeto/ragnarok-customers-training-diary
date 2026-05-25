@@ -2,6 +2,7 @@ package com.ragnarok.ragnarok_customers_training_diary.reservation.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.Map;
  * ({@code com.matejmarek.ragnarok_customers_reservation_system.dto}).
  *
  * <p>Záměrně jen ta pole, která potřebujeme — Jackson ignoruje neznámá pole.
+ * Klíče v JSON (např. {@code reservation_id}) přemostěné přes
+ * {@link JsonProperty} → camelCase Java fields.
  */
 public final class ReservationDtos {
 
@@ -84,9 +87,13 @@ public final class ReservationDtos {
         }
     }
 
+    /**
+     * Partial info o rezervaci — bez emailů a telefonů (anonymizovaná pro veřejné API).
+     * JSON klíče: {@code reservation_id}, ostatní camelCase.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PartialReservation(
-            Long reservation_id,
+            @JsonProperty("reservation_id") Long reservationId,
             Long trainingId,
             String firstName,
             String secondName,
@@ -112,10 +119,13 @@ public final class ReservationDtos {
             int numberOfBookedEntries
     ) {}
 
-    /** Odpověď rezervačního systému na vytvořenou rezervaci. */
+    /**
+     * Odpověď rezervačního systému na vytvořenou rezervaci.
+     * JSON klíč ID je {@code reservation_id} (z {@code @JsonProperty} v originálním DTO).
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CreateReservationResponse(
-            Long reservation_id,
+            @JsonProperty("reservation_id") Long reservationId,
             Long trainingId,
             String firstName,
             String secondName,
