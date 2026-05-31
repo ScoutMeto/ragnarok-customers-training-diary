@@ -24,5 +24,11 @@ public enum TrainingExerciseType {
     PYRAMID,
     SUPERSET,
     STRAIGHT_SETS,
-    COMPLEX
+    COMPLEX,
+
+    /** Kardio cvik (běh, veslo, kolo…) — Phase 11 (A1). Zatím bez speciálního configu. */
+    CARDIO,
+
+    /** Cvik na střed těla / core — Phase 11 (A1). Zatím bez speciálního configu. */
+    CORE
 }

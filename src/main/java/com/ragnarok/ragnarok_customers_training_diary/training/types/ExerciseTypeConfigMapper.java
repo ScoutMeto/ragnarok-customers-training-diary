@@ -59,7 +59,7 @@ public class ExerciseTypeConfigMapper {
             case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
             case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
             case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
-            case FREEFORM -> { /* žádný extra config */ }
+            case FREEFORM, CARDIO, CORE -> { /* žádný extra config — jen set tabulka */ }
         }
     }
 
