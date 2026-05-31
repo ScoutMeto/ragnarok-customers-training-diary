@@ -66,6 +66,7 @@
             <td>
                 <span th:class="|rk-badge ${a.role.name() == 'ADMIN' ? 'rk-badge--accent' : ''}|"
                       th:text="${a.role}">USER</span>
+                <span th:if="${a.deactivated}" class="rk-badge rk-badge--danger" style="margin-left: 4px;">NEAKTIVNÍ</span>
             </td>
             <td class="num text-muted" th:text="${#temporals.format(a.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
             <td class="text-end">

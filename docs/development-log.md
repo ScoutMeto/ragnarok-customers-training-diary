@@ -21,7 +21,7 @@
 | 7.1 | Integrace s rezervacemi — kalendář + rezervace 1 klikem | ✅ DONE | na `develop` |
 | 7.2 | Rezervace: cancel + moje rezervace + historie | ⏳ TODO (vyžaduje admin přístup do rez. systému) | — |
 | **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
-| 10 | Inactive účty (read-only mód pro neplatiče) | ⏳ TODO | — |
+| 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
 | 11 | Per-exercise tagy + equipment override + CARDIO/CORE typy | ⏳ TODO | — |
 | 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
 | 13 | Nové typy: StrongFirst ladder, Interval, KB sport time | ⏳ TODO | — |

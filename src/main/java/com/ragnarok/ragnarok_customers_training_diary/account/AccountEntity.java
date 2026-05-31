@@ -98,9 +98,22 @@ public class AccountEntity implements UserDetails {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    /**
+     * Phase 10: deaktivace účtu (read-only mód pro neplatiče). {@code null} = aktivní.
+     * Když má hodnotu, klient se může přihlásit a prohlížet, ale nesmí přidávat/upravovat
+     * tréninky a nevidí nabídky skupinových lekcí. Liší se od {@link #deletedAt} (soft delete).
+     */
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
+
     /** Konvenience getter — `deletedAt == null`. */
     public boolean isActive() {
         return deletedAt == null;
+    }
+
+    /** {@code true} pokud je účet deaktivovaný (read-only mód). */
+    public boolean isDeactivated() {
+        return deactivatedAt != null;
     }
 
     // ---------------------------------------------------------------------------------------------

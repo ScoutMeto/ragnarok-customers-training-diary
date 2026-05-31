@@ -23,7 +23,7 @@
                 </span>
             </p>
         </div>
-        <div class="rk-page__actions">
+        <div class="rk-page__actions" th:unless="${readOnly}">
             <a th:href="@{/diary/new}" class="btn btn-accent btn-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
                 Nový trénink
@@ -33,6 +33,13 @@
 
     <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
     <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <!-- Phase 10: read-only banner pro deaktivovaný účet -->
+    <div th:if="${readOnly}" class="alert alert-warning">
+        <strong>Tvůj účet je dočasně neaktivní.</strong> Máš jen náhled na svoje
+        tréninky a statistiky. Nové tréninky přidávat nelze. Pro obnovení všech
+        funkcí kontaktuj trenéra.
+    </div>
 
     <!-- ==================== Dnes v gymu (skupinové) ==================== -->
     <div th:if="${!todayGroupTrainings.isEmpty()}" style="margin-bottom: var(--sp-6);">

@@ -18,11 +18,17 @@
         </div>
         <div class="rk-page__actions">
             <a class="btn btn-outline" th:href="@{/diary}">Můj deník</a>
-            <a class="btn btn-accent btn-icon" th:href="@{/diary/new}">
+            <a th:unless="${readOnly}" class="btn btn-accent btn-icon" th:href="@{/diary/new}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 Nový trénink
             </a>
         </div>
+    </div>
+
+    <!-- Phase 10: read-only banner pro deaktivovaný účet -->
+    <div th:if="${readOnly}" class="alert alert-warning">
+        <strong>Tvůj účet je dočasně neaktivní.</strong> Máš jen náhled na svoje
+        tréninky a statistiky. Pro obnovení všech funkcí kontaktuj trenéra.
     </div>
 
     <!-- Recent trainings + quick actions -->

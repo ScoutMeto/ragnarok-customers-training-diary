@@ -95,9 +95,12 @@ public class PageController {
         // Tři nejnovější vlastní tréninky pro rychlý přístup
         var recent = trainingService.listMyTrainings(account).stream().limit(3).toList();
         model.addAttribute("recentTrainings", recent);
-        // Dnešní skupinové tréninky od trenéra (vidí všichni klienti)
-        model.addAttribute("todayGroupTrainings",
-                trainingService.listGroupTrainingsForDay(LocalDate.now()));
+        // Phase 10: deaktivovaný klient je read-only a nevidí nabídky skupinových lekcí
+        boolean readOnly = accountService.isDeactivated(account.getId());
+        model.addAttribute("readOnly", readOnly);
+        model.addAttribute("todayGroupTrainings", readOnly
+                ? java.util.List.of()
+                : trainingService.listGroupTrainingsForDay(LocalDate.now()));
         return "dashboard";
     }
 }

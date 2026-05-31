@@ -46,6 +46,7 @@ public class DiaryPageController {
     private final ExerciseCatalogService catalogService;
     private final TrainingTagService tagService;
     private final TrainingCommentService commentService;
+    private final com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
 
     public DiaryPageController(
@@ -53,21 +54,34 @@ public class DiaryPageController {
             ExerciseCatalogService catalogService,
             TrainingTagService tagService,
             TrainingCommentService commentService,
+            com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService,
             com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
         this.commentService = commentService;
+        this.accountService = accountService;
         this.typeToInputMapper = typeToInputMapper;
+    }
+
+    /**
+     * Phase 10: deaktivovaný (neaktivní) klient je read-only — nesmí přidávat
+     * ani upravovat tréninky. Čte fresh stav z DB (principal v session může být stale).
+     */
+    private boolean isReadOnly(AccountEntity user) {
+        return accountService.isDeactivated(user.getId());
     }
 
     @GetMapping
     public String list(@AuthenticationPrincipal AccountEntity user, Model model) {
         List<TrainingEntity> trainings = trainingService.listMyTrainings(user);
         model.addAttribute("trainings", trainings);
-        // Dnešní skupinové tréninky od trenéra (viditelné všem klientům)
-        model.addAttribute("todayGroupTrainings",
-                trainingService.listGroupTrainingsForDay(java.time.LocalDate.now()));
+        boolean readOnly = isReadOnly(user);
+        model.addAttribute("readOnly", readOnly);
+        // Phase 10: deaktivovaný klient nevidí nabídky skupinových lekcí
+        model.addAttribute("todayGroupTrainings", readOnly
+                ? java.util.List.of()
+                : trainingService.listGroupTrainingsForDay(java.time.LocalDate.now()));
         return "diary/list";
     }
 
@@ -88,6 +102,7 @@ public class DiaryPageController {
         model.addAttribute("currentUser", user);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("isGroup", isGroup);
+        model.addAttribute("readOnly", isReadOnly(user));
         return "diary/detail";
     }
 
@@ -119,7 +134,13 @@ public class DiaryPageController {
     // -----------------------------------------------------------------------------
 
     @GetMapping("/new")
-    public String newForm(@AuthenticationPrincipal AccountEntity user, Model model) {
+    public String newForm(@AuthenticationPrincipal AccountEntity user, Model model,
+                          RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/diary";
+        }
         TrainingInput form = new TrainingInput();
         // Rovnou jeden prázdný cvik a tři prázdné sety — jednodušší UX
         TrainingExerciseInput firstExercise = new TrainingExerciseInput();
@@ -140,6 +161,11 @@ public class DiaryPageController {
             Model model,
             RedirectAttributes flash) {
 
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/diary";
+        }
         if (bindingResult.hasErrors()) {
             prepareFormModel(model, form, user);
             return "diary/form";
@@ -160,7 +186,13 @@ public class DiaryPageController {
     public String editForm(
             @AuthenticationPrincipal AccountEntity user,
             @PathVariable Long id,
-            Model model) {
+            Model model,
+            RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/diary/" + id;
+        }
         TrainingEntity training = trainingService.getMyTraining(user, id);
         TrainingInput form = toInput(training);
         prepareFormModel(model, form, user);
@@ -177,6 +209,11 @@ public class DiaryPageController {
             Model model,
             RedirectAttributes flash) {
 
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/diary/" + id;
+        }
         if (bindingResult.hasErrors()) {
             prepareFormModel(model, form, user);
             model.addAttribute("editingId", id);
@@ -259,6 +296,11 @@ public class DiaryPageController {
             @AuthenticationPrincipal AccountEntity user,
             @PathVariable Long id,
             RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/diary/" + id;
+        }
         try {
             TrainingEntity copy = trainingService.copyGroupToPrivate(user, id, typeToInputMapper);
             flash.addFlashAttribute("flashSuccess",

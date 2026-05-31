@@ -133,6 +133,31 @@ public class AccountService {
     }
 
     /**
+     * Phase 10: deaktivace účtu (read-only mód). Klient se může přihlásit a prohlížet,
+     * ale nesmí přidávat/upravovat tréninky. Idempotentní.
+     */
+    @Transactional
+    public void deactivate(Long id) {
+        AccountEntity account = getById(id);
+        if (account.getDeactivatedAt() == null) {
+            account.setDeactivatedAt(LocalDateTime.now());
+        }
+    }
+
+    /** Phase 10: reaktivace účtu — zpřístupní opět všechny funkce. Idempotentní. */
+    @Transactional
+    public void reactivate(Long id) {
+        AccountEntity account = getById(id);
+        account.setDeactivatedAt(null);
+    }
+
+    /** {@code true} pokud je účet (dle čerstvého stavu v DB) deaktivovaný. */
+    @Transactional(readOnly = true)
+    public boolean isDeactivated(Long id) {
+        return getById(id).isDeactivated();
+    }
+
+    /**
      * Soft delete — anonymizuje účet a nastaví {@code deleted_at}. Účet se nesmaže
      * fyzicky, aby zůstaly historické tréninky a komentáře platné. Po soft delete
      * se nelze přihlásit (viz {@link AccountEntity#isEnabled()}).

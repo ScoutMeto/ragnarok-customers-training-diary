@@ -167,4 +167,23 @@ public class AdminAccountController {
         flash.addFlashAttribute("flashSuccess", "Účet anonymizován.");
         return "redirect:/admin/accounts";
     }
+
+    // -----------------------------------------------------------------------------
+    // Phase 10: deaktivace / reaktivace (read-only mód pro neplatiče)
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/{id}/deactivate")
+    public String deactivate(@PathVariable Long id, RedirectAttributes flash) {
+        accountService.deactivate(id);
+        flash.addFlashAttribute("flashSuccess",
+                "Účet deaktivován — klient má teď jen náhled (read-only).");
+        return "redirect:/admin/accounts/" + id;
+    }
+
+    @PostMapping("/{id}/reactivate")
+    public String reactivate(@PathVariable Long id, RedirectAttributes flash) {
+        accountService.reactivate(id);
+        flash.addFlashAttribute("flashSuccess", "Účet reaktivován — všechny funkce zpřístupněny.");
+        return "redirect:/admin/accounts/" + id;
+    }
 }

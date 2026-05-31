@@ -26,6 +26,8 @@
                     <div>
                         <h1 style="font-size: var(--fs-h1); margin-bottom: 6px;">
                             <span th:text="${account.firstName + ' ' + account.lastName}">Jméno Příjmení</span>
+                            <span th:if="${account.deactivated}" class="rk-badge rk-badge--danger"
+                                  style="vertical-align: middle; margin-left: 8px;">NEAKTIVNÍ</span>
                         </h1>
                         <p class="text-muted" style="margin: 0; font-size: var(--fs-sm); line-height: 1.7;">
                             <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
@@ -44,6 +46,18 @@
                        th:href="@{/admin/accounts/{id}/coach-plans(id=${account.id})}"
                        class="btn btn-accent btn-sm btn-icon">📋 Plány od trenéra</a>
                     <a th:href="@{/admin/accounts/{id}/edit(id=${account.id})}" class="btn btn-outline btn-sm">Upravit</a>
+
+                    <!-- Phase 10: deaktivace / reaktivace (jen pro klienty) -->
+                    <form th:if="${account.role.name() == 'USER' and !account.deactivated}"
+                          th:action="@{/admin/accounts/{id}/deactivate(id=${account.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Deaktivovat účet? Klient bude mít jen náhled (read-only) — nebude moci přidávat ani upravovat tréninky.');">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color: var(--rk-warning); border-color: var(--rk-warning);">Deaktivovat</button>
+                    </form>
+                    <form th:if="${account.role.name() == 'USER' and account.deactivated}"
+                          th:action="@{/admin/accounts/{id}/reactivate(id=${account.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color: var(--rk-success); border-color: var(--rk-success);">Reaktivovat</button>
+                    </form>
+
                     <form th:action="@{/admin/accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu anonymizovat tento účet? Tréninky zůstanou v DB ale účet se nesmí přihlásit.');">
                         <button type="submit" class="btn btn-danger-outline btn-sm">Anonymizovat</button>

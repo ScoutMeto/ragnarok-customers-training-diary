@@ -37,7 +37,7 @@
                 </div>
 
                 <!-- Akce dle kontextu -->
-                <div class="d-flex gap-2" th:if="${isOwner}">
+                <div class="d-flex gap-2" th:if="${isOwner and !readOnly}">
                     <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline btn-sm">Upravit</a>
                     <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu smazat tento trénink?');">
@@ -54,7 +54,7 @@
                     </form>
                 </div>
 
-                <div th:if="${isGroup and currentUser.role.name() != 'ADMIN'}" class="d-flex flex-column align-items-end gap-2">
+                <div th:if="${isGroup and currentUser.role.name() != 'ADMIN' and !readOnly}" class="d-flex flex-column align-items-end gap-2">
                     <form th:action="@{/diary/{id}/copy(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Zkopírovat tento trénink do tvého deníku?');">
                         <button type="submit" class="btn btn-accent btn-sm btn-icon">
