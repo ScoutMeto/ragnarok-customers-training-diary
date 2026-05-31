@@ -11,9 +11,6 @@ public enum TrainingExerciseType {
     /** Jednoduchý cvik: název + N setů (váha, opakování, RPE, poznámka). */
     FREEFORM,
 
-    /** Strukturovaný cvik s pohybovým vzorcem, oblastí, bilateralitou (Fáze 3). */
-    CUSTOMIZING,
-
     /** Every Minute On the Minute (Fáze 3). */
     EMOM,
 
