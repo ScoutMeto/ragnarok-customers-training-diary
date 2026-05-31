@@ -40,25 +40,14 @@
     </div>
 
     <!-- KPI tiles -->
-    <div class="rk-stats-row" style="margin-bottom: var(--sp-5);">
+    <div class="rk-stats-row" style="margin-bottom: var(--sp-5); grid-template-columns: repeat(2, 1fr);">
         <div class="rk-kpi rk-kpi--accent">
             <div class="rk-kpi__label">Aktivní klienti</div>
             <div class="rk-kpi__value" id="kpiClients">—</div>
         </div>
         <div class="rk-kpi">
-            <div class="rk-kpi__label">Osobní tréninky</div>
-            <div class="rk-kpi__value" id="kpiPrivate">—</div>
-        </div>
-        <div class="rk-kpi">
-            <div class="rk-kpi__label">Skupinové tréninky</div>
-            <div class="rk-kpi__value" id="kpiGroup">—</div>
-        </div>
-        <div class="rk-kpi">
-            <div class="rk-kpi__label">Total volume</div>
-            <div class="rk-kpi__value">
-                <span id="kpiVolume">—</span>
-                <span class="rk-kpi__unit">kg</span>
-            </div>
+            <div class="rk-kpi__label">Počet záznamů</div>
+            <div class="rk-kpi__value" id="kpiRecords">—</div>
         </div>
     </div>
 
@@ -106,11 +95,7 @@
             .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
             .then(data => {
                 document.getElementById('kpiClients').textContent = data.activeClients;
-                document.getElementById('kpiPrivate').textContent = data.totalPrivateTrainings;
-                document.getElementById('kpiGroup').textContent = data.totalGroupTrainings;
-                document.getElementById('kpiVolume').textContent = data.gymTotalVolumeKg
-                    ? parseFloat(data.gymTotalVolumeKg).toLocaleString('cs-CZ', { maximumFractionDigits: 0 })
-                    : '0';
+                document.getElementById('kpiRecords').textContent = data.totalRecords;
                 const tbody = document.getElementById('topClientsTbody');
                 tbody.innerHTML = '';
                 if (!data.topActiveClients || data.topActiveClients.length === 0) {

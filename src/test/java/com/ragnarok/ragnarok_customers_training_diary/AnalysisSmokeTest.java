@@ -83,9 +83,10 @@ class AnalysisSmokeTest {
     @Test
     void adminOverview_returnsKpis() {
         var overview = analysisService.adminOverview(today.minusDays(7), today);
-        assertThat(overview.totalPrivateTrainings()).isGreaterThanOrEqualTo(3);
+        // Phase 9 (D1-D3): jen activeClients + totalRecords + topActiveClients
+        assertThat(overview.totalRecords()).isGreaterThanOrEqualTo(3);
         assertThat(overview.activeClients()).isGreaterThanOrEqualTo(1);
-        assertThat(overview.gymTotalVolumeKg()).isNotNull();
+        assertThat(overview.topActiveClients()).isNotNull();
     }
 
     // ---------- helpers ----------

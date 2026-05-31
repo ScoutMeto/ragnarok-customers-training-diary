@@ -236,29 +236,15 @@ public class AnalysisService {
                 "  AND a.role = com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.USER")
                 .getSingleResult();
 
-        Long totalPrivateTrainings = (Long) em.createQuery(
+        // Phase 9 (D2): "Počet záznamů" = počet PRIVATE tréninků klientů (role USER, ne admini)
+        // v daném období. Vylučujeme admin účty (admin si může vést vlastní deník, ale do
+        // gym přehledu se nezapočítává).
+        Long totalRecords = (Long) em.createQuery(
                 "SELECT COUNT(t) FROM TrainingEntity t " +
                 "WHERE t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "  AND t.owner IS NOT NULL " +
+                "  AND t.owner.role = com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.USER " +
                 "  AND t.trainingDate BETWEEN :from AND :to")
-                .setParameter("from", from)
-                .setParameter("to", to)
-                .getSingleResult();
-
-        Long totalGroupTrainings = (Long) em.createQuery(
-                "SELECT COUNT(t) FROM TrainingEntity t " +
-                "WHERE t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.GROUP " +
-                "  AND t.trainingDate BETWEEN :from AND :to")
-                .setParameter("from", from)
-                .setParameter("to", to)
-                .getSingleResult();
-
-        BigDecimal gymTotalVolume = (BigDecimal) em.createQuery(
-                "SELECT COALESCE(SUM(s.weightKg * s.reps), 0) FROM ExerciseSetEntity s " +
-                "  JOIN s.trainingExercise e " +
-                "  JOIN e.training t " +
-                "WHERE t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
-                "  AND t.trainingDate BETWEEN :from AND :to " +
-                "  AND s.weightKg IS NOT NULL AND s.reps IS NOT NULL")
                 .setParameter("from", from)
                 .setParameter("to", to)
                 .getSingleResult();
@@ -270,6 +256,7 @@ public class AnalysisService {
                 "WHERE t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND t.owner IS NOT NULL " +
+                "  AND t.owner.role = com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.USER " +
                 "GROUP BY t.owner.id, t.owner.firstName, t.owner.lastName, t.owner.email " +
                 "ORDER BY COUNT(t) DESC")
                 .setParameter("from", from)
@@ -285,9 +272,7 @@ public class AnalysisService {
 
         return new AdminOverview(
                 activeAccounts.intValue(),
-                totalPrivateTrainings.intValue(),
-                totalGroupTrainings.intValue(),
-                gymTotalVolume,
+                totalRecords.intValue(),
                 top);
     }
 
@@ -305,11 +290,15 @@ public class AnalysisService {
     public record DateValuePoint(LocalDate date, BigDecimal value) {}
     public record LabelValuePoint(String label, BigDecimal value) {}
     public record TopClient(String firstName, String lastName, String email, int trainingCount) {}
+
+    /**
+     * Gym overview pro admina. Phase 9 (D1-D3): odstraněn gymTotalVolumeKg
+     * a totalGroupTrainings, totalPrivateTrainings přejmenován na totalRecords
+     * (počet záznamů do deníků klientů, mimo adminy).
+     */
     public record AdminOverview(
             int activeClients,
-            int totalPrivateTrainings,
-            int totalGroupTrainings,
-            BigDecimal gymTotalVolumeKg,
+            int totalRecords,
             List<TopClient> topActiveClients
     ) {}
 }
