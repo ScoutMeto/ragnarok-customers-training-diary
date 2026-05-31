@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 Stav fází (k 2026-05-24)
+## 📊 Stav fází (k 2026-05-31)
 
 | # | Fáze | Stav | Kde |
 |---|------|------|-----|
@@ -15,9 +15,20 @@
 | 3 | Rozšířené typy cviků (10 typů) | ✅ DONE | na `develop` |
 | 4 | Timer / stopky | ✅ DONE | na `develop` |
 | 5 | Statistiky (klient + admin overview) | ✅ DONE | na `develop` |
-| 6 | Email notifikace | ⏳ odloženo (po Phase 8) | rovnou na `develop` |
-| 7 | Integrace s rezervacemi | ⏳ odloženo (po Phase 8) | rovnou na `develop` |
 | 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan) | ✅ DONE | na `develop` |
+| R | UI redesign (Forge design system) | ✅ DONE | na `develop` |
+| 6 | Email confirmation + notifikace | ✅ DONE | na `develop` |
+| 7.1 | Integrace s rezervacemi — kalendář + rezervace 1 klikem | ✅ DONE | na `develop` |
+| 7.2 | Rezervace: cancel + moje rezervace + historie | ⏳ TODO (vyžaduje admin přístup do rez. systému) | — |
+| **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
+| 10 | Inactive účty (read-only mód pro neplatiče) | ⏳ TODO | — |
+| 11 | Per-exercise tagy + equipment override + CARDIO/CORE typy | ⏳ TODO | — |
+| 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
+| 13 | Nové typy: StrongFirst ladder, Interval, KB sport time | ⏳ TODO | — |
+| 14 | Korunka (favorite) + flag (per-trénink) + filter v deníku | ⏳ TODO | — |
+| 15 | Rozšířené statistiky (objem per tag/cvik/série/reps, nejvyšší reps) | ⏳ TODO | — |
+| 16 | Audit copy-to-private flow (skupinové → osobní) | ⏳ TODO | — |
+| 17 | Správa katalogu cviků (CRUD + popisy + svalové partie, per-user + system) | ⏳ TODO | — |
 
 **Branching strategie (od Fáze 2):**
 - `master` = stable releases (zatím prázdné, mergne se ze `develop` ručně při stabilizaci)

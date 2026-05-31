@@ -211,9 +211,28 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
 | 7.2 | Rezervace: cancel + "moje rezervace" + historie (vyžaduje admin přístup do rezervačního systému) | ⏳ TODO | rovnou na `develop` |
+| 9 | Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup | ⏳ IN PROGRESS | na `develop` |
+| 10–17 | Další ScoutMeto požadavky (inactive účty, per-exercise tagy/equipment, nové typy, korunka/flag, rozšířené statistiky, katalog cviků CRUD) | ⏳ TODO | viz `docs/development-log.md` |
 
 **Branching strategie:** `develop` = veškerý vývoj. `master` = stable release (zatím se nepoužívá,
 mergnutí ze `develop` proběhne ručně při stabilizaci verze pro produkci).
+
+### ScoutMeto feedback (25.5.2026) — klíčová rozhodnutí pro Phase 9–17
+
+- **Difficulty (A13):** ZŮSTÁVAJÍ 3 úrovně (statistiky = 3 sloupce), ale uživatel
+  vybírá z 9 konkrétních labelů; v roletě se NEzobrazí slova light/medium/hard.
+  - Úroveň 1: „lehký trénink", „deload", „rychlost"
+  - Úroveň 2: „silově-kondiční trénink", „sběr opakování", „drill", „výuka"
+  - Úroveň 3: „rozvoj maximální síly", „testování"
+- **Equipment (A14):** default jen 3 (bez pomůcek / kettlebell / osa) + custom per-user (uchované, smazatelné)
+- **Korunka (A16):** per-instance (konkrétní cvik v konkrétním tréninku)
+- **Flag (B8):** per-trénink
+- **Inactive účet (E1):** read-only, skupinové lekce nezobrazovat
+- **StrongFirst ladder (A10):** jeden cvik, set 1+rest, 2+rest, ... až ladder_height, pak cyklus znovu; L/P u unilaterálních
+- **KB sport time (A12):** reps za čas + volitelný multiswitch s libovolnou délkou intervalu
+- **Circuit (A3):** vlastní per-round záznam, editovatelný (cvik lze v kole vyřadit/nahradit)
+- **Katalog cviků (Phase 17):** každý klient si edituje VLASTNÍ katalog. Seed 92 = system (owner=null).
+  Admin přidá → vidí všichni. Klient přidá/upraví → vidí jen on (copy-on-write pattern jako tagy).
 
 Detail jednotlivých fází viz `docs/development-log.md` a `docs/architecture.md`.
 
