@@ -52,7 +52,7 @@
                         <label for="difficulty" class="form-label">Obtížnost</label>
                         <select id="difficulty" th:field="*{difficulty}" class="form-select">
                             <option value="">—</option>
-                            <option th:each="d : ${difficulties}" th:value="${d}" th:text="${d}">MEDIUM</option>
+                            <option th:each="d : ${difficulties}" th:value="${d}" th:text="${d.label}">Lehký trénink</option>
                         </select>
                     </div>
 

@@ -182,7 +182,11 @@ public class AnalysisService {
         return map;
     }
 
-    /** Volume per difficulty (LIGHT/MEDIUM/HARD). */
+    /**
+     * Volume podle úrovně obtížnosti — 3 sloupce (Lehký / Střední / Těžký).
+     * Phase 9 (A13): difficulty má 9 zaměření, agregujeme je do 3 úrovní
+     * přes {@link com.ragnarok.ragnarok_customers_training_diary.training.TrainingDifficulty.Level}.
+     */
     public List<LabelValuePoint> volumePerDifficulty(AccountEntity owner, LocalDate from, LocalDate to) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createQuery(
@@ -200,9 +204,24 @@ public class AnalysisService {
                 .setParameter("from", from)
                 .setParameter("to", to)
                 .getResultList();
-        return rows.stream()
-                .map(r -> new LabelValuePoint(r[0] != null ? r[0].toString() : "—", toBigDecimal(r[1])))
-                .toList();
+
+        // Agreguj 9 zaměření → 3 úrovně (zachová pořadí LIGHT, MEDIUM, HARD)
+        var byLevel = new java.util.EnumMap<
+                com.ragnarok.ragnarok_customers_training_diary.training.TrainingDifficulty.Level, BigDecimal>(
+                com.ragnarok.ragnarok_customers_training_diary.training.TrainingDifficulty.Level.class);
+        for (Object[] r : rows) {
+            if (r[0] == null) continue;
+            var focus = (com.ragnarok.ragnarok_customers_training_diary.training.TrainingDifficulty) r[0];
+            byLevel.merge(focus.getLevel(), toBigDecimal(r[1]), BigDecimal::add);
+        }
+        List<LabelValuePoint> result = new ArrayList<>();
+        for (var lvl : com.ragnarok.ragnarok_customers_training_diary.training.TrainingDifficulty.Level.values()) {
+            BigDecimal v = byLevel.get(lvl);
+            if (v != null && v.signum() != 0) {
+                result.add(new LabelValuePoint(lvl.getLabel(), v));
+            }
+        }
+        return result;
     }
 
     /** RPE per den — pro kalendářní heatmap (může být null kde tréning nebyl). */

@@ -120,8 +120,8 @@
                     <span th:text="|RPE ${t.rpe}|">RPE 8</span>
                 </div>
                 <span th:if="${t.difficulty != null}"
-                      th:class="|rk-badge ${t.difficulty.name() == 'HARD' ? 'rk-badge--danger' : (t.difficulty.name() == 'LIGHT' ? 'rk-badge--success' : '')}|"
-                      th:text="${t.difficulty}">MEDIUM</span>
+                      th:class="|rk-badge ${t.difficulty.level.name() == 'HARD' ? 'rk-badge--danger' : (t.difficulty.level.name() == 'LIGHT' ? 'rk-badge--success' : '')}|"
+                      th:text="${t.difficulty.label}">Lehký trénink</span>
             </div>
         </article>
     </div>

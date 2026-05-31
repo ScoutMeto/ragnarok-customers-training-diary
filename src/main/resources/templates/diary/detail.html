@@ -72,8 +72,8 @@
             <!-- Badges / tags / RPE -->
             <div class="rk-row" style="margin-top: var(--sp-4); gap: 8px;">
                 <span th:if="${training.difficulty != null}"
-                      th:class="|rk-badge ${training.difficulty.name() == 'HARD' ? 'rk-badge--danger' : (training.difficulty.name() == 'LIGHT' ? 'rk-badge--success' : '')}|"
-                      th:text="${training.difficulty}">MEDIUM</span>
+                      th:class="|rk-badge ${training.difficulty.level.name() == 'HARD' ? 'rk-badge--danger' : (training.difficulty.level.name() == 'LIGHT' ? 'rk-badge--success' : '')}|"
+                      th:text="${training.difficulty.label}">Lehký trénink</span>
                 <span th:if="${training.rpe != null}" class="rk-badge num" th:text="'RPE ' + ${training.rpe}">RPE 7</span>
                 <span th:each="tag : ${training.tags}"
                       th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
