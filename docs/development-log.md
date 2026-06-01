@@ -28,7 +28,7 @@
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (objem per tag/cvik/série/reps, nejvyšší reps) | ⏳ TODO | — |
 | 16 | Audit copy-to-private flow (skupinové → osobní) | ⏳ TODO | — |
-| 17 | Správa katalogu cviků (CRUD + popisy + svalové partie, per-user + system) | ⏳ TODO | — |
+| 17 | Správa katalogu cviků (CRUD + per-user + system) | ✅ DONE (popisy 92 cviků → 17c TODO) | na `develop` |
 
 **Branching strategie (od Fáze 2):**
 - `master` = stable releases (zatím prázdné, mergne se ze `develop` ručně při stabilizaci)

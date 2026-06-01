@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="cs">
+<head th:replace="~{fragments/layout :: head('Katalog cviků')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('catalog')}"></nav>
+
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current">Katalog cviků</span>
+    </div>
+
+    <div class="rk-page__head">
+        <div>
+            <h1 class="rk-page__title">Katalog cviků</h1>
+            <p class="rk-page__sub">
+                Systémové cviky (od trenéra) + tvoje vlastní.
+                <span class="num" th:text="${items.size()}">0</span> cviků celkem.
+            </p>
+        </div>
+        <div class="rk-page__actions">
+            <a th:href="@{/catalog/new}" class="btn btn-accent btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+                Nový cvik
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <div th:if="${items.isEmpty()}" class="rk-empty rk-card">
+        <h3>Katalog je prázdný</h3>
+        <p>Přidej si první cvik.</p>
+    </div>
+
+    <table class="rk-table" th:unless="${items.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Název</th>
+            <th>Oblast</th>
+            <th>Vzorec</th>
+            <th>Náčiní</th>
+            <th>Původ</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="i : ${items}">
+            <td>
+                <a th:href="@{/catalog/{id}(id=${i.id})}" style="color: var(--rk-ink); font-weight: 600;"
+                   th:text="${i.name}">Cvik</a>
+            </td>
+            <td class="text-muted" th:text="${i.bodyRegion} ?: '—'">—</td>
+            <td class="text-muted" th:text="${i.movementPattern} ?: '—'">—</td>
+            <td class="text-muted" th:text="${i.equipment} ?: '—'">—</td>
+            <td>
+                <span th:if="${i.system}" class="rk-badge">SYSTÉM</span>
+                <span th:unless="${i.system}" class="rk-badge rk-badge--accent">MŮJ</span>
+            </td>
+            <td class="text-end">
+                <a th:href="@{/catalog/{id}(id=${i.id})}" class="btn btn-ghost btn-sm">Detail</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

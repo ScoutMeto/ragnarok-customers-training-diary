@@ -13,6 +13,18 @@ public interface ExerciseCatalogItemRepository extends JpaRepository<ExerciseCat
     List<ExerciseCatalogItemEntity> findByActiveTrueOrderByNameAsc();
 
     /**
+     * Phase 17: cviky viditelné pro uživatele = systémové (is_system=true)
+     * NEBO vlastní custom (created_by = uživatel). Jen aktivní.
+     */
+    @Query("""
+            SELECT e FROM ExerciseCatalogItemEntity e
+            WHERE e.active = true
+              AND (e.isSystem = true OR e.createdBy.id = :userId)
+            ORDER BY e.name ASC
+            """)
+    List<ExerciseCatalogItemEntity> findVisibleTo(@Param("userId") Long userId);
+
+    /**
      * Search by (case-insensitive) substring v názvu. Vrací jen aktivní položky.
      */
     @Query("""

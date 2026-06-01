@@ -22,7 +22,7 @@ public class AnalysisPageController {
 
     @GetMapping("/analysis")
     public String analysisPage(@AuthenticationPrincipal AccountEntity user, Model model) {
-        model.addAttribute("catalogItems", catalogService.listAll());
+        model.addAttribute("catalogItems", catalogService.listVisibleTo(user));
         // Phase 14 (A16): seznam cviků označených korunkou — sekce na konci stránky
         model.addAttribute("starredExercises", trainingService.listStarredExercises(user));
         return "analysis/index";

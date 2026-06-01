@@ -49,6 +49,10 @@ public class ExerciseCatalogItemEntity {
     @Column(name = "primary_muscle", length = 64)
     private String primaryMuscle;
 
+    /** Phase 17: zapojené/vedlejší svalové skupiny (volný text). */
+    @Column(name = "secondary_muscles", length = 255)
+    private String secondaryMuscles;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 64)
     private Equipment equipment;

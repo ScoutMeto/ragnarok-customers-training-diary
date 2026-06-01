@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Cvik')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('catalog')}"></nav>
+
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <a th:href="@{/catalog}">Katalog cviků</a>
+        <span class="sep">/</span>
+        <span class="current" th:text="${item.name}">Cvik</span>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <div class="rk-card">
+        <div class="rk-card__body">
+            <div class="rk-row" style="justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h1 style="font-size: var(--fs-h1); margin-bottom: 8px;">
+                        <span th:text="${item.name}">Cvik</span>
+                        <span th:if="${item.system}" class="rk-badge" style="vertical-align: middle;">SYSTÉM</span>
+                        <span th:unless="${item.system}" class="rk-badge rk-badge--accent" style="vertical-align: middle;">MŮJ</span>
+                    </h1>
+                    <div class="rk-row" style="gap: 6px; margin-bottom: var(--sp-3);">
+                        <span th:if="${item.bodyRegion != null}" class="rk-badge" th:text="${item.bodyRegion}">UPPER_BODY</span>
+                        <span th:if="${item.movementPattern != null}" class="rk-badge" th:text="${item.movementPattern}">PUSH</span>
+                        <span th:if="${item.equipment != null}" class="rk-badge" th:text="${item.equipment}">KETTLEBELL</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2" th:if="${canEdit}">
+                    <a th:href="@{/catalog/{id}/edit(id=${item.id})}" class="btn btn-outline btn-sm">Upravit</a>
+                    <form th:action="@{/catalog/{id}/delete(id=${item.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Odebrat cvik z katalogu? (deaktivuje se, historické tréninky zůstanou)');">
+                        <button type="submit" class="btn btn-danger-outline btn-sm">Odebrat</button>
+                    </form>
+                </div>
+            </div>
+
+            <hr style="margin: var(--sp-3) 0;">
+
+            <p class="text-muted" style="font-size: var(--fs-sm); line-height: 1.7;">
+                <strong>Primární sval:</strong> <span th:text="${item.primaryMuscle} ?: '—'">—</span><br>
+                <strong>Zapojené svaly:</strong> <span th:text="${item.secondaryMuscles} ?: '—'">—</span>
+            </p>
+
+            <div th:if="${item.description != null and !item.description.isEmpty()}"
+                 style="margin-top: var(--sp-4); padding: var(--sp-4); background: var(--rk-bg); border-radius: var(--rad-md); border: 1px dashed var(--rk-border);">
+                <div style="font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--rk-muted); font-weight: 600; margin-bottom: 8px;">Popis & technika</div>
+                <p style="white-space: pre-wrap; margin: 0;" th:text="${item.description}">Popis cviku.</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

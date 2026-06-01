@@ -62,6 +62,8 @@
                th:classappend="${active == 'diary'} ? ' active'">Můj deník</a>
             <a class="rk-nav__link" th:href="@{/analysis}"
                th:classappend="${active == 'analysis'} ? ' active'">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/catalog}"
+               th:classappend="${active == 'catalog'} ? ' active'">Cviky</a>
             <a class="rk-nav__link" th:href="@{/reservations}"
                sec:authorize="!hasRole('ADMIN')"
                th:classappend="${active == 'reservations'} ? ' active'">Rezervace</a>
@@ -112,6 +114,8 @@
             <a class="rk-nav__link" th:href="@{/dashboard}">Dashboard</a>
             <a class="rk-nav__link" th:href="@{/diary}">Můj deník</a>
             <a class="rk-nav__link" th:href="@{/analysis}">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/catalog}">Cviky</a>
+            <a class="rk-nav__link" th:href="@{/reservations}" sec:authorize="!hasRole('ADMIN')">Rezervace</a>
             <a class="rk-nav__link" th:href="@{/my-plan}" sec:authorize="!hasRole('ADMIN')">Můj plán</a>
             <div sec:authorize="hasRole('ADMIN')" class="rk-nav__mobile-sep"></div>
             <a class="rk-nav__link" th:href="@{/admin/accounts}" sec:authorize="hasRole('ADMIN')">Účty</a>
