@@ -72,6 +72,10 @@ public class TrainingExerciseEntity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    /** Phase 14 (A16): „korunka" — per-instance oblíbený cvik (důležitý pro uživatele). */
+    @Column(name = "starred", nullable = false)
+    private boolean starred = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

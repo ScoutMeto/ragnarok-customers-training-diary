@@ -123,6 +123,45 @@
         <div id="heatmap" class="d-flex flex-wrap gap-1"></div>
     </div>
 
+    <!-- Phase 14 (A16): označené cviky korunkou -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2>👑 Označené cviky (korunka)</h2>
+        <span class="meta">
+            <span class="num" th:text="${starredExercises != null ? starredExercises.size() : 0}">0</span> cviků
+        </span>
+    </div>
+
+    <div th:if="${starredExercises == null or starredExercises.isEmpty()}" class="rk-empty rk-card">
+        <p>Zatím nemáš žádný cvik označený korunkou.</p>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            V detailu tréninku klikni u cviku na ♕ a označíš si ho jako důležitý.
+            Najdeš ho pak tady s proklikem na konkrétní trénink.
+        </p>
+    </div>
+
+    <table class="rk-table" th:unless="${starredExercises == null or starredExercises.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Cvik</th>
+            <th>Typ</th>
+            <th>Trénink</th>
+            <th>Datum</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="ex : ${starredExercises}">
+            <td><strong>👑 <span th:text="${ex.displayName}">Cvik</span></strong></td>
+            <td><span class="rk-badge" th:text="${ex.type}">FREEFORM</span></td>
+            <td class="text-muted" th:text="${ex.training.name} ?: 'Trénink'">Trénink</td>
+            <td class="num text-muted" th:text="${#temporals.format(ex.training.trainingDate, 'dd.MM.yyyy')}">23.05.2026</td>
+            <td class="text-end">
+                <a th:href="@{/diary/{id}(id=${ex.training.id})}" class="btn btn-ghost btn-sm">Otevřít →</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

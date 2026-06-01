@@ -108,7 +108,10 @@
                 <div class="mon" th:text="${#strings.toUpperCase(#temporals.format(t.trainingDate, 'MMM'))}">KVĚ</div>
             </div>
             <div class="rk-workout__main">
-                <div class="rk-workout__title" th:text="${t.name} ?: 'Trénink'">Trénink</div>
+                <div class="rk-workout__title">
+                    <span th:if="${t.flagged}" title="Označený trénink" style="margin-right: 4px;">🚩</span>
+                    <span th:text="${t.name} ?: 'Trénink'">Trénink</span>
+                </div>
                 <div class="rk-workout__tags" th:if="${t.tags != null and !t.tags.isEmpty()}">
                     <span th:each="tag : ${t.tags}"
                           th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"

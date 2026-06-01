@@ -97,6 +97,10 @@ public class TrainingEntity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    /** Phase 14 (B8): uživatel si označí důležitý trénink vlaječkou. */
+    @Column(name = "flagged", nullable = false)
+    private boolean flagged = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

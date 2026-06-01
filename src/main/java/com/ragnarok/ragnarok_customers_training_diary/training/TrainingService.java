@@ -35,18 +35,57 @@ public class TrainingService {
     private final TrainingTagRepository tagRepository;
     private final ExerciseTypeConfigMapper typeConfigMapper;
     private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
+    private final TrainingExerciseRepository exerciseRepository;
 
     public TrainingService(
             TrainingRepository trainingRepository,
             ExerciseCatalogItemRepository catalogRepository,
             TrainingTagRepository tagRepository,
             ExerciseTypeConfigMapper typeConfigMapper,
-            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService,
+            TrainingExerciseRepository exerciseRepository) {
         this.trainingRepository = trainingRepository;
         this.catalogRepository = catalogRepository;
         this.tagRepository = tagRepository;
         this.typeConfigMapper = typeConfigMapper;
         this.emailService = emailService;
+        this.exerciseRepository = exerciseRepository;
+    }
+
+    // =============================================================================
+    // Phase 14: flag (trénink) + korunka (cvik)
+    // =============================================================================
+
+    /** Přepne vlaječku tréninku (B8). Vrací nový stav. Jen vlastník. */
+    @Transactional
+    public boolean toggleFlag(AccountEntity owner, Long trainingId) {
+        TrainingEntity t = getMyTraining(owner, trainingId);
+        t.setFlagged(!t.isFlagged());
+        return t.isFlagged();
+    }
+
+    /**
+     * Přepne korunku cviku (A16, per-instance). Vrací nový stav. Ověřuje, že cvik
+     * patří do PRIVATE tréninku vlastníka.
+     */
+    @Transactional
+    public boolean toggleStar(AccountEntity owner, Long exerciseId) {
+        TrainingExerciseEntity ex = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NotFoundException("Cvik (id=" + exerciseId + ") nenalezen."));
+        TrainingEntity training = ex.getTraining();
+        if (training == null || training.getOwner() == null
+                || !training.getOwner().getId().equals(owner.getId())) {
+            throw new com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException(
+                    "Tento cvik nepatří tobě.");
+        }
+        ex.setStarred(!ex.isStarred());
+        return ex.isStarred();
+    }
+
+    /** Označené (korunkou) cviky vlastníka — pro sekci ve statistikách. */
+    @Transactional(readOnly = true)
+    public List<TrainingExerciseEntity> listStarredExercises(AccountEntity owner) {
+        return exerciseRepository.findStarredForOwner(owner.getId());
     }
 
     // =============================================================================

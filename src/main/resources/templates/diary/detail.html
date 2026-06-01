@@ -38,6 +38,11 @@
 
                 <!-- Akce dle kontextu -->
                 <div class="d-flex gap-2" th:if="${isOwner and !readOnly}">
+                    <form th:action="@{/diary/{id}/flag(id=${training.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline btn-sm"
+                                th:title="${training.flagged} ? 'Odebrat vlaječku' : 'Označit vlaječkou'"
+                                th:text="${training.flagged} ? '🚩 Označeno' : '🏳️ Označit'">🏳️ Označit</button>
+                    </form>
                     <a th:href="@{/diary/{id}/edit(id=${training.id})}" class="btn btn-outline btn-sm">Upravit</a>
                     <form th:action="@{/diary/{id}/delete(id=${training.id})}" method="post" class="d-inline"
                           onsubmit="return confirm('Opravdu smazat tento trénink?');">
@@ -104,9 +109,18 @@
             <div class="rk-ex__head">
                 <div class="rk-ex__title">
                     <span class="rk-ex__num" th:text="${exStat.count}">1</span>
+                    <span th:if="${ex.starred}" title="Označený cvik (korunka)">👑</span>
                     <span th:text="${ex.displayName}">Cvik</span>
                 </div>
                 <div class="rk-row" style="gap: 6px;">
+                    <!-- Phase 14: korunka (per-instance), jen vlastník a ne read-only -->
+                    <form th:if="${isOwner and !readOnly}"
+                          th:action="@{/diary/{id}/exercises/{exId}/star(id=${training.id}, exId=${ex.id})}"
+                          method="post" class="d-inline">
+                        <button type="submit" class="btn btn-ghost btn-sm"
+                                th:title="${ex.starred} ? 'Odebrat korunku' : 'Přidat korunku (oblíbený cvik)'"
+                                th:text="${ex.starred} ? '👑' : '♕'">♕</button>
+                    </form>
                     <span class="rk-badge" th:text="${ex.type}">FREEFORM</span>
                     <span th:if="${ex.rpe != null}" class="rk-badge num" th:text="'RPE ' + ${ex.rpe}">RPE 7</span>
                     <button type="button" class="btn btn-accent btn-sm btn-icon"

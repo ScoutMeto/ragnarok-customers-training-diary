@@ -250,6 +250,50 @@ public class DiaryPageController {
     }
 
     // -----------------------------------------------------------------------------
+    // Phase 14: flag (trénink) + korunka (cvik)
+    // -----------------------------------------------------------------------------
+
+    /** Přepne vlaječku tréninku. {@code back=list} → redirect na seznam, jinak na detail. */
+    @PostMapping("/{id}/flag")
+    public String toggleFlag(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            @RequestParam(value = "back", required = false) String back,
+            RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled).");
+            return "redirect:/diary";
+        }
+        try {
+            trainingService.toggleFlag(user, id);
+        } catch (NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "list".equals(back) ? "redirect:/diary" : "redirect:/diary/" + id;
+    }
+
+    /** Přepne korunku cviku (per-instance). Redirect zpět na detail tréninku. */
+    @PostMapping("/{id}/exercises/{exerciseId}/star")
+    public String toggleStar(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            @PathVariable Long exerciseId,
+            RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled).");
+            return "redirect:/diary/" + id;
+        }
+        try {
+            trainingService.toggleStar(user, exerciseId);
+        } catch (NotFoundException | ForbiddenException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/diary/" + id;
+    }
+
+    // -----------------------------------------------------------------------------
     // Komentáře
     // -----------------------------------------------------------------------------
 
