@@ -450,6 +450,20 @@
                         </div>
                     </div>
 
+                    <!-- =============== INTERVAL (Phase 13 A11) =============== -->
+                    <div class="type-config type-interval mt-4" style="display:none">
+                        <h6 class="mb-2">Interval (N kol: práce + pauza)</h6>
+                        <div class="row g-2">
+                            <div class="col-md-2"><label class="form-label form-label-sm">Počet kol *</label><input type="number" min="1" max="100" th:name="|exercises[${exStat.index}].interval.rounds|" th:value="${ex.interval?.rounds}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Práce: opakování</label><input type="number" th:name="|exercises[${exStat.index}].interval.workReps|" th:value="${ex.interval?.workReps}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">nebo práce: čas (s)</label><input type="number" th:name="|exercises[${exStat.index}].interval.workSeconds|" th:value="${ex.interval?.workSeconds}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" th:name="|exercises[${exStat.index}].interval.restSeconds|" th:value="${ex.interval?.restSeconds}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" th:name="|exercises[${exStat.index}].interval.weightKg|" th:value="${ex.interval?.weightKg}" class="form-control form-control-sm"></div>
+                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].interval.notes|" th:value="${ex.interval?.notes}" class="form-control form-control-sm"></div>
+                        </div>
+                        <p class="form-text mb-0">Vyplň buď opakování, nebo čas práce (podle typu cviku).</p>
+                    </div>
+
                     <!-- =============== COMPOSITE (Superset/Complex) =============== -->
                     <div class="type-config type-superset type-complex mt-4" style="display:none">
                         <h6 class="mb-2">Schéma (kompozitní série)</h6>
@@ -709,6 +723,18 @@
                     <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" data-name="straightSets.restSeconds" class="form-control form-control-sm"></div>
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="straightSets.notes" class="form-control form-control-sm"></div>
                 </div>
+            </div>
+            <div class="type-config type-interval mt-4" style="display:none">
+                <h6 class="mb-2">Interval (N kol: práce + pauza)</h6>
+                <div class="row g-2">
+                    <div class="col-md-2"><label class="form-label form-label-sm">Počet kol *</label><input type="number" min="1" max="100" data-name="interval.rounds" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Práce: opakování</label><input type="number" data-name="interval.workReps" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">nebo práce: čas (s)</label><input type="number" data-name="interval.workSeconds" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" data-name="interval.restSeconds" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="interval.weightKg" class="form-control form-control-sm"></div>
+                    <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="interval.notes" class="form-control form-control-sm"></div>
+                </div>
+                <p class="form-text mb-0">Vyplň buď opakování, nebo čas práce (podle typu cviku).</p>
             </div>
             <div class="type-config type-superset type-complex mt-4" style="display:none">
                 <h6 class="mb-2">Schéma (kompozitní)</h6>

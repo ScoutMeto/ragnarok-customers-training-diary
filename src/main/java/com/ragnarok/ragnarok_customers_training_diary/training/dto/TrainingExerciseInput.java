@@ -75,6 +75,10 @@ public class TrainingExerciseInput {
     @Valid
     private StraightSetsConfigInput straightSets;
 
+    /** Phase 13 (A11): Interval. */
+    @Valid
+    private IntervalConfigInput interval;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

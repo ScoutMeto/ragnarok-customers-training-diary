@@ -47,6 +47,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setNumericSeriesConfig(null);
         exercise.setCompositeSetConfig(null);
         exercise.setStraightSetsConfig(null);
+        exercise.setIntervalConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -59,8 +60,23 @@ public class ExerciseTypeConfigMapper {
             case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
             case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
             case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
+            case INTERVAL -> applyInterval(exercise, input.getInterval());
             case FREEFORM, CARDIO, CORE -> { /* žádný extra config — jen set tabulka */ }
         }
+    }
+
+    private void applyInterval(TrainingExerciseEntity exercise,
+                               com.ragnarok.ragnarok_customers_training_diary.training.dto.IntervalConfigInput in) {
+        if (in == null || in.getRounds() == null) return;
+        var cfg = new com.ragnarok.ragnarok_customers_training_diary.training.types.interval.IntervalConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setRounds(in.getRounds());
+        cfg.setWorkReps(in.getWorkReps());
+        cfg.setWorkSeconds(in.getWorkSeconds());
+        cfg.setRestSeconds(in.getRestSeconds() != null ? in.getRestSeconds() : 0);
+        cfg.setWeightKg(in.getWeightKg());
+        cfg.setNotes(in.getNotes());
+        exercise.setIntervalConfig(cfg);
     }
 
     private void applyStraightSets(TrainingExerciseEntity exercise, StraightSetsConfigInput in) {

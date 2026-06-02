@@ -196,6 +196,16 @@
                 <span th:if="${ex.straightSetsConfig.restSeconds != null}">· pauza <span class="num" th:text="${ex.straightSetsConfig.restSeconds}">120</span>&nbsp;s</span>
             </div>
 
+            <!-- Interval (Phase 13 A11) -->
+            <div th:if="${ex.intervalConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>Interval</strong> ·
+                <span class="num" th:text="${ex.intervalConfig.rounds}">8</span> kol
+                <span th:if="${ex.intervalConfig.workReps != null}">· práce <b class="num" th:text="${ex.intervalConfig.workReps}">10</b> opak.</span>
+                <span th:if="${ex.intervalConfig.workSeconds != null}">· práce <b class="num" th:text="${ex.intervalConfig.workSeconds}">30</b>&nbsp;s</span>
+                <span>· pauza <span class="num" th:text="${ex.intervalConfig.restSeconds}">60</span>&nbsp;s</span>
+                <span th:if="${ex.intervalConfig.weightKg != null}">· <b class="num" th:text="${ex.intervalConfig.weightKg}">24</b> kg</span>
+            </div>
+
             <!-- Composite (Superset / Complex) -->
             <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong th:text="${ex.type}">SUPERSET</strong> ·

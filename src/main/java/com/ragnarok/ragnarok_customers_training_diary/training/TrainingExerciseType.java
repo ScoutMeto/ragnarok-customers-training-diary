@@ -26,6 +26,9 @@ public enum TrainingExerciseType {
     STRAIGHT_SETS,
     COMPLEX,
 
+    /** Intervalový trénink — Phase 13 (A11): N kol práce (reps/čas) + pauza. */
+    INTERVAL,
+
     /** Kardio cvik (běh, veslo, kolo…) — Phase 11 (A1). Zatím bez speciálního configu. */
     CARDIO,
 

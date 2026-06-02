@@ -52,6 +52,17 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getStraightSetsConfig() != null) {
             input.setStraightSets(toStraightSetsInput(ex.getStraightSetsConfig()));
         }
+        if (ex.getIntervalConfig() != null) {
+            var e = ex.getIntervalConfig();
+            var in = new com.ragnarok.ragnarok_customers_training_diary.training.dto.IntervalConfigInput();
+            in.setRounds(e.getRounds());
+            in.setWorkReps(e.getWorkReps());
+            in.setWorkSeconds(e.getWorkSeconds());
+            in.setRestSeconds(e.getRestSeconds());
+            in.setWeightKg(e.getWeightKg());
+            in.setNotes(e.getNotes());
+            input.setInterval(in);
+        }
     }
 
     private StraightSetsConfigInput toStraightSetsInput(StraightSetsConfigEntity e) {

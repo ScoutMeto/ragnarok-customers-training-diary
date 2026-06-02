@@ -135,6 +135,10 @@ public class TrainingExerciseEntity {
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private StraightSetsConfigEntity straightSetsConfig;
 
+    /** Phase 13 (A11): Interval — N kol práce (reps/čas) + pauza. */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private com.ragnarok.ragnarok_customers_training_diary.training.types.interval.IntervalConfigEntity intervalConfig;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
