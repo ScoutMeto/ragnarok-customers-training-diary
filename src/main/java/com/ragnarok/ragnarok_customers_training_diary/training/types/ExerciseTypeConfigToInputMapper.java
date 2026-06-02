@@ -63,6 +63,17 @@ public class ExerciseTypeConfigToInputMapper {
             in.setNotes(e.getNotes());
             input.setInterval(in);
         }
+        if (ex.getStrongFirstLadderConfig() != null) {
+            var e = ex.getStrongFirstLadderConfig();
+            var in = new com.ragnarok.ragnarok_customers_training_diary.training.dto.StrongFirstLadderConfigInput();
+            in.setLadderHeight(e.getLadderHeight());
+            in.setCycles(e.getCycles());
+            in.setRestSeconds(e.getRestSeconds());
+            in.setWeightKg(e.getWeightKg());
+            in.setUnilateral(e.isUnilateral());
+            in.setNotes(e.getNotes());
+            input.setStrongFirstLadder(in);
+        }
     }
 
     private StraightSetsConfigInput toStraightSetsInput(StraightSetsConfigEntity e) {

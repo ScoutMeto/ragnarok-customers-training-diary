@@ -206,6 +206,17 @@
                 <span th:if="${ex.intervalConfig.weightKg != null}">· <b class="num" th:text="${ex.intervalConfig.weightKg}">24</b> kg</span>
             </div>
 
+            <!-- StrongFirst ladder (Phase 13 A10) -->
+            <div th:if="${ex.strongFirstLadderConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>StrongFirst žebřík</strong> ·
+                vrchol <span class="num" th:text="${ex.strongFirstLadderConfig.ladderHeight}">5</span>
+                (1–<span class="num" th:text="${ex.strongFirstLadderConfig.ladderHeight}">5</span>)
+                · <span class="num" th:text="${ex.strongFirstLadderConfig.cycles}">3</span>× cyklus
+                <span th:if="${ex.strongFirstLadderConfig.restSeconds != null}">· pauza <span class="num" th:text="${ex.strongFirstLadderConfig.restSeconds}">120</span>&nbsp;s</span>
+                <span th:if="${ex.strongFirstLadderConfig.weightKg != null}">· <b class="num" th:text="${ex.strongFirstLadderConfig.weightKg}">24</b> kg</span>
+                <span th:if="${ex.strongFirstLadderConfig.unilateral}">· L/P zvlášť</span>
+            </div>
+
             <!-- Composite (Superset / Complex) -->
             <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong th:text="${ex.type}">SUPERSET</strong> ·

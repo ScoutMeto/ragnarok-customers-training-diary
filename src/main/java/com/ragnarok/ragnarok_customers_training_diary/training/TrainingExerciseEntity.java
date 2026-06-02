@@ -139,6 +139,10 @@ public class TrainingExerciseEntity {
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private com.ragnarok.ragnarok_customers_training_diary.training.types.interval.IntervalConfigEntity intervalConfig;
 
+    /** Phase 13 (A10): StrongFirst žebřík. */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private com.ragnarok.ragnarok_customers_training_diary.training.types.strongfirst.StrongFirstLadderConfigEntity strongFirstLadderConfig;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {

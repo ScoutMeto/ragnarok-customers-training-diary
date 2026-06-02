@@ -29,6 +29,9 @@ public enum TrainingExerciseType {
     /** Intervalový trénink — Phase 13 (A11): N kol práce (reps/čas) + pauza. */
     INTERVAL,
 
+    /** StrongFirst žebřík — Phase 13 (A10): 1,2,...,ladderHeight reps + pauza, opakuj v cyklech. */
+    STRONGFIRST_LADDER,
+
     /** Kardio cvik (běh, veslo, kolo…) — Phase 11 (A1). Zatím bez speciálního configu. */
     CARDIO,
 

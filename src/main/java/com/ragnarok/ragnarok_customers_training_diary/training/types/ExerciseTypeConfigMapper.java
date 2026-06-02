@@ -48,6 +48,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setCompositeSetConfig(null);
         exercise.setStraightSetsConfig(null);
         exercise.setIntervalConfig(null);
+        exercise.setStrongFirstLadderConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -61,8 +62,23 @@ public class ExerciseTypeConfigMapper {
             case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
             case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
             case INTERVAL -> applyInterval(exercise, input.getInterval());
+            case STRONGFIRST_LADDER -> applyStrongFirstLadder(exercise, input.getStrongFirstLadder());
             case FREEFORM, CARDIO, CORE -> { /* žádný extra config — jen set tabulka */ }
         }
+    }
+
+    private void applyStrongFirstLadder(TrainingExerciseEntity exercise,
+                                        com.ragnarok.ragnarok_customers_training_diary.training.dto.StrongFirstLadderConfigInput in) {
+        if (in == null || in.getLadderHeight() == null) return;
+        var cfg = new com.ragnarok.ragnarok_customers_training_diary.training.types.strongfirst.StrongFirstLadderConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setLadderHeight(in.getLadderHeight());
+        cfg.setCycles(in.getCycles() != null ? in.getCycles() : 1);
+        cfg.setRestSeconds(in.getRestSeconds());
+        cfg.setWeightKg(in.getWeightKg());
+        cfg.setUnilateral(in.isUnilateral());
+        cfg.setNotes(in.getNotes());
+        exercise.setStrongFirstLadderConfig(cfg);
     }
 
     private void applyInterval(TrainingExerciseEntity exercise,

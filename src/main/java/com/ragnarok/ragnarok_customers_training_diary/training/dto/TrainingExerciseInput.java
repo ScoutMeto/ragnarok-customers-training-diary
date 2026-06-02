@@ -79,6 +79,10 @@ public class TrainingExerciseInput {
     @Valid
     private IntervalConfigInput interval;
 
+    /** Phase 13 (A10): StrongFirst žebřík. */
+    @Valid
+    private StrongFirstLadderConfigInput strongFirstLadder;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */
