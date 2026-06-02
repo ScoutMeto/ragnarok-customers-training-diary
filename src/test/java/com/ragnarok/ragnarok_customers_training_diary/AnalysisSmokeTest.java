@@ -89,6 +89,33 @@ class AnalysisSmokeTest {
         assertThat(overview.topActiveClients()).isNotNull();
     }
 
+    @Test
+    void listLoggedExerciseNames_returnsDistinctNames() {
+        var names = analysisService.listLoggedExerciseNames(alice);
+        assertThat(names).containsExactly("KB swing");
+    }
+
+    @Test
+    void exerciseStats_aggregatesAllMetricsForExercise() {
+        // 3 tréninky × 2 sety "KB swing":
+        //  -2d: 24×10 + 24×8 = 432, reps 18
+        //  -1d: 28×8  + 28×8 = 448, reps 16
+        //   0d: 20×12 + 20×10= 440, reps 22
+        var stats = analysisService.exerciseStats(alice, "KB swing", today.minusDays(7), today);
+        assertThat(stats.totalVolumeKg().intValueExact()).isEqualTo(1320);
+        assertThat(stats.totalSets()).isEqualTo(6);
+        assertThat(stats.totalReps()).isEqualTo(56);
+        assertThat(stats.maxReps()).isEqualTo(12);
+        assertThat(stats.maxWeightKg().intValueExact()).isEqualTo(28);
+    }
+
+    @Test
+    void exerciseStats_unknownExercise_returnsZero() {
+        var stats = analysisService.exerciseStats(alice, "Neexistuje", today.minusDays(7), today);
+        assertThat(stats.totalSets()).isZero();
+        assertThat(stats.totalReps()).isZero();
+    }
+
     // ---------- helpers ----------
 
     private AccountEntity createUser(String email, String firstName, AccountRole role) {

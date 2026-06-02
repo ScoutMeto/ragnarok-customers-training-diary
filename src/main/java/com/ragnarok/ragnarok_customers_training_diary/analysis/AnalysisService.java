@@ -98,6 +98,66 @@ public class AnalysisService {
                 .toList();
     }
 
+    /**
+     * Phase 15 (B2-B4, B7): seznam unikátních názvů cviků, které klient někdy
+     * zaznamenal (catalog name i custom name). Pro dropdown ve statistikách.
+     */
+    public List<String> listLoggedExerciseNames(AccountEntity owner) {
+        @SuppressWarnings("unchecked")
+        List<String> names = em.createQuery(
+                "SELECT DISTINCT COALESCE(ci.name, e.customName) " +
+                "FROM TrainingExerciseEntity e " +
+                "  JOIN e.training t " +
+                "  LEFT JOIN e.catalogItem ci " +
+                "WHERE t.owner.id = :ownerId " +
+                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "  AND COALESCE(ci.name, e.customName) IS NOT NULL " +
+                "ORDER BY COALESCE(ci.name, e.customName) ASC")
+                .setParameter("ownerId", owner.getId())
+                .getResultList();
+        return names;
+    }
+
+    /**
+     * Phase 15 (B2-B4, B7): souhrnné metriky pro vybraný cvik (podle názvu —
+     * sjednocuje catalog i custom záznamy stejného jména) v daném období:
+     *  - totalVolumeKg = SUM(weight * reps)
+     *  - totalSets     = počet setů
+     *  - totalReps     = SUM(reps)
+     *  - maxReps       = nejvyšší počet opakování v jednom setu
+     *  - maxWeightKg   = nejvyšší váha
+     */
+    public ExerciseStats exerciseStats(AccountEntity owner, String exerciseName,
+                                        LocalDate from, LocalDate to) {
+        Object[] r = (Object[]) em.createQuery(
+                "SELECT COALESCE(SUM(s.weightKg * s.reps), 0), " +
+                "       COUNT(s), " +
+                "       COALESCE(SUM(s.reps), 0), " +
+                "       MAX(s.reps), " +
+                "       MAX(s.weightKg) " +
+                "FROM ExerciseSetEntity s " +
+                "  JOIN s.trainingExercise e " +
+                "  JOIN e.training t " +
+                "  LEFT JOIN e.catalogItem ci " +
+                "WHERE t.owner.id = :ownerId " +
+                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "  AND COALESCE(ci.name, e.customName) = :name " +
+                "  AND t.trainingDate BETWEEN :from AND :to")
+                .setParameter("ownerId", owner.getId())
+                .setParameter("name", exerciseName)
+                .setParameter("from", from)
+                .setParameter("to", to)
+                .getSingleResult();
+
+        return new ExerciseStats(
+                exerciseName,
+                toBigDecimal(r[0]),
+                r[1] != null ? ((Number) r[1]).longValue() : 0L,
+                r[2] != null ? ((Number) r[2]).longValue() : 0L,
+                r[3] != null ? ((Number) r[3]).intValue() : 0,
+                r[4] != null ? toBigDecimal(r[4]) : null);
+    }
+
     /** Počet setů per body region. */
     public List<LabelValuePoint> setsPerBodyRegion(AccountEntity owner, LocalDate from, LocalDate to) {
         @SuppressWarnings("unchecked")
@@ -308,6 +368,16 @@ public class AnalysisService {
 
     public record DateValuePoint(LocalDate date, BigDecimal value) {}
     public record LabelValuePoint(String label, BigDecimal value) {}
+
+    /** Phase 15: souhrnné metriky pro jeden cvik. */
+    public record ExerciseStats(
+            String exerciseName,
+            BigDecimal totalVolumeKg,
+            long totalSets,
+            long totalReps,
+            int maxReps,
+            BigDecimal maxWeightKg
+    ) {}
     public record TopClient(String firstName, String lastName, String email, int trainingCount) {}
 
     /**

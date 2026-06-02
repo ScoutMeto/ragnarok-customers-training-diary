@@ -54,6 +54,22 @@ public class AnalysisRestController {
         return new MaxWeightResponse(service.maxWeightForExercise(user, catalogItemId, from, to));
     }
 
+    /** Phase 15: seznam názvů cviků klienta (pro dropdown). */
+    @GetMapping("/exercise-names")
+    public List<String> exerciseNames(@AuthenticationPrincipal AccountEntity user) {
+        return service.listLoggedExerciseNames(user);
+    }
+
+    /** Phase 15 (B2-B4, B7): souhrnné metriky pro vybraný cvik. */
+    @GetMapping("/exercise-stats")
+    public AnalysisService.ExerciseStats exerciseStats(
+            @AuthenticationPrincipal AccountEntity user,
+            @RequestParam String name,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return service.exerciseStats(user, name, from, to);
+    }
+
     @GetMapping("/sets-per-body-region")
     public List<AnalysisService.LabelValuePoint> setsPerBodyRegion(
             @AuthenticationPrincipal AccountEntity user,

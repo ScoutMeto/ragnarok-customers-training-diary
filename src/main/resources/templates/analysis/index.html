@@ -80,6 +80,44 @@
         </div>
     </div>
 
+    <!-- Phase 15: souhrnné metriky pro konkrétní cvik (B2-B4, B7) -->
+    <div class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__head">
+            <div class="rk-card__title">📊 Souhrn pro konkrétní cvik</div>
+        </div>
+        <div class="rk-card__body">
+            <div class="rk-field" style="max-width: 360px; margin-bottom: var(--sp-4);">
+                <label for="exStatSelect" class="rk-label">Vyber cvik</label>
+                <select id="exStatSelect" class="form-select">
+                    <option value="">— načítám cviky —</option>
+                </select>
+                <p class="rk-help">Zahrnuje katalogové i vlastní cviky stejného názvu, za vybrané období.</p>
+            </div>
+
+            <div id="exStatResult" class="rk-stats-row" style="display: none;">
+                <div class="rk-kpi rk-kpi--accent">
+                    <div class="rk-kpi__label">Objem</div>
+                    <div class="rk-kpi__value"><span id="exVolume">0</span><span class="rk-kpi__unit">kg</span></div>
+                </div>
+                <div class="rk-kpi">
+                    <div class="rk-kpi__label">Série</div>
+                    <div class="rk-kpi__value" id="exSets">0</div>
+                </div>
+                <div class="rk-kpi">
+                    <div class="rk-kpi__label">Opakování</div>
+                    <div class="rk-kpi__value" id="exReps">0</div>
+                </div>
+                <div class="rk-kpi">
+                    <div class="rk-kpi__label">Max. opakování / max. váha</div>
+                    <div class="rk-kpi__value"><span id="exMaxReps">0</span><span class="rk-kpi__unit">×</span> · <span id="exMaxWeight">—</span><span class="rk-kpi__unit">kg</span></div>
+                </div>
+            </div>
+            <p id="exStatEmpty" class="text-muted" style="font-size: var(--fs-sm); display: none;">
+                Pro tento cvik a období nejsou žádná data.
+            </p>
+        </div>
+    </div>
+
     <!-- Body region + Movement pattern -->
     <div class="row g-3" style="margin-bottom: var(--sp-4);">
         <div class="col-md-6">
@@ -179,6 +217,79 @@
     }
 </script>
 <script th:src="@{/js/analysis.js}"></script>
+
+<!-- Phase 15: souhrn pro konkrétní cvik (samostatný od Chart.js sekce) -->
+<script>
+(function () {
+    const select = document.getElementById('exStatSelect');
+    const result = document.getElementById('exStatResult');
+    const empty = document.getElementById('exStatEmpty');
+    if (!select) return;
+
+    function isoDaysAgo(n) {
+        const d = new Date();
+        d.setDate(d.getDate() - n);
+        return d.toISOString().slice(0, 10);
+    }
+    function isoToday() { return new Date().toISOString().slice(0, 10); }
+
+    // Spočítej období ze stejného period selectoru jako zbytek statistik
+    function currentPeriod() {
+        const sel = document.getElementById('periodSelect');
+        const val = sel ? sel.value : '30';
+        if (val === 'custom') {
+            const f = document.getElementById('fromDate');
+            const t = document.getElementById('toDate');
+            return { from: (f && f.value) || isoDaysAgo(30), to: (t && t.value) || isoToday() };
+        }
+        return { from: isoDaysAgo(parseInt(val, 10)), to: isoToday() };
+    }
+
+    // Načti seznam cviků do dropdownu
+    fetch('/api/analysis/exercise-names', { credentials: 'same-origin' })
+        .then(r => r.ok ? r.json() : [])
+        .then(names => {
+            select.innerHTML = '<option value="">— vyber cvik —</option>';
+            (names || []).forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n; opt.textContent = n;
+                select.appendChild(opt);
+            });
+        })
+        .catch(() => { select.innerHTML = '<option value="">— chyba načítání —</option>'; });
+
+    function loadStats() {
+        const name = select.value;
+        if (!name) { result.style.display = 'none'; empty.style.display = 'none'; return; }
+        const p = currentPeriod();
+        const url = `/api/analysis/exercise-stats?name=${encodeURIComponent(name)}&from=${p.from}&to=${p.to}`;
+        fetch(url, { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(s => {
+                const hasData = s && (s.totalSets > 0 || s.totalReps > 0);
+                if (!hasData) {
+                    result.style.display = 'none';
+                    empty.style.display = '';
+                    return;
+                }
+                const fmt = (v) => v != null ? parseFloat(v).toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) : '0';
+                document.getElementById('exVolume').textContent = fmt(s.totalVolumeKg);
+                document.getElementById('exSets').textContent = s.totalSets;
+                document.getElementById('exReps').textContent = s.totalReps;
+                document.getElementById('exMaxReps').textContent = s.maxReps || 0;
+                document.getElementById('exMaxWeight').textContent = s.maxWeightKg != null ? fmt(s.maxWeightKg) : '—';
+                empty.style.display = 'none';
+                result.style.display = '';
+            })
+            .catch(() => { result.style.display = 'none'; empty.style.display = ''; });
+    }
+
+    select.addEventListener('change', loadStats);
+    // Při kliku na "Načíst" (změna období) přepočti i tuhle sekci
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', loadStats);
+})();
+</script>
 
 </body>
 </html>
