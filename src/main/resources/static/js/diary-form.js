@@ -57,8 +57,9 @@
             const numEl = card.querySelector('.exercise-number');
             if (numEl) numEl.textContent = (idx + 1) + '.';
 
-            // Top-level fields (type, catalogItemId, customName, rpe, notes)
-            ['type', 'catalogItemId', 'customName', 'rpe', 'notes'].forEach(fieldName => {
+            // Top-level fields (type, catalogItemId, customName, rpe, notes, equipment...)
+            ['type', 'catalogItemId', 'customName', 'rpe', 'notes',
+             'equipmentName', 'equipmentWeightKg', 'equipmentCount', 'equipmentSecondWeightKg'].forEach(fieldName => {
                 const el = card.querySelector('[data-name="' + fieldName + '"]');
                 if (el) el.name = 'exercises[' + idx + '].' + fieldName;
             });
@@ -141,8 +142,18 @@
             if (customInput) customInput.value = '';
         } else if (e.target.classList.contains('type-select')) {
             updateTypeConfigVisibility(e.target.closest('.exercise-card'));
+        } else if (e.target.classList.contains('equipment-count')) {
+            updateEquipmentSecondVisibility(e.target.closest('.exercise-card'));
         }
     });
+
+    function updateEquipmentSecondVisibility(card) {
+        const countSel = card.querySelector('.equipment-count');
+        const second = card.querySelector('.equipment-second');
+        if (countSel && second) {
+            second.style.display = (countSel.value === '2') ? '' : 'none';
+        }
+    }
 
     container.addEventListener('input', function (e) {
         if (e.target.classList.contains('custom-name-input') && e.target.value.trim()) {
@@ -152,5 +163,8 @@
     });
 
     // Při načtení existujících (server-rendered) cviků nastavíme viditelnost
-    container.querySelectorAll('.exercise-card').forEach(updateTypeConfigVisibility);
+    container.querySelectorAll('.exercise-card').forEach(card => {
+        updateTypeConfigVisibility(card);
+        updateEquipmentSecondVisibility(card);
+    });
 })();

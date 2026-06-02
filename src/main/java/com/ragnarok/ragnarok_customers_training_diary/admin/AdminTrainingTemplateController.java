@@ -214,6 +214,10 @@ public class AdminTrainingTemplateController {
             ei.setRpe(ex.getRpe());
             ei.setNotes(ex.getNotes());
             ei.setTagIds(ex.getTags().stream().map(t -> t.getId()).collect(Collectors.toSet()));
+            ei.setEquipmentName(ex.getEquipmentName());
+            ei.setEquipmentWeightKg(ex.getEquipmentWeightKg());
+            ei.setEquipmentCount(ex.getEquipmentCount());
+            ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
             List<SetInput> sets = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());

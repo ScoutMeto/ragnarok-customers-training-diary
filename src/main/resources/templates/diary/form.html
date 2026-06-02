@@ -22,6 +22,11 @@
     <form th:action="${editingId != null} ? @{/diary/{id}(id=${editingId})} : @{/diary}"
           th:object="${form}" method="post" id="trainingForm">
 
+        <!-- Phase 11 (A14): sdílený datalist pomůcek (system + vlastní) -->
+        <datalist id="equipmentOptionsList">
+            <option th:each="opt : ${equipmentOptions}" th:value="${opt.name}"></option>
+        </datalist>
+
         <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
             <ul class="mb-0">
                 <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</li>
@@ -218,6 +223,36 @@
                                 <label class="form-check-label small" th:for="|extag-${exStat.index}-${tag.id}|"
                                        th:text="${tag.name}">Tag</label>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 11 (A14): náčiní/nářadí -->
+                    <div class="row g-2 mt-3 align-items-end equipment-block">
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm" style="font-weight:600;">Náčiní</label>
+                            <input type="text" list="equipmentOptionsList" data-name="equipmentName"
+                                   th:name="|exercises[${exStat.index}].equipmentName|" th:value="${ex.equipmentName}"
+                                   class="form-control form-control-sm" placeholder="vyber nebo napiš vlastní">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label form-label-sm">Váha (kg)</label>
+                            <input type="number" step="0.25" data-name="equipmentWeightKg"
+                                   th:name="|exercises[${exStat.index}].equipmentWeightKg|" th:value="${ex.equipmentWeightKg}"
+                                   class="form-control form-control-sm num">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label form-label-sm">Počet zátěží</label>
+                            <select data-name="equipmentCount" th:name="|exercises[${exStat.index}].equipmentCount|"
+                                    class="form-select form-select-sm equipment-count">
+                                <option value="1" th:selected="${ex.equipmentCount != 2}">1 zátěž</option>
+                                <option value="2" th:selected="${ex.equipmentCount == 2}">2 zátěže současně</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 equipment-second" th:style="${ex.equipmentCount == 2} ? '' : 'display:none'">
+                            <label class="form-label form-label-sm">2. zátěž (kg)</label>
+                            <input type="number" step="0.25" data-name="equipmentSecondWeightKg"
+                                   th:name="|exercises[${exStat.index}].equipmentSecondWeightKg|" th:value="${ex.equipmentSecondWeightKg}"
+                                   class="form-control form-control-sm num">
                         </div>
                     </div>
 
@@ -580,6 +615,30 @@
                                data-name="tagIds" th:value="${tag.id}">
                         <label class="form-check-label small" th:text="${tag.name}">Tag</label>
                     </div>
+                </div>
+            </div>
+
+            <!-- Phase 11 (A14): náčiní (v template — JS doplní name index) -->
+            <div class="row g-2 mt-3 align-items-end equipment-block">
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm" style="font-weight:600;">Náčiní</label>
+                    <input type="text" list="equipmentOptionsList" data-name="equipmentName"
+                           class="form-control form-control-sm" placeholder="vyber nebo napiš vlastní">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label form-label-sm">Váha (kg)</label>
+                    <input type="number" step="0.25" data-name="equipmentWeightKg" class="form-control form-control-sm num">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label form-label-sm">Počet zátěží</label>
+                    <select data-name="equipmentCount" class="form-select form-select-sm equipment-count">
+                        <option value="1">1 zátěž</option>
+                        <option value="2">2 zátěže současně</option>
+                    </select>
+                </div>
+                <div class="col-md-3 equipment-second" style="display:none">
+                    <label class="form-label form-label-sm">2. zátěž (kg)</label>
+                    <input type="number" step="0.25" data-name="equipmentSecondWeightKg" class="form-control form-control-sm num">
                 </div>
             </div>
 

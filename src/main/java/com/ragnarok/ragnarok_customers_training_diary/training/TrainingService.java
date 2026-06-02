@@ -36,6 +36,7 @@ public class TrainingService {
     private final ExerciseTypeConfigMapper typeConfigMapper;
     private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
     private final TrainingExerciseRepository exerciseRepository;
+    private final com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService;
 
     public TrainingService(
             TrainingRepository trainingRepository,
@@ -43,13 +44,15 @@ public class TrainingService {
             TrainingTagRepository tagRepository,
             ExerciseTypeConfigMapper typeConfigMapper,
             com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService,
-            TrainingExerciseRepository exerciseRepository) {
+            TrainingExerciseRepository exerciseRepository,
+            com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService) {
         this.trainingRepository = trainingRepository;
         this.catalogRepository = catalogRepository;
         this.tagRepository = tagRepository;
         this.typeConfigMapper = typeConfigMapper;
         this.emailService = emailService;
         this.exerciseRepository = exerciseRepository;
+        this.equipmentService = equipmentService;
     }
 
     // =============================================================================
@@ -135,6 +138,7 @@ public class TrainingService {
         applyTrainingFields(training, input);
         applyExercises(training, input.getExercises());
         applyTags(training, input.getTagIds(), owner);
+        persistCustomEquipment(owner, input);
 
         return trainingRepository.save(training);
     }
@@ -150,8 +154,20 @@ public class TrainingService {
         training.getExercises().clear();
         applyExercises(training, input.getExercises());
         applyTags(training, input.getTagIds(), owner);
+        persistCustomEquipment(owner, input);
 
         return trainingRepository.save(training);
+    }
+
+    /**
+     * Phase 11 (A14): pokud klient zadal nový název pomůcky, uloží se do jeho
+     * custom equipment options (pro příště).
+     */
+    private void persistCustomEquipment(AccountEntity owner, TrainingInput input) {
+        if (input.getExercises() == null) return;
+        for (TrainingExerciseInput ex : input.getExercises()) {
+            equipmentService.ensureExistsForUser(owner, ex.getEquipmentName());
+        }
     }
 
     public void delete(AccountEntity owner, Long trainingId) {
@@ -309,6 +325,11 @@ public class TrainingService {
             // Phase 11 (A2): zkopíruj per-exercise tagy zaměření
             exInput.setTagIds(sourceEx.getTags().stream().map(TrainingTagEntity::getId)
                     .collect(java.util.stream.Collectors.toSet()));
+            // Phase 11 (A14): zkopíruj náčiní
+            exInput.setEquipmentName(sourceEx.getEquipmentName());
+            exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
+            exInput.setEquipmentCount(sourceEx.getEquipmentCount());
+            exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
             // RPE klient vyplní sám
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();
@@ -457,6 +478,14 @@ public class TrainingService {
 
             // Phase 11 (A2): per-exercise tagy zaměření
             applyExerciseTags(exercise, exInput.getTagIds());
+
+            // Phase 11 (A14): náčiní
+            String eqName = exInput.getEquipmentName();
+            exercise.setEquipmentName(eqName != null && !eqName.isBlank() ? eqName.trim() : null);
+            exercise.setEquipmentWeightKg(exInput.getEquipmentWeightKg());
+            int eqCount = exInput.getEquipmentCount() != null ? exInput.getEquipmentCount() : 1;
+            exercise.setEquipmentCount(eqCount == 2 ? 2 : 1);
+            exercise.setEquipmentSecondWeightKg(eqCount == 2 ? exInput.getEquipmentSecondWeightKg() : null);
 
             training.addExercise(exercise);
         }

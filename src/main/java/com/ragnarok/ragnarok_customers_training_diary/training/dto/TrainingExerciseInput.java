@@ -40,6 +40,13 @@ public class TrainingExerciseInput {
     /** Phase 11 (A2): ID tagů zaměření přiřazených cviku. */
     private java.util.Set<Long> tagIds = new java.util.HashSet<>();
 
+    // --- Phase 11 (A14): náčiní/nářadí ---
+    @Size(max = 64)
+    private String equipmentName;
+    private java.math.BigDecimal equipmentWeightKg;
+    private Integer equipmentCount;
+    private java.math.BigDecimal equipmentSecondWeightKg;
+
     @Valid
     private List<SetInput> sets = new ArrayList<>();
 

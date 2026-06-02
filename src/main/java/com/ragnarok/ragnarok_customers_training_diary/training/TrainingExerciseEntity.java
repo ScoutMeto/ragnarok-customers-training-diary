@@ -83,6 +83,21 @@ public class TrainingExerciseEntity {
     @OrderBy("setIndex ASC")
     private List<ExerciseSetEntity> sets = new ArrayList<>();
 
+    // --- Phase 11 (A14): použité náčiní/nářadí ---
+    @Column(name = "equipment_name", length = 64)
+    private String equipmentName;
+
+    @Column(name = "equipment_weight_kg", precision = 7, scale = 2)
+    private java.math.BigDecimal equipmentWeightKg;
+
+    /** 1 = jedna zátěž, 2 = dvě zátěže současně (např. 2 kettlebelly). */
+    @Column(name = "equipment_count", nullable = false)
+    private int equipmentCount = 1;
+
+    /** Váha druhé zátěže (když count=2 a liší se od první). */
+    @Column(name = "equipment_second_weight_kg", precision = 7, scale = 2)
+    private java.math.BigDecimal equipmentSecondWeightKg;
+
     /** Phase 11 (A2): per-exercise tagy zaměření (sdílený pool s tréninkovými tagy). */
     @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
     @jakarta.persistence.JoinTable(

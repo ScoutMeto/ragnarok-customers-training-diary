@@ -47,6 +47,7 @@ public class DiaryPageController {
     private final TrainingTagService tagService;
     private final TrainingCommentService commentService;
     private final com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService;
+    private final com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
 
     public DiaryPageController(
@@ -55,12 +56,14 @@ public class DiaryPageController {
             TrainingTagService tagService,
             TrainingCommentService commentService,
             com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService,
+            com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService,
             com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
         this.commentService = commentService;
         this.accountService = accountService;
+        this.equipmentService = equipmentService;
         this.typeToInputMapper = typeToInputMapper;
     }
 
@@ -366,6 +369,7 @@ public class DiaryPageController {
         model.addAttribute("exerciseTypes", java.util.List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogItems", catalogService.listVisibleTo(user));
         model.addAttribute("tags", tagService.findVisibleTo(user));
+        model.addAttribute("equipmentOptions", equipmentService.listVisibleTo(user));
     }
 
     /**
@@ -392,6 +396,10 @@ public class DiaryPageController {
             ei.setRpe(ex.getRpe());
             ei.setNotes(ex.getNotes());
             ei.setTagIds(ex.getTags().stream().map(t -> t.getId()).collect(Collectors.toSet()));
+            ei.setEquipmentName(ex.getEquipmentName());
+            ei.setEquipmentWeightKg(ex.getEquipmentWeightKg());
+            ei.setEquipmentCount(ex.getEquipmentCount());
+            ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
             List<SetInput> setInputs = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());

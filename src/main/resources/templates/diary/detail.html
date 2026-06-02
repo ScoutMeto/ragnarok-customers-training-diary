@@ -148,6 +148,14 @@
                       th:text="${tag.name}">Core</span>
             </div>
 
+            <!-- Phase 11 (A14): náčiní -->
+            <div th:if="${ex.equipmentName != null and !ex.equipmentName.isEmpty()}"
+                 class="text-muted" style="padding: 4px var(--sp-5) 0; font-size: var(--fs-sm);">
+                🏋️ <strong th:text="${ex.equipmentName}">Kettlebell</strong><span
+                  th:if="${ex.equipmentWeightKg != null}"> · <span class="num" th:text="${ex.equipmentWeightKg}">24</span> kg</span><span
+                  th:if="${ex.equipmentCount == 2}"> · 2 zátěže<span th:if="${ex.equipmentSecondWeightKg != null}"> (2. = <span class="num" th:text="${ex.equipmentSecondWeightKg}">20</span> kg)</span></span>
+            </div>
+
             <!-- EMOM -->
             <div th:if="${ex.emomConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong>EMOM</strong> ·
