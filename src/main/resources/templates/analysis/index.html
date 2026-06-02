@@ -118,6 +118,40 @@
         </div>
     </div>
 
+    <!-- Phase 15 (B1/B5): objem/série/reps podle zaměření cviků (per-exercise tagy) -->
+    <div class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__head">
+            <div class="rk-card__title">🎯 Objem podle zaměření cviků</div>
+        </div>
+        <div class="rk-card__body">
+            <p class="rk-help" style="margin-bottom: var(--sp-3);">
+                Vyber jedno či více zaměření (např. core + dolní část těla). Sečte cviky,
+                které mají alespoň jeden z vybraných tagů, za zvolené období.
+            </p>
+            <div id="tagStatChecks" class="d-flex flex-wrap gap-2" style="margin-bottom: var(--sp-4);">
+                <span class="text-muted" style="font-size: var(--fs-sm);">— načítám zaměření —</span>
+            </div>
+
+            <div id="tagStatResult" class="rk-stats-row" style="display: none;">
+                <div class="rk-kpi rk-kpi--accent">
+                    <div class="rk-kpi__label">Objem</div>
+                    <div class="rk-kpi__value"><span id="tagVolume">0</span><span class="rk-kpi__unit">kg</span></div>
+                </div>
+                <div class="rk-kpi">
+                    <div class="rk-kpi__label">Série</div>
+                    <div class="rk-kpi__value" id="tagSets">0</div>
+                </div>
+                <div class="rk-kpi">
+                    <div class="rk-kpi__label">Opakování</div>
+                    <div class="rk-kpi__value" id="tagReps">0</div>
+                </div>
+            </div>
+            <p id="tagStatEmpty" class="text-muted" style="font-size: var(--fs-sm); display: none;">
+                Pro vybrané zaměření a období nejsou žádná data.
+            </p>
+        </div>
+    </div>
+
     <!-- Body region + Movement pattern -->
     <div class="row g-3" style="margin-bottom: var(--sp-4);">
         <div class="col-md-6">
@@ -285,9 +319,61 @@
     }
 
     select.addEventListener('change', loadStats);
-    // Při kliku na "Načíst" (změna období) přepočti i tuhle sekci
+
+    // -------- Phase 15 (B1/B5): objem podle zaměření (per-exercise tagy) --------
+    const tagChecks = document.getElementById('tagStatChecks');
+    const tagResult = document.getElementById('tagStatResult');
+    const tagEmpty = document.getElementById('tagStatEmpty');
+
+    function selectedTagIds() {
+        return Array.from(tagChecks.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(c => c.value);
+    }
+
+    function loadTagStats() {
+        const ids = selectedTagIds();
+        if (ids.length === 0) { tagResult.style.display = 'none'; tagEmpty.style.display = 'none'; return; }
+        const p = currentPeriod();
+        const qs = ids.map(id => 'tagIds=' + encodeURIComponent(id)).join('&');
+        fetch(`/api/analysis/stats-by-tags?${qs}&from=${p.from}&to=${p.to}`, { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(s => {
+                const hasData = s && (s.totalSets > 0 || s.totalReps > 0);
+                if (!hasData) { tagResult.style.display = 'none'; tagEmpty.style.display = ''; return; }
+                const fmt = (v) => v != null ? parseFloat(v).toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) : '0';
+                document.getElementById('tagVolume').textContent = fmt(s.totalVolumeKg);
+                document.getElementById('tagSets').textContent = s.totalSets;
+                document.getElementById('tagReps').textContent = s.totalReps;
+                tagEmpty.style.display = 'none';
+                tagResult.style.display = '';
+            })
+            .catch(() => { tagResult.style.display = 'none'; tagEmpty.style.display = ''; });
+    }
+
+    if (tagChecks) {
+        fetch('/api/analysis/exercise-tags', { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : [])
+            .then(tags => {
+                if (!tags || tags.length === 0) {
+                    tagChecks.innerHTML = '<span class="text-muted" style="font-size:var(--fs-sm)">Zatím nemáš u cviků žádné tagy zaměření.</span>';
+                    return;
+                }
+                tagChecks.innerHTML = '';
+                tags.forEach(t => {
+                    const label = document.createElement('label');
+                    label.className = 'form-check form-check-inline m-0';
+                    label.innerHTML = '<input class="form-check-input" type="checkbox" value="' + t.id + '">'
+                        + '<span class="form-check-label small">' + t.name + '</span>';
+                    label.querySelector('input').addEventListener('change', loadTagStats);
+                    tagChecks.appendChild(label);
+                });
+            })
+            .catch(() => { tagChecks.innerHTML = '<span class="text-muted">chyba načítání</span>'; });
+    }
+
+    // Při kliku na "Načíst" (změna období) přepočti i tyhle sekce
     const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) refreshBtn.addEventListener('click', loadStats);
+    if (refreshBtn) refreshBtn.addEventListener('click', function () { loadStats(); loadTagStats(); });
 })();
 </script>
 

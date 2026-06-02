@@ -26,7 +26,7 @@
 | 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
 | 13 | Nové typy: StrongFirst ladder, Interval, KB sport time | ⏳ TODO | — |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
-| 15 | Rozšířené statistiky — per-cvik objem/série/reps/max (B2-B4,B7) | ✅ DONE (B1/B5 per-tag → po A2; filter v deníku → TODO) | na `develop` |
+| 15 | Rozšířené statistiky — per-cvik (B2-B4,B7) + per-tag objem/série/reps (B1,B5) | ✅ DONE (filter tréninků v deníku → TODO) | na `develop` |
 | 16 | Audit copy-to-private flow (skupinové → osobní) | ⏳ TODO | — |
 | 17 | Správa katalogu cviků (CRUD + per-user + system) | ✅ DONE (popisy 92 cviků → 17c TODO) | na `develop` |
 

@@ -70,6 +70,26 @@ public class AnalysisRestController {
         return service.exerciseStats(user, name, from, to);
     }
 
+    /** Phase 15 (B1/B5): per-exercise tagy použité klientem (pro multi-select). */
+    @GetMapping("/exercise-tags")
+    public List<TagOption> exerciseTags(@AuthenticationPrincipal AccountEntity user) {
+        return service.listUsedExerciseTags(user).stream()
+                .map(t -> new TagOption(t.getId(), t.getName()))
+                .toList();
+    }
+
+    /** Phase 15 (B1/B5): objem/série/reps pro cviky s vybranými tagy (OR). */
+    @GetMapping("/stats-by-tags")
+    public AnalysisService.ExerciseStats statsByTags(
+            @AuthenticationPrincipal AccountEntity user,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return service.statsByExerciseTags(user, tagIds, from, to);
+    }
+
+    public record TagOption(Long id, String name) {}
+
     @GetMapping("/sets-per-body-region")
     public List<AnalysisService.LabelValuePoint> setsPerBodyRegion(
             @AuthenticationPrincipal AccountEntity user,

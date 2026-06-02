@@ -116,6 +116,46 @@ class AnalysisSmokeTest {
         assertThat(stats.totalReps()).isZero();
     }
 
+    @Test
+    void statsByExerciseTags_aggregatesByTag_noDoubleCounting() {
+        // Vytvoř tag "Core" a přiřaď ho cviku v novém tréninku (2 sety: 10×10, 10×10)
+        var coreTag = new com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity();
+        coreTag.setName("Core");
+        coreTag.setColor("#888");
+        coreTag.setSystem(true);
+        coreTag = tagRepository.save(coreTag);
+
+        var input = new TrainingInput();
+        input.setTrainingDate(today);
+        input.setName("Tag test");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.FREEFORM);
+        ex.setCustomName("Plank rotace");
+        ex.setTagIds(java.util.Set.of(coreTag.getId()));
+        var s = new SetInput();
+        s.setWeightKg(new java.math.BigDecimal(10));
+        s.setReps(10);
+        ex.getSets().add(s);
+        input.getExercises().add(ex);
+        trainingService.create(alice, input);
+
+        var stats = analysisService.statsByExerciseTags(
+                alice, java.util.List.of(coreTag.getId()), today.minusDays(7), today);
+        // 1 set: 10×10 = 100, 1 série, 10 reps
+        assertThat(stats.totalVolumeKg().intValueExact()).isEqualTo(100);
+        assertThat(stats.totalSets()).isEqualTo(1);
+        assertThat(stats.totalReps()).isEqualTo(10);
+    }
+
+    @Test
+    void statsByExerciseTags_emptyTagList_returnsZero() {
+        var stats = analysisService.statsByExerciseTags(alice, java.util.List.of(), today.minusDays(7), today);
+        assertThat(stats.totalSets()).isZero();
+    }
+
+    @Autowired
+    private com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository tagRepository;
+
     // ---------- helpers ----------
 
     private AccountEntity createUser(String email, String firstName, AccountRole role) {

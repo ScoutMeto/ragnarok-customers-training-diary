@@ -158,6 +158,61 @@ public class AnalysisService {
                 r[4] != null ? toBigDecimal(r[4]) : null);
     }
 
+    /**
+     * Phase 15 (B1/B5): seznam per-exercise tagů, které klient použil u cviků
+     * (pro multi-select ve statistikách).
+     */
+    public List<com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity> listUsedExerciseTags(AccountEntity owner) {
+        @SuppressWarnings("unchecked")
+        List<com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity> tags = em.createQuery(
+                "SELECT DISTINCT tag FROM TrainingExerciseEntity e " +
+                "  JOIN e.training t " +
+                "  JOIN e.tags tag " +
+                "WHERE t.owner.id = :ownerId " +
+                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "ORDER BY tag.name ASC")
+                .setParameter("ownerId", owner.getId())
+                .getResultList();
+        return tags;
+    }
+
+    /**
+     * Phase 15 (B1/B5): objem/série/opakování pro cviky, které mají alespoň jeden
+     * z vybraných per-exercise tagů (OR semantika). EXISTS místo JOIN — cvik
+     * s víc matching tagy se počítá jen jednou (nedojde k duplikaci přes set).
+     */
+    public ExerciseStats statsByExerciseTags(AccountEntity owner, java.util.Collection<Long> tagIds,
+                                              LocalDate from, LocalDate to) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return new ExerciseStats(null, java.math.BigDecimal.ZERO, 0L, 0L, 0, null);
+        }
+        Object[] r = (Object[]) em.createQuery(
+                "SELECT COALESCE(SUM(s.weightKg * s.reps), 0), " +
+                "       COUNT(s), " +
+                "       COALESCE(SUM(s.reps), 0), " +
+                "       MAX(s.reps), " +
+                "       MAX(s.weightKg) " +
+                "FROM ExerciseSetEntity s " +
+                "  JOIN s.trainingExercise e " +
+                "  JOIN e.training t " +
+                "WHERE t.owner.id = :ownerId " +
+                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "  AND t.trainingDate BETWEEN :from AND :to " +
+                "  AND EXISTS (SELECT 1 FROM e.tags tg WHERE tg.id IN :tagIds)")
+                .setParameter("ownerId", owner.getId())
+                .setParameter("tagIds", tagIds)
+                .setParameter("from", from)
+                .setParameter("to", to)
+                .getSingleResult();
+        return new ExerciseStats(
+                null,
+                toBigDecimal(r[0]),
+                r[1] != null ? ((Number) r[1]).longValue() : 0L,
+                r[2] != null ? ((Number) r[2]).longValue() : 0L,
+                r[3] != null ? ((Number) r[3]).intValue() : 0,
+                r[4] != null ? toBigDecimal(r[4]) : null);
+    }
+
     /** Počet setů per body region. */
     public List<LabelValuePoint> setsPerBodyRegion(AccountEntity owner, LocalDate from, LocalDate to) {
         @SuppressWarnings("unchecked")
