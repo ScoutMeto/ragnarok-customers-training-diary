@@ -91,6 +91,20 @@ public class TrainingService {
         return exerciseRepository.findStarredForOwner(owner.getId());
     }
 
+    /** Phase 14/15 (B8): filtr vlastních tréninků podle tagu / cviku / vlaječky. */
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listMyTrainingsFiltered(AccountEntity owner, Long tagId,
+                                                        String exerciseName, boolean flaggedOnly) {
+        String name = (exerciseName != null && !exerciseName.isBlank()) ? exerciseName.trim() : null;
+        return trainingRepository.findFiltered(owner.getId(), tagId, name, flaggedOnly);
+    }
+
+    /** Distinct názvy cviků klienta (pro filtr dropdown). */
+    @Transactional(readOnly = true)
+    public List<String> listMyExerciseNames(AccountEntity owner) {
+        return exerciseRepository.findDistinctExerciseNames(owner.getId());
+    }
+
     // =============================================================================
     // Read
     // =============================================================================

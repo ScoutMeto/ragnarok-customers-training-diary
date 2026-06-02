@@ -20,4 +20,15 @@ public interface TrainingExerciseRepository extends JpaRepository<TrainingExerci
            "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
            "ORDER BY t.trainingDate DESC, e.orderIndex ASC")
     List<TrainingExerciseEntity> findStarredForOwner(@Param("ownerId") Long ownerId);
+
+    /** Phase 15/B8: distinct názvy cviků klienta (pro filtr dropdown v deníku). */
+    @Query("SELECT DISTINCT COALESCE(ci.name, e.customName) " +
+           "FROM TrainingExerciseEntity e " +
+           "  JOIN e.training t " +
+           "  LEFT JOIN e.catalogItem ci " +
+           "WHERE t.owner.id = :ownerId " +
+           "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+           "  AND COALESCE(ci.name, e.customName) IS NOT NULL " +
+           "ORDER BY COALESCE(ci.name, e.customName) ASC")
+    List<String> findDistinctExerciseNames(@Param("ownerId") Long ownerId);
 }

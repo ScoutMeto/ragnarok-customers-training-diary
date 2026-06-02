@@ -83,18 +83,63 @@
     </div>
 
     <!-- ==================== Moje tréninky ==================== -->
-    <div class="rk-section-head" th:if="${!trainings.isEmpty()}">
+    <div class="rk-section-head">
         <h2 style="font-size: var(--fs-h3);">📓 Moje tréninky</h2>
         <span class="meta"><span class="num" th:text="${trainings.size()}">42</span> záznamů</span>
     </div>
 
-    <div th:if="${trainings.isEmpty() and todayGroupTrainings.isEmpty()}" class="rk-empty rk-card">
+    <!-- Phase 14/15 (B8): filtr tréninků podle tagu / cviku / vlaječky -->
+    <form th:action="@{/diary}" method="get" class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <div class="rk-field">
+                        <label class="rk-label" for="filterTag">Zaměření / tag</label>
+                        <select id="filterTag" name="tagId" class="form-select">
+                            <option value="">— všechny —</option>
+                            <option th:each="t : ${filterTags}" th:value="${t.id}"
+                                    th:selected="${selectedTagId != null and selectedTagId == t.id}"
+                                    th:text="${t.name}">Tag</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="rk-field">
+                        <label class="rk-label" for="filterExercise">Cvik</label>
+                        <select id="filterExercise" name="exercise" class="form-select">
+                            <option value="">— všechny —</option>
+                            <option th:each="n : ${filterExercises}" th:value="${n}"
+                                    th:selected="${selectedExercise != null and selectedExercise == n}"
+                                    th:text="${n}">Cvik</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-check" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top: 8px;">
+                        <input type="checkbox" name="flagged" value="true" class="form-check-input"
+                               th:checked="${flaggedOnly}">
+                        <span class="small">🚩 jen označené</span>
+                    </label>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-accent btn-sm">Filtrovat</button>
+                    <a th:if="${filterActive}" th:href="@{/diary}" class="btn btn-ghost btn-sm">Zrušit</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <p th:if="${filterActive and trainings.isEmpty()}" class="text-muted" style="font-size: var(--fs-sm);">
+        Žádný trénink neodpovídá filtru. <a th:href="@{/diary}" style="color: var(--rk-primary); font-weight:600;">Zrušit filtr →</a>
+    </p>
+
+    <div th:if="${trainings.isEmpty() and todayGroupTrainings.isEmpty() and !filterActive}" class="rk-empty rk-card">
         <h3>Zatím nemáš žádný trénink</h3>
         <p>Začni s prvním záznamem do svého deníku — zaloguj cviky, sety, RPE.</p>
         <a th:href="@{/diary/new}" class="btn btn-accent">Začít první trénink</a>
     </div>
 
-    <div th:if="${trainings.isEmpty() and !todayGroupTrainings.isEmpty()}" class="text-muted"
+    <div th:if="${trainings.isEmpty() and !todayGroupTrainings.isEmpty() and !filterActive}" class="text-muted"
          style="font-size: var(--fs-sm);">
         Zatím nemáš žádný vlastní trénink. <a th:href="@{/diary/new}" style="color: var(--rk-primary); font-weight: 600;">Začít první →</a>
     </div>

@@ -4,10 +4,35 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> {
+
+    /**
+     * Phase 14/15 (B8): filtr vlastních tréninků podle tagu / názvu cviku / vlaječky.
+     * Tag matchuje na úrovni tréninku NEBO některého jeho cviku. Všechny filtry
+     * jsou volitelné (null/false = neaktivní).
+     */
+    @Query("""
+            SELECT DISTINCT t FROM TrainingEntity t
+              LEFT JOIN t.exercises e
+              LEFT JOIN e.catalogItem ci
+            WHERE t.owner.id = :ownerId
+              AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE
+              AND (:flaggedOnly = false OR t.flagged = true)
+              AND (:exerciseName IS NULL OR COALESCE(ci.name, e.customName) = :exerciseName)
+              AND (:tagId IS NULL
+                   OR EXISTS (SELECT 1 FROM t.tags tt WHERE tt.id = :tagId)
+                   OR EXISTS (SELECT 1 FROM t.exercises ex2 JOIN ex2.tags et WHERE et.id = :tagId))
+            ORDER BY t.trainingDate DESC, t.id DESC
+            """)
+    List<TrainingEntity> findFiltered(@Param("ownerId") Long ownerId,
+                                      @Param("tagId") Long tagId,
+                                      @Param("exerciseName") String exerciseName,
+                                      @Param("flaggedOnly") boolean flaggedOnly);
 
     // -----------------------------------------------------------------------------
     // PRIVATE — vlastní tréninky klienta

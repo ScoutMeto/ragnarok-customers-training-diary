@@ -76,9 +76,28 @@ public class DiaryPageController {
     }
 
     @GetMapping
-    public String list(@AuthenticationPrincipal AccountEntity user, Model model) {
-        List<TrainingEntity> trainings = trainingService.listMyTrainings(user);
+    public String list(@AuthenticationPrincipal AccountEntity user,
+                       @RequestParam(value = "tagId", required = false) Long tagId,
+                       @RequestParam(value = "exercise", required = false) String exercise,
+                       @RequestParam(value = "flagged", required = false, defaultValue = "false") boolean flagged,
+                       Model model) {
+        boolean filterActive = tagId != null
+                || (exercise != null && !exercise.isBlank())
+                || flagged;
+
+        List<TrainingEntity> trainings = filterActive
+                ? trainingService.listMyTrainingsFiltered(user, tagId, exercise, flagged)
+                : trainingService.listMyTrainings(user);
         model.addAttribute("trainings", trainings);
+        model.addAttribute("filterActive", filterActive);
+
+        // Phase 14/15 (B8): podklady pro filtr
+        model.addAttribute("filterTags", tagService.findVisibleTo(user));
+        model.addAttribute("filterExercises", trainingService.listMyExerciseNames(user));
+        model.addAttribute("selectedTagId", tagId);
+        model.addAttribute("selectedExercise", exercise);
+        model.addAttribute("flaggedOnly", flagged);
+
         boolean readOnly = isReadOnly(user);
         model.addAttribute("readOnly", readOnly);
         // Phase 10: deaktivovaný klient nevidí nabídky skupinových lekcí
