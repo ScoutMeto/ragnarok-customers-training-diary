@@ -138,10 +138,14 @@
                 </div>
             </div>
 
-            <div class="rk-ex__tags" th:if="${ex.catalogItem != null}">
-                <span th:if="${ex.catalogItem.bodyRegion != null}" class="rk-badge" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
-                <span th:if="${ex.catalogItem.movementPattern != null}" class="rk-badge" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
-                <span th:if="${ex.catalogItem.equipment != null}" class="rk-badge" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
+            <div class="rk-ex__tags" th:if="${ex.catalogItem != null or (ex.tags != null and !ex.tags.isEmpty())}">
+                <span th:if="${ex.catalogItem != null and ex.catalogItem.bodyRegion != null}" class="rk-badge" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
+                <span th:if="${ex.catalogItem != null and ex.catalogItem.movementPattern != null}" class="rk-badge" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
+                <span th:if="${ex.catalogItem != null and ex.catalogItem.equipment != null}" class="rk-badge" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
+                <!-- Phase 11 (A2): per-exercise tagy zaměření -->
+                <span th:each="tag : ${ex.tags}"
+                      th:class="|rk-tag rk-tag--${#strings.toLowerCase(tag.name).replace('_','-').replace(' ','-')}|"
+                      th:text="${tag.name}">Core</span>
             </div>
 
             <!-- EMOM -->

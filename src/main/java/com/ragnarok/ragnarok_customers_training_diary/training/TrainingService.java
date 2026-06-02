@@ -306,6 +306,9 @@ public class TrainingService {
             exInput.setCatalogItemId(sourceEx.getCatalogItem() != null ? sourceEx.getCatalogItem().getId() : null);
             exInput.setCustomName(sourceEx.getCustomName());
             exInput.setNotes(sourceEx.getNotes());
+            // Phase 11 (A2): zkopíruj per-exercise tagy zaměření
+            exInput.setTagIds(sourceEx.getTags().stream().map(TrainingTagEntity::getId)
+                    .collect(java.util.stream.Collectors.toSet()));
             // RPE klient vyplní sám
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();
@@ -452,8 +455,26 @@ public class TrainingService {
             // Per-type config (EMOM, Tabata, AMRAP, Circuit, ...). Bezpečné NO-OP pro FREEFORM.
             typeConfigMapper.apply(exercise, exInput);
 
+            // Phase 11 (A2): per-exercise tagy zaměření
+            applyExerciseTags(exercise, exInput.getTagIds());
+
             training.addExercise(exercise);
         }
+    }
+
+    /**
+     * Phase 11 (A2): přiřadí cviku tagy zaměření. Méně striktní než training-level
+     * (bez owner validace) — tag se používá jen v rámci tréninku, který už má
+     * ownership, a klient ve formuláři vidí jen svoje + system tagy.
+     */
+    private void applyExerciseTags(TrainingExerciseEntity exercise, Set<Long> tagIds) {
+        Set<TrainingTagEntity> resolved = new HashSet<>();
+        if (tagIds != null) {
+            for (Long tagId : tagIds) {
+                tagRepository.findById(tagId).ifPresent(resolved::add);
+            }
+        }
+        exercise.setTags(resolved);
     }
 
     private void applyTags(TrainingEntity training, Set<Long> tagIds, AccountEntity owner) {

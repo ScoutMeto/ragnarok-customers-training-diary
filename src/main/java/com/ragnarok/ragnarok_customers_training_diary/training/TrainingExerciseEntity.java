@@ -83,6 +83,15 @@ public class TrainingExerciseEntity {
     @OrderBy("setIndex ASC")
     private List<ExerciseSetEntity> sets = new ArrayList<>();
 
+    /** Phase 11 (A2): per-exercise tagy zaměření (sdílený pool s tréninkovými tagy). */
+    @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.JoinTable(
+            name = "training_exercise_tag_link",
+            joinColumns = @jakarta.persistence.JoinColumn(name = "training_exercise_id"),
+            inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "tag_id")
+    )
+    private java.util.Set<com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity> tags = new java.util.HashSet<>();
+
     // --- Per-type konfigurace (OneToOne přes shared PK).
     // V daný okamžik je pro cvik vyplněna jen jedna config (podle type).
     // Cascade ALL + orphanRemoval — když se vymění typ, stará config se smaže.

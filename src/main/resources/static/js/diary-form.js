@@ -63,6 +63,11 @@
                 if (el) el.name = 'exercises[' + idx + '].' + fieldName;
             });
 
+            // Phase 11 (A2): per-exercise tag checkboxy (víc elementů se stejným name)
+            card.querySelectorAll('[data-name="tagIds"]').forEach(el => {
+                el.name = 'exercises[' + idx + '].tagIds';
+            });
+
             // Per-type config fields (data-name="emom.totalMinutes", "tabata.rounds", ...)
             card.querySelectorAll('[data-name]').forEach(el => {
                 const dn = el.getAttribute('data-name');

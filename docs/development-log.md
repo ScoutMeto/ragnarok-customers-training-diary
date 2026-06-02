@@ -22,7 +22,7 @@
 | 7.2 | Rezervace: cancel + moje rezervace + historie | ⏳ TODO (vyžaduje admin přístup do rez. systému) | — |
 | **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
 | 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
-| 11 | Per-exercise tagy + equipment override + CARDIO/CORE typy | ⏳ TODO | — |
+| 11 | Per-exercise tagy (A2) + CARDIO/CORE typy (A1) hotové; equipment override (A14) → TODO | 🔶 ČÁSTEČNĚ | na `develop` |
 | 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
 | 13 | Nové typy: StrongFirst ladder, Interval, KB sport time | ⏳ TODO | — |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |

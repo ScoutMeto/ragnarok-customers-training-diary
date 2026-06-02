@@ -213,6 +213,7 @@ public class AdminTrainingTemplateController {
             ei.setCustomName(ex.getCustomName());
             ei.setRpe(ex.getRpe());
             ei.setNotes(ex.getNotes());
+            ei.setTagIds(ex.getTags().stream().map(t -> t.getId()).collect(Collectors.toSet()));
             List<SetInput> sets = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());

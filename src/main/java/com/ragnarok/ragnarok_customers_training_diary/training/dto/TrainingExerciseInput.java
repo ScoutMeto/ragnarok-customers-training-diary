@@ -37,6 +37,9 @@ public class TrainingExerciseInput {
 
     private String notes;
 
+    /** Phase 11 (A2): ID tagů zaměření přiřazených cviku. */
+    private java.util.Set<Long> tagIds = new java.util.HashSet<>();
+
     @Valid
     private List<SetInput> sets = new ArrayList<>();
 
