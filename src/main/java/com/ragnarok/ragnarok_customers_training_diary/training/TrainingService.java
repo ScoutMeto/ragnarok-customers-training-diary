@@ -422,6 +422,14 @@ public class TrainingService {
             exInput.setCustomName(sourceEx.getCustomName());
             exInput.setRpe(sourceEx.getRpe());
             exInput.setNotes(sourceEx.getNotes());
+            // Phase 11 (A2): per-exercise tagy zaměření
+            exInput.setTagIds(sourceEx.getTags().stream().map(TrainingTagEntity::getId)
+                    .collect(java.util.stream.Collectors.toSet()));
+            // Phase 11 (A14): náčiní
+            exInput.setEquipmentName(sourceEx.getEquipmentName());
+            exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
+            exInput.setEquipmentCount(sourceEx.getEquipmentCount());
+            exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
             // Sety (přenes prázdné jako šablona - klient si je doplní)
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();

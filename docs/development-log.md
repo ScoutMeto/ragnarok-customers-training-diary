@@ -27,7 +27,7 @@
 | 13 | Nové typy: Interval (A11) + StrongFirst ladder (A10) + KB sport time (A12) | ✅ DONE (KB sport zadávání detailních intervalů UI → follow-up) | na `develop` |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (B1-B5,B7) + filter tréninků v deníku (B8) | ✅ DONE | na `develop` |
-| 16 | Audit copy-to-private flow (skupinové → osobní) | ⏳ TODO | — |
+| 16 | Audit copy-to-private flow (skupinové → osobní) | ✅ DONE | na `develop` |
 | 17 | Správa katalogu cviků (CRUD + per-user + system) | ✅ DONE (popisy 92 cviků → 17c TODO) | na `develop` |
 
 **Branching strategie (od Fáze 2):**
