@@ -217,6 +217,28 @@
                 <span th:if="${ex.strongFirstLadderConfig.unilateral}">· L/P zvlášť</span>
             </div>
 
+            <!-- KB sport time (Phase 13 A12) -->
+            <div th:if="${ex.kbSportConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>KB sport</strong> ·
+                <span class="num" th:text="${ex.kbSportConfig.totalSeconds / 60}">10</span>:<span class="num" th:text="${#strings.replace(#numbers.formatInteger(ex.kbSportConfig.totalSeconds % 60, 2), ' ', '0')}">00</span>&nbsp;min
+                <span th:if="${ex.kbSportConfig.totalReps != null}">· <b class="num" th:text="${ex.kbSportConfig.totalReps}">80</b> opakování</span>
+                <span th:if="${ex.kbSportConfig.weightKg != null}">· <b class="num" th:text="${ex.kbSportConfig.weightKg}">24</b> kg</span>
+                <span th:if="${ex.kbSportConfig.unilateral}">· unilaterální (L/P)</span>
+                <span th:if="${ex.kbSportConfig.splitIntervalSeconds != null}">· rozděleno po <span class="num" th:text="${ex.kbSportConfig.splitIntervalSeconds}">60</span>&nbsp;s</span>
+            </div>
+            <table class="rk-series" th:if="${ex.kbSportConfig != null and !ex.kbSportConfig.intervals.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Interval</th><th>Opakování</th><th>Strana</th><th>Pozn.</th></tr></thead>
+                <tbody>
+                <tr th:each="iv : ${ex.kbSportConfig.intervals}">
+                    <td th:text="${iv.intervalIndex + 1}">1</td>
+                    <td th:text="${iv.reps} ?: '—'">20</td>
+                    <td th:text="${iv.side} ?: '—'">L</td>
+                    <td th:text="${iv.note} ?: ''"></td>
+                </tr>
+                </tbody>
+            </table>
+
             <!-- Composite (Superset / Complex) -->
             <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong th:text="${ex.type}">SUPERSET</strong> ·

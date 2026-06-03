@@ -32,6 +32,9 @@ public enum TrainingExerciseType {
     /** StrongFirst žebřík — Phase 13 (A10): 1,2,...,ladderHeight reps + pauza, opakuj v cyklech. */
     STRONGFIRST_LADDER,
 
+    /** KB sport time — Phase 13 (A12): počet opakování za čas + volitelný split na intervaly + L/P. */
+    KB_SPORT_TIME,
+
     /** Kardio cvik (běh, veslo, kolo…) — Phase 11 (A1). Zatím bez speciálního configu. */
     CARDIO,
 

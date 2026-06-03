@@ -49,6 +49,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setStraightSetsConfig(null);
         exercise.setIntervalConfig(null);
         exercise.setStrongFirstLadderConfig(null);
+        exercise.setKbSportConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -63,8 +64,53 @@ public class ExerciseTypeConfigMapper {
             case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
             case INTERVAL -> applyInterval(exercise, input.getInterval());
             case STRONGFIRST_LADDER -> applyStrongFirstLadder(exercise, input.getStrongFirstLadder());
+            case KB_SPORT_TIME -> applyKbSport(exercise, input.getKbSport());
             case FREEFORM, CARDIO, CORE -> { /* žádný extra config — jen set tabulka */ }
         }
+    }
+
+    private void applyKbSport(TrainingExerciseEntity exercise,
+                              com.ragnarok.ragnarok_customers_training_diary.training.dto.KbSportConfigInput in) {
+        if (in == null) return;
+        int min = in.getTotalMinutes() != null ? in.getTotalMinutes() : 0;
+        int sec = in.getTotalSeconds() != null ? in.getTotalSeconds() : 0;
+        int total = min * 60 + sec;
+        if (total <= 0) return;
+
+        var cfg = new com.ragnarok.ragnarok_customers_training_diary.training.types.kbsport.KbSportConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setTotalSeconds(total);
+        cfg.setTotalReps(in.getTotalReps());
+        Integer split = in.getSplitIntervalSeconds();
+        cfg.setSplitIntervalSeconds(split != null && split > 0 ? split : null);
+        cfg.setWeightKg(in.getWeightKg());
+        cfg.setUnilateral(in.isUnilateral());
+        cfg.setNotes(in.getNotes());
+
+        if (in.getIntervals() != null) {
+            int idx = 0;
+            for (var ii : in.getIntervals()) {
+                boolean empty = ii.getReps() == null
+                        && (ii.getNote() == null || ii.getNote().isBlank())
+                        && (ii.getSide() == null || ii.getSide().isBlank());
+                if (empty) continue;
+                var interval = new com.ragnarok.ragnarok_customers_training_diary.training.types.kbsport.KbSportIntervalEntity();
+                interval.setKbSportConfig(cfg);
+                interval.setIntervalIndex(ii.getIntervalIndex() != null ? ii.getIntervalIndex() : idx);
+                interval.setReps(ii.getReps());
+                interval.setSide(normalizeSide(ii.getSide()));
+                interval.setNote(ii.getNote());
+                cfg.getIntervals().add(interval);
+                idx++;
+            }
+        }
+        exercise.setKbSportConfig(cfg);
+    }
+
+    private String normalizeSide(String side) {
+        if (side == null || side.isBlank()) return null;
+        String s = side.trim().toUpperCase();
+        return (s.equals("L") || s.equals("P")) ? s : null;
     }
 
     private void applyStrongFirstLadder(TrainingExerciseEntity exercise,

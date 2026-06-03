@@ -83,6 +83,10 @@ public class TrainingExerciseInput {
     @Valid
     private StrongFirstLadderConfigInput strongFirstLadder;
 
+    /** Phase 13 (A12): KB sport time. */
+    @Valid
+    private KbSportConfigInput kbSport;
+
     /**
      * Validuje XOR mezi {@code catalogItemId} a {@code customName} — exactly one set.
      */

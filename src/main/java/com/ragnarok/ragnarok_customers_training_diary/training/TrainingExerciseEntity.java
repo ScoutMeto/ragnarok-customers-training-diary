@@ -143,6 +143,10 @@ public class TrainingExerciseEntity {
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private com.ragnarok.ragnarok_customers_training_diary.training.types.strongfirst.StrongFirstLadderConfigEntity strongFirstLadderConfig;
 
+    /** Phase 13 (A12): KB sport time. */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private com.ragnarok.ragnarok_customers_training_diary.training.types.kbsport.KbSportConfigEntity kbSportConfig;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {

@@ -24,7 +24,7 @@
 | 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
 | 11 | Per-exercise tagy (A2) + CARDIO/CORE typy (A1) + equipment override (A14) | ✅ DONE | na `develop` |
 | 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
-| 13 | Nové typy: Interval (A11) + StrongFirst ladder (A10) hotové; KB sport time (A12) → TODO | 🔶 ČÁSTEČNĚ | na `develop` |
+| 13 | Nové typy: Interval (A11) + StrongFirst ladder (A10) + KB sport time (A12) | ✅ DONE (KB sport zadávání detailních intervalů UI → follow-up) | na `develop` |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (B1-B5,B7) + filter tréninků v deníku (B8) | ✅ DONE | na `develop` |
 | 16 | Audit copy-to-private flow (skupinové → osobní) | ⏳ TODO | — |

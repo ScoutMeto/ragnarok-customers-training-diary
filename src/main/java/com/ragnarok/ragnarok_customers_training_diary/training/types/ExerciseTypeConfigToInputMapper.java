@@ -74,6 +74,27 @@ public class ExerciseTypeConfigToInputMapper {
             in.setNotes(e.getNotes());
             input.setStrongFirstLadder(in);
         }
+        if (ex.getKbSportConfig() != null) {
+            var e = ex.getKbSportConfig();
+            var in = new com.ragnarok.ragnarok_customers_training_diary.training.dto.KbSportConfigInput();
+            int total = e.getTotalSeconds() != null ? e.getTotalSeconds() : 0;
+            in.setTotalMinutes(total / 60);
+            in.setTotalSeconds(total % 60);
+            in.setTotalReps(e.getTotalReps());
+            in.setSplitIntervalSeconds(e.getSplitIntervalSeconds());
+            in.setWeightKg(e.getWeightKg());
+            in.setUnilateral(e.isUnilateral());
+            in.setNotes(e.getNotes());
+            for (var iv : e.getIntervals()) {
+                var ii = new com.ragnarok.ragnarok_customers_training_diary.training.dto.KbSportConfigInput.IntervalInput();
+                ii.setIntervalIndex(iv.getIntervalIndex());
+                ii.setReps(iv.getReps());
+                ii.setSide(iv.getSide());
+                ii.setNote(iv.getNote());
+                in.getIntervals().add(ii);
+            }
+            input.setKbSport(in);
+        }
     }
 
     private StraightSetsConfigInput toStraightSetsInput(StraightSetsConfigEntity e) {
