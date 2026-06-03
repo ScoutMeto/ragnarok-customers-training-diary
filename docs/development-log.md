@@ -405,14 +405,14 @@ jiné reps/váha) je **odložen**. Důvody:
 
 ## 🚨 Open issues / blockers / TODO
 
-- [ ] **Admin formuláře jsou zastaralé duplikáty** (`admin/group-trainings/form.html`,
-  `admin/templates/form.html`, ~500 řádků každý). Jsou na PŘED-Phase-11/12 markupu:
-  - circuit/composite kroky pevné (strop 8/6), bez dynamického přidávání ani katalog dropdownu (A6/A7)
-  - chybí per-exercise tagy (A2) a náčiní (A14)
-  - chybí A8 (skrytí redundantního pojmenování) i „set tabulka jen pro FREEFORM" (A6)
-  - Sdílí `diary-form.js`, ale ten je díky null-guardům **nerozbije** (jen tam nové funkce neaplikuje).
-  - **Doporučení:** vytáhnout editor cviků do sdíleného Thymeleaf fragmentu a použít
-    v diary/form.html i obou admin formech (DRY). Vyžaduje vizuální review → samostatná session.
+- [x] ~~**Admin formuláře jsou zastaralé duplikáty**~~ **VYŘEŠENO 2026-06-03** — editor cviků
+  vytažen do sdíleného fragmentu `fragments/exercise-editor.html` (fragmenty `editor` + `scripts`),
+  použit v diary/form, admin/group-trainings/form i admin/templates/form. Všechny tři teď mají
+  Phase 11/12 funkce (dynamické kroky, katalog dropdown, per-exercise tagy/náčiní, A8). Ověřeno
+  E2E v prohlížeči + DB (superset uložen v klientském deníku i admin skupinovém tréninku).
+  ⚠️ **Gotcha:** fragment se NESMÍ jmenovat `body` — Thymeleaf selektor `:: body` matchne HTML
+  element `<body>` (obal fragment souboru), ne `th:fragment="body"`, a vrátí celý soubor 2×.
+  Přejmenováno na `editor`.
 - [ ] **A3 — per-round actual záznam** (circuit): odložen, viz Fáze 12. Potřebuje UX rozhodnutí.
 - [ ] **17c** — popisy zbývajících ~80 cviků (čeká na schválení formátu 10 vzorků od ScoutMeta).
 - [ ] **KB sport** — UI pro zadávání detailních intervalů (backend + detail hotové; viz Fáze 13).

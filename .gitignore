@@ -36,3 +36,6 @@ build/
 src/main/resources/application-local.properties
 .env
 .env.local
+
+# Claude Code lokální nástroje (machine-specific, např. launch.json s absolutní cestou)
+.claude/
