@@ -50,4 +50,9 @@ public class CircuitConfigEntity {
     @OneToMany(mappedBy = "circuitConfig", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("roundIndex ASC")
     private List<CircuitRoundRestEntity> roundRests = new ArrayList<>();
+
+    /** Phase 12 / A3: skutečný záznam po kolech (kolo × krok). */
+    @OneToMany(mappedBy = "circuitConfig", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("roundIndex ASC, stepOrder ASC")
+    private List<CircuitRoundEntryEntity> roundEntries = new ArrayList<>();
 }

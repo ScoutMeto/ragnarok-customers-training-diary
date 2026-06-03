@@ -85,6 +85,49 @@ public class TrainingService {
         return ex.isStarred();
     }
 
+    /**
+     * Phase 12 / A3: uloží skutečný záznam circuitu po kolech (kolo × krok).
+     * Nahradí stávající záznamy danými (jen ty s daty). Ownership přes vlastníka tréninku.
+     */
+    @Transactional
+    public void saveCircuitRoundLog(AccountEntity owner, Long exerciseId,
+            List<com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitRoundLogInput.EntryInput> entries) {
+        TrainingExerciseEntity ex = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NotFoundException("Cvik (id=" + exerciseId + ") nenalezen."));
+        TrainingEntity training = ex.getTraining();
+        if (training == null || training.getOwner() == null
+                || !training.getOwner().getId().equals(owner.getId())) {
+            throw new com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException(
+                    "Tento cvik nepatří tobě.");
+        }
+        var cfg = ex.getCircuitConfig();
+        if (cfg == null) {
+            throw new IllegalArgumentException("Cvik není typu Circuit.");
+        }
+
+        // replace-all: vyhoď staré (orphanRemoval), přidej nové s daty
+        cfg.getRoundEntries().clear();
+        if (entries != null) {
+            for (var in : entries) {
+                if (in == null || in.getRoundIndex() == null || in.getStepOrder() == null || !in.hasData()) {
+                    continue;
+                }
+                var e = new com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundEntryEntity();
+                e.setCircuitConfig(cfg);
+                e.setRoundIndex(in.getRoundIndex());
+                e.setStepOrder(in.getStepOrder());
+                e.setSkipped(in.isSkipped());
+                String sub = in.getSubstituteName();
+                e.setSubstituteName(sub != null && !sub.isBlank() ? sub.trim() : null);
+                e.setActualReps(in.getActualReps());
+                e.setActualWeightKg(in.getActualWeightKg());
+                String note = in.getNote();
+                e.setNote(note != null && !note.isBlank() ? note.trim() : null);
+                cfg.getRoundEntries().add(e);
+            }
+        }
+    }
+
     /** Označené (korunkou) cviky vlastníka — pro sekci ve statistikách. */
     @Transactional(readOnly = true)
     public List<TrainingExerciseEntity> listStarredExercises(AccountEntity owner) {

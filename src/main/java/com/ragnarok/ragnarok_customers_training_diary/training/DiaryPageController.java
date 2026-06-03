@@ -125,7 +125,27 @@ public class DiaryPageController {
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("isGroup", isGroup);
         model.addAttribute("readOnly", isReadOnly(user));
+        // Phase 12 / A3: lookup mapa skutečného záznamu circuitu, klíč "exId-round-step"
+        model.addAttribute("circuitLog", buildCircuitLogMap(training));
         return "diary/detail";
+    }
+
+    /**
+     * Phase 12 / A3: mapa pro pre-fill skutečného záznamu circuitu.
+     * Klíč {@code "exId-roundIndex-stepOrder"} → záznam buňky.
+     */
+    private java.util.Map<String, com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundEntryEntity>
+            buildCircuitLogMap(TrainingEntity training) {
+        var map = new java.util.HashMap<String,
+                com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundEntryEntity>();
+        for (TrainingExerciseEntity ex : training.getExercises()) {
+            var cfg = ex.getCircuitConfig();
+            if (cfg == null) continue;
+            for (var e : cfg.getRoundEntries()) {
+                map.put(ex.getId() + "-" + e.getRoundIndex() + "-" + e.getStepOrder(), e);
+            }
+        }
+        return map;
     }
 
     /**
@@ -313,6 +333,27 @@ public class DiaryPageController {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
         return "redirect:/diary/" + id;
+    }
+
+    /** Phase 12 / A3: uložení skutečného záznamu circuitu po kolech. */
+    @PostMapping("/{id}/exercises/{exerciseId}/circuit-log")
+    public String saveCircuitLog(
+            @AuthenticationPrincipal AccountEntity user,
+            @PathVariable Long id,
+            @PathVariable Long exerciseId,
+            @ModelAttribute com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitRoundLogInput input,
+            RedirectAttributes flash) {
+        if (isReadOnly(user)) {
+            flash.addFlashAttribute("flashError", "Tvůj účet je neaktivní (jen náhled).");
+            return "redirect:/diary/" + id;
+        }
+        try {
+            trainingService.saveCircuitRoundLog(user, exerciseId, input.getEntries());
+            flash.addFlashAttribute("flashSuccess", "Záznam po kolech uložen.");
+        } catch (IllegalArgumentException | NotFoundException | ForbiddenException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/diary/" + id + "#ex-" + exerciseId;
     }
 
     // -----------------------------------------------------------------------------

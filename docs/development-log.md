@@ -23,7 +23,7 @@
 | **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
 | 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
 | 11 | Per-exercise tagy (A2) + CARDIO/CORE typy (A1) + equipment override (A14) | ✅ DONE | na `develop` |
-| 12 | Refactor typů: set tabulka jen FREEFORM (A6), composite+circuit bez limitu + katalog dropdown (A6/A7), A8 skrytí redundantního pojmenování | ✅ DONE (per-round actual záznam A3 → follow-up, viz níže) | na `develop` |
+| 12 | Refactor typů: set tabulka jen FREEFORM (A6), composite+circuit bez limitu + katalog dropdown (A6/A7), A8 skrytí redundantního pojmenování, per-round záznam circuitu (A3) | ✅ DONE | na `develop` |
 | 13 | Nové typy: Interval (A11) + StrongFirst ladder (A10) + KB sport time (A12) | ✅ DONE (KB sport zadávání detailních intervalů UI → follow-up) | na `develop` |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (B1-B5,B7) + filter tréninků v deníku (B8) | ✅ DONE | na `develop` |
@@ -393,15 +393,17 @@ upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
 - `Phase12FeaturesTest` (2): sety u FREEFORM persistují; u SUPERSET se sety zahodí
   a 8 kroků (nad starým stropem) se uloží. **114 testů zelených.**
 
-### ⏳ Follow-up — A3 (per-round actual záznam)
-Editovatelný záznam co se reálně odehrálo v každém kole (cvik vyřadit/nahradit,
-jiné reps/váha) je **odložen**. Důvody:
-- Vyžaduje UX rozhodnutí: logování patří spíš na **detail/po tréninku**, ne do create formu
-  (chicken-egg: kola i kroky se definují současně se záznamem).
-- Plný 2D grid (kola × kroky) s proměnným R i S je nejrizikovější form-binding v appce.
-- Potřebuje migraci (nová entita `circuit_round_entry`).
-
-→ Dodělat po konzultaci se ScoutMetem o tom, kde a jak chce per-round zapisovat.
+### ✅ A3 — per-round actual záznam circuitu (DONE 2026-06-03)
+Po rozhodnutí (ScoutMeto answers): **logování na detailu tréninku** (ne v create formu) +
+**plný grid kola × kroky**.
+- **V26** `circuit_round_entry` (circuit_config_id FK, round_index, step_order, skipped,
+  substitute_name, actual_reps, actual_weight_kg, note). INTEGER (ne SMALLINT) — blind-spot lesson.
+- `CircuitRoundEntryEntity` + `roundEntries` na `CircuitConfigEntity` (cascade/orphanRemoval).
+- `CircuitRoundLogInput` (plochý seznam buněk) + `TrainingService.saveCircuitRoundLog`
+  (replace-all, ukládá jen buňky s daty, ownership).
+- POST `/diary/{id}/exercises/{exId}/circuit-log`; editor na detailu (`<details>` per kolo,
+  vyřadit/nahradit/reps/kg), pre-fill přes `circuitLog` mapu v controlleru.
+- Ověřeno: V26 na PostgreSQL (správné typy), `Phase12FeaturesTest` + ostrý POST přes curl (DB-verified).
 
 ## 🚨 Open issues / blockers / TODO
 
@@ -413,7 +415,6 @@ jiné reps/váha) je **odložen**. Důvody:
   ⚠️ **Gotcha:** fragment se NESMÍ jmenovat `body` — Thymeleaf selektor `:: body` matchne HTML
   element `<body>` (obal fragment souboru), ne `th:fragment="body"`, a vrátí celý soubor 2×.
   Přejmenováno na `editor`.
-- [ ] **A3 — per-round actual záznam** (circuit): odložen, viz Fáze 12. Potřebuje UX rozhodnutí.
 - [ ] **17c** — popisy zbývajících ~80 cviků (čeká na schválení formátu 10 vzorků od ScoutMeta).
 - [ ] **KB sport** — UI pro zadávání detailních intervalů (backend + detail hotové; viz Fáze 13).
 - [ ] **Pushnout** `feature/phase-0-foundation` + `feature/phase-1-mvp-diary` na origin (kdy?)
