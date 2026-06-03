@@ -23,7 +23,7 @@
 | **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
 | 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
 | 11 | Per-exercise tagy (A2) + CARDIO/CORE typy (A1) + equipment override (A14) | ✅ DONE | na `develop` |
-| 12 | Refactor typů: set tabulka jen FREEFORM, composite bez limitu, circuit per-round záznam | ⏳ TODO | — |
+| 12 | Refactor typů: set tabulka jen FREEFORM (A6), composite+circuit bez limitu + katalog dropdown (A6/A7), A8 skrytí redundantního pojmenování | ✅ DONE (per-round actual záznam A3 → follow-up, viz níže) | na `develop` |
 | 13 | Nové typy: Interval (A11) + StrongFirst ladder (A10) + KB sport time (A12) | ✅ DONE (KB sport zadávání detailních intervalů UI → follow-up) | na `develop` |
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (B1-B5,B7) + filter tréninků v deníku (B8) | ✅ DONE | na `develop` |
@@ -371,6 +371,37 @@ upomínku klientům, kteří mají na zítra skupinový trénink. Per-account
 | Deploy | Railway (po Phase 0 zatím lokálně) |
 
 ---
+
+## ✅ Fáze 12 — Refactor typů cviků (DONE, 2026-06-03)
+
+**Cíl (ScoutMeto A6/A7/A8):** uklidit UI typovaných cviků.
+
+### Co bylo dodáno
+- **A6 — tabulka sérií jen pro FREEFORM:** Generická tabulka Váha/reps/RPE/pozn.
+  se zobrazuje jen u FREEFORM. Pro typované cviky (EMOM, Tabata, …) ji nahrazuje
+  per-type config. Backend sety mimo FREEFORM ignoruje (`applyExercises`).
+- **A6/A7 — composite + circuit bez limitu kroků:** Kroky superset/complex (dřív strop 6)
+  a circuit (dřív strop 8) jsou dynamické — `+ Přidat cvik` / `×`. Server-rendered kroky
+  + JS `<template>` (compositeStepTemplate, circuitStepTemplate), přečíslování v `renumberExercises`.
+- **Katalog dropdown v krocích:** Každý krok má `<select class="step-catalog-select">`,
+  výběr vyplní textový název kroku (denormalizovaně → **bez migrace**, žádný blind-spot risk).
+- **A8 — skrytí redundantního pojmenování:** U sdružených typů (SUPERSET/COMPLEX/CIRCUIT)
+  se horní „Cvik z katalogu / Vlastní název" skryje (`.naming-col`); doplní se zástupný
+  `customName` (Superset/Complex/Circuit) kvůli XOR constraintu.
+
+### Testy
+- `Phase12FeaturesTest` (2): sety u FREEFORM persistují; u SUPERSET se sety zahodí
+  a 8 kroků (nad starým stropem) se uloží. **114 testů zelených.**
+
+### ⏳ Follow-up — A3 (per-round actual záznam)
+Editovatelný záznam co se reálně odehrálo v každém kole (cvik vyřadit/nahradit,
+jiné reps/váha) je **odložen**. Důvody:
+- Vyžaduje UX rozhodnutí: logování patří spíš na **detail/po tréninku**, ne do create formu
+  (chicken-egg: kola i kroky se definují současně se záznamem).
+- Plný 2D grid (kola × kroky) s proměnným R i S je nejrizikovější form-binding v appce.
+- Potřebuje migraci (nová entita `circuit_round_entry`).
+
+→ Dodělat po konzultaci se ScoutMetem o tom, kde a jak chce per-round zapisovat.
 
 ## 🚨 Open issues / blockers / TODO
 
