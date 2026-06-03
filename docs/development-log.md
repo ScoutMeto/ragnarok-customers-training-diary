@@ -28,7 +28,7 @@
 | 14 | Korunka (favorite) + flag (per-trénink) | ✅ DONE (filter v deníku → Phase 15) | na `develop` |
 | 15 | Rozšířené statistiky (B1-B5,B7) + filter tréninků v deníku (B8) | ✅ DONE | na `develop` |
 | 16 | Audit copy-to-private flow (skupinové → osobní) | ✅ DONE | na `develop` |
-| 17 | Správa katalogu cviků (CRUD + per-user + system) | ✅ DONE (popisy 92 cviků → 17c TODO) | na `develop` |
+| 17 | Správa katalogu cviků (CRUD + per-user + system) | ✅ DONE (vč. 17c — popisy všech 92 cviků, V19 + V27) | na `develop` |
 
 **Branching strategie (od Fáze 2):**
 - `master` = stable releases (zatím prázdné, mergne se ze `develop` ručně při stabilizaci)
@@ -415,7 +415,9 @@ Po rozhodnutí (ScoutMeto answers): **logování na detailu tréninku** (ne v cr
   ⚠️ **Gotcha:** fragment se NESMÍ jmenovat `body` — Thymeleaf selektor `:: body` matchne HTML
   element `<body>` (obal fragment souboru), ne `th:fragment="body"`, a vrátí celý soubor 2×.
   Přejmenováno na `editor`.
-- [ ] **17c** — popisy zbývajících ~80 cviků (čeká na schválení formátu 10 vzorků od ScoutMeta).
+- [x] ~~**17c** — popisy cviků~~ **HOTOVO 2026-06-03** — V27 dopsala popisy zbývajících 72 cviků
+  (technika + cues + časté chyby + zapojené svaly), všech 92 systémových cviků má popis.
+  Pokud se Scoutovi něco nelíbí, doupraví si to přes /catalog (klient edituje vlastní katalog).
 - [ ] **KB sport** — UI pro zadávání detailních intervalů (backend + detail hotové; viz Fáze 13).
 - [ ] **Pushnout** `feature/phase-0-foundation` + `feature/phase-1-mvp-diary` na origin (kdy?)
 - [ ] **Mergnout** Fázi 0 + 1 do master po review kolegou
