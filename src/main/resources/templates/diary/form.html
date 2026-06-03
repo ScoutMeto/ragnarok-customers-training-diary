@@ -161,6 +161,7 @@
                         </div>
                     </div>
 
+                    <div class="freeform-sets">
                     <h6 class="mb-2">Série</h6>
                     <table class="table table-sm sets-table">
                         <thead>
@@ -208,6 +209,7 @@
                         </tbody>
                     </table>
                     <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
+                    </div>
 
                     <!-- Phase 11 (A2): per-exercise tagy zaměření -->
                     <div class="mt-3" th:if="${!tags.isEmpty()}">
@@ -643,6 +645,7 @@
                 </div>
             </div>
 
+            <div class="freeform-sets">
             <h6 class="mb-2">Série</h6>
             <table class="table table-sm sets-table">
                 <thead>
@@ -658,6 +661,7 @@
                 <tbody class="sets-tbody"></tbody>
             </table>
             <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
+            </div>
 
             <!-- Phase 11 (A2): per-exercise tagy zaměření (v template — JS doplní name index) -->
             <div class="mt-3" th:if="${!tags.isEmpty()}">

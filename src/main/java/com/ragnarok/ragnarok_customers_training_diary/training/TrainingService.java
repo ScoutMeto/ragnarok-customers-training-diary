@@ -475,8 +475,11 @@ public class TrainingService {
                 exercise.setCustomName(exInput.getCustomName());
             }
 
+            // Phase 12 (A6): tabulka sérií (Váha/reps/RPE/pozn.) má smysl jen pro FREEFORM;
+            // pro typované cviky drží data per-type config, takže sety ignorujeme.
             int setIdx = 0;
             for (SetInput setInput : exInput.getSets()) {
+                if (exInput.getType() != TrainingExerciseType.FREEFORM) break;
                 if (isSetEmpty(setInput)) continue;
                 ExerciseSetEntity set = new ExerciseSetEntity();
                 set.setSetIndex(setIdx++);

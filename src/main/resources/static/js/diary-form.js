@@ -48,6 +48,12 @@
             const isMatch = div.classList.contains('type-' + selected.toLowerCase());
             div.style.display = isMatch ? '' : 'none';
         });
+        // Phase 12 (A6): tabulka sérií (Váha/reps/RPE/pozn.) jen pro FREEFORM —
+        // pro typované cviky ji nahrazuje per-type config.
+        const setsBlock = exerciseCard.querySelector('.freeform-sets');
+        if (setsBlock) {
+            setsBlock.style.display = (selected === 'FREEFORM') ? '' : 'none';
+        }
     }
 
     function renumberExercises() {
