@@ -125,7 +125,7 @@
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-7">
+                        <div class="col-md-7 naming-col">
                             <label class="form-label">Cvik z katalogu</label>
                             <select th:name="|exercises[${exStat.index}].catalogItemId|"
                                     th:value="${ex.catalogItemId}"
@@ -138,7 +138,7 @@
                             </select>
                             <div class="form-text">Nebo zadej vlastní název níže.</div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-5 naming-col">
                             <label class="form-label">Vlastní název</label>
                             <input type="text" th:name="|exercises[${exStat.index}].customName|"
                                    th:value="${ex.customName}"
@@ -520,18 +520,23 @@
                             <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].composite.notes|" th:value="${ex.composite?.notes}" class="form-control form-control-sm"></div>
                         </div>
                         <table class="table table-sm">
-                            <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th></tr></thead>
-                            <tbody>
-                            <tr th:each="i : ${#numbers.sequence(0, 5)}">
-                                <td th:text="${i + 1}">1</td>
-                                <td><input type="text" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].name|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).name : ''}" class="form-control form-control-sm"></td>
-                                <td><input type="number" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].reps|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).reps : ''}" class="form-control form-control-sm"></td>
-                                <td><input type="number" step="0.25" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].weightKg|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).weightKg : ''}" class="form-control form-control-sm"></td>
-                                <td><input type="number" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].restAfterSeconds|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).restAfterSeconds : ''}" class="form-control form-control-sm"></td>
-                                <td><input type="text" th:name="|exercises[${exStat.index}].composite.steps[__${i}__].note|" th:value="${ex.composite?.steps != null and ex.composite.steps.size() > i ? ex.composite.steps.get(i).note : ''}" class="form-control form-control-sm"></td>
+                            <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th><th style="width:40px"></th></tr></thead>
+                            <tbody class="composite-steps-tbody">
+                            <tr th:each="s, sStat : ${ex.composite?.steps}" class="composite-step-row">
+                                <td class="step-num" th:text="${sStat.count}">1</td>
+                                <td>
+                                    <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
+                                    <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+                                </td>
+                                <td><input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm"></td>
+                                <td><input type="number" step="0.25" data-step-field="weightKg" th:value="${s.weightKg}" class="form-control form-control-sm"></td>
+                                <td><input type="number" data-step-field="restAfterSeconds" th:value="${s.restAfterSeconds}" class="form-control form-control-sm"></td>
+                                <td><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></td>
+                                <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
                             </tr>
                             </tbody>
                         </table>
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-composite-step">+ Přidat cvik</button>
                     </div>
 
                     <!-- =============== AMRAP config =============== -->
@@ -624,14 +629,14 @@
             </div>
 
             <div class="row g-3 mb-3">
-                <div class="col-md-7">
+                <div class="col-md-7 naming-col">
                     <label class="form-label">Cvik z katalogu</label>
                     <select data-name="catalogItemId" class="form-select catalog-select">
                         <option value="">— vyber z katalogu —</option>
                     </select>
                     <div class="form-text">Nebo zadej vlastní název níže.</div>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-5 naming-col">
                     <label class="form-label">Vlastní název</label>
                     <input type="text" data-name="customName" class="form-control custom-name-input">
                 </div>
@@ -823,18 +828,10 @@
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="composite.notes" class="form-control form-control-sm"></div>
                 </div>
                 <table class="table table-sm">
-                    <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th></tr></thead>
-                    <tbody>
-                    <tr th:each="i : ${#numbers.sequence(0, 5)}">
-                        <td th:text="${i + 1}">1</td>
-                        <td><input type="text" th:attr="data-name='composite.steps[' + ${i} + '].name'" class="form-control form-control-sm"></td>
-                        <td><input type="number" th:attr="data-name='composite.steps[' + ${i} + '].reps'" class="form-control form-control-sm"></td>
-                        <td><input type="number" step="0.25" th:attr="data-name='composite.steps[' + ${i} + '].weightKg'" class="form-control form-control-sm"></td>
-                        <td><input type="number" th:attr="data-name='composite.steps[' + ${i} + '].restAfterSeconds'" class="form-control form-control-sm"></td>
-                        <td><input type="text" th:attr="data-name='composite.steps[' + ${i} + '].note'" class="form-control form-control-sm"></td>
-                    </tr>
-                    </tbody>
+                    <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th><th style="width:40px"></th></tr></thead>
+                    <tbody class="composite-steps-tbody"></tbody>
                 </table>
+                <button type="button" class="btn btn-sm btn-outline-secondary add-composite-step">+ Přidat cvik</button>
             </div>
             <div class="type-config type-amrap mt-4" style="display:none">
                 <h6 class="mb-2">AMRAP schéma</h6>
@@ -859,6 +856,21 @@
         <td><input type="number" min="1" max="10" data-name="rpe" class="form-control form-control-sm"></td>
         <td><input type="text" data-name="note" class="form-control form-control-sm"></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger remove-set">×</button></td>
+    </tr>
+</template>
+
+<template id="compositeStepTemplate">
+    <tr class="composite-step-row">
+        <td class="step-num">N</td>
+        <td>
+            <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
+            <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+        </td>
+        <td><input type="number" data-step-field="reps" class="form-control form-control-sm"></td>
+        <td><input type="number" step="0.25" data-step-field="weightKg" class="form-control form-control-sm"></td>
+        <td><input type="number" data-step-field="restAfterSeconds" class="form-control form-control-sm"></td>
+        <td><input type="text" data-step-field="note" class="form-control form-control-sm"></td>
+        <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
     </tr>
 </template>
 
