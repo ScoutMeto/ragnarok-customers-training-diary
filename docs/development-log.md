@@ -405,6 +405,24 @@ Po rozhodnutí (ScoutMeto answers): **logování na detailu tréninku** (ne v cr
   vyřadit/nahradit/reps/kg), pre-fill přes `circuitLog` mapu v controlleru.
 - Ověřeno: V26 na PostgreSQL (správné typy), `Phase12FeaturesTest` + ostrý POST přes curl (DB-verified).
 
+## ✅ ScoutMeto feedback kolo 2 (2026-06-04)
+
+Detail + odpověď pro ScoutMeta: `docs/scoutmeto-feedback-round2.md`.
+
+- **Fáze 18 (kritické):** oprava editace tréninku + přidání 2.+ cviku — příčinou byla
+  serializace celé JPA entity katalogu do inline JS (Hibernate proxy → uťatá odpověď).
+  Fix = lehké `CatalogOption` DTO. Bonus: ucpaná bezpečnostní díra (únik `createdBy`→účet).
+- **Fáze 19a:** obtížnost = 3 řádky (spojené labely) místo 9. DB/statistiky beze změny.
+- **Fáze 19b:** notifikace — odebrán uvítací mail + připomínka skupinové; přidáno potvrzení
+  o vytvoření tréninku + upozornění na deaktivaci účtu (V29). Group-reminder cron disabled.
+- **Fáze 19c:** Nastavení → „Moje tagy" (create/delete přes /api/tags).
+- **Fáze 19d:** tagy „Unilaterální levá/pravá" (V28).
+- **Fáze 19e:** Nastavení → „Moje náčiní" (mazání vlastní pomůcky).
+
+**Zbývá (další kolo):** 20a/b admin katalog vlastní pohybový vzorec + náčiní · 20c admin
+„Deník/Statistiky uživatele" (výběr klienta) · 21 trénink jako prostý text. Otázky na ScoutMeta
+viz feedback dokument.
+
 ## 🚨 Open issues / blockers / TODO
 
 - [x] ~~**Admin formuláře jsou zastaralé duplikáty**~~ **VYŘEŠENO 2026-06-03** — editor cviků
