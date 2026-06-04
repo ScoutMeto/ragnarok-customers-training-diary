@@ -42,6 +42,31 @@ public enum TrainingDifficulty {
     }
 
     /**
+     * Phase 19a (ScoutMeto): roleta obtížnosti se zobrazuje jako 3 řádky (jeden na úroveň),
+     * text = spojené labely dané úrovně. Hodnota = reprezentativní {@link TrainingDifficulty}
+     * (první v úrovni) — v DB i statistikách zůstává 3-úrovňové dělení beze změny.
+     */
+    public record Group(TrainingDifficulty representative, String label) {}
+
+    public static java.util.List<Group> groups() {
+        java.util.List<Group> result = new java.util.ArrayList<>();
+        for (Level lvl : Level.values()) {
+            TrainingDifficulty rep = null;
+            java.util.List<String> labels = new java.util.ArrayList<>();
+            for (TrainingDifficulty d : values()) {
+                if (d.level == lvl) {
+                    if (rep == null) rep = d;
+                    labels.add(d.label);
+                }
+            }
+            if (rep != null) {
+                result.add(new Group(rep, String.join(", ", labels)));
+            }
+        }
+        return result;
+    }
+
+    /**
      * Tři úrovně náročnosti pro agregaci ve statistikách. Label se používá
      * jako popisek sloupce v grafu „objem podle obtížnosti".
      */

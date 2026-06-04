@@ -168,7 +168,7 @@ public class AdminGroupTrainingController {
     // -----------------------------------------------------------------------------
 
     private void prepareFormModel(Model model) {
-        model.addAttribute("difficulties", TrainingDifficulty.values());
+        model.addAttribute("difficultyGroups", TrainingDifficulty.groups());
         model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogOptions", catalogService.allOptions());
         // Pro group trénink povolíme jen systémové tagy

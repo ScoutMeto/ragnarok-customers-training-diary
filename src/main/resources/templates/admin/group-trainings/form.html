@@ -56,9 +56,11 @@
                     </div>
                     <div class="col-md-3">
                         <label for="difficulty" class="form-label">Obtížnost</label>
-                        <select id="difficulty" th:field="*{difficulty}" class="form-select">
+                        <select id="difficulty" name="difficulty" class="form-select">
                             <option value="">—</option>
-                            <option th:each="d : ${difficulties}" th:value="${d}" th:text="${d.label}">Lehký trénink</option>
+                            <option th:each="g : ${difficultyGroups}" th:value="${g.representative}"
+                                    th:selected="${form.difficulty != null and form.difficulty.level == g.representative.level}"
+                                    th:text="${g.label}">Lehký trénink, Deload, Rychlost</option>
                         </select>
                     </div>
 

@@ -187,7 +187,7 @@ public class AdminTrainingTemplateController {
     // -----------------------------------------------------------------------------
 
     private void prepareFormModel(Model model) {
-        model.addAttribute("difficulties", TrainingDifficulty.values());
+        model.addAttribute("difficultyGroups", TrainingDifficulty.groups());
         model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogOptions", catalogService.allOptions());
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());

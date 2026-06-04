@@ -425,7 +425,7 @@ public class DiaryPageController {
 
     private void prepareFormModel(Model model, TrainingInput form, AccountEntity user) {
         model.addAttribute("form", form);
-        model.addAttribute("difficulties", TrainingDifficulty.values());
+        model.addAttribute("difficultyGroups", TrainingDifficulty.groups());
         model.addAttribute("exerciseTypes", java.util.List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogOptions", catalogService.optionsVisibleTo(user));
         model.addAttribute("tags", tagService.findVisibleTo(user));
