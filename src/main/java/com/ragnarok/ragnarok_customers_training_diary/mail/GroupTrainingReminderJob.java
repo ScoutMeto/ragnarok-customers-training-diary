@@ -38,10 +38,11 @@ public class GroupTrainingReminderJob {
     }
 
     /**
-     * Spouštěno dle cron expression v {@code ragnarok.mail.group-reminder-cron}
-     * (default {@code 0 0 18 * * *} = každý den v 18:00).
+     * Phase 19b (ScoutMeto): připomínka skupinového tréninku ZRUŠENA — default cron je
+     * "-" (Spring task disabled). Kód ponechán pro případ pozdějšího znovuzapnutí přes
+     * property {@code ragnarok.mail.group-reminder-cron}.
      */
-    @Scheduled(cron = "${ragnarok.mail.group-reminder-cron:0 0 18 * * *}")
+    @Scheduled(cron = "${ragnarok.mail.group-reminder-cron:-}")
     @Transactional(readOnly = true)
     public void sendTomorrowReminders() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);

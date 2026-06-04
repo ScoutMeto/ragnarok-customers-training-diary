@@ -40,10 +40,13 @@ public class AdminAccountController {
 
     private final AccountService accountService;
     private final TrainingService trainingService;
+    private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
 
-    public AdminAccountController(AccountService accountService, TrainingService trainingService) {
+    public AdminAccountController(AccountService accountService, TrainingService trainingService,
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
         this.accountService = accountService;
         this.trainingService = trainingService;
+        this.emailService = emailService;
     }
 
     @GetMapping
@@ -175,6 +178,8 @@ public class AdminAccountController {
     @PostMapping("/{id}/deactivate")
     public String deactivate(@PathVariable Long id, RedirectAttributes flash) {
         accountService.deactivate(id);
+        // Phase 19b: upozornění klientovi na deaktivaci (respektuje jeho preferenci)
+        emailService.sendAccountDeactivatedNotification(accountService.getById(id));
         flash.addFlashAttribute("flashSuccess",
                 "Účet deaktivován — klient má teď jen náhled (read-only).");
         return "redirect:/admin/accounts/" + id;

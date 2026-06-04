@@ -49,6 +49,7 @@ public class DiaryPageController {
     private final com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService;
     private final com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
+    private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
 
     public DiaryPageController(
             TrainingService trainingService,
@@ -57,7 +58,8 @@ public class DiaryPageController {
             TrainingCommentService commentService,
             com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService,
             com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService,
-            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
+            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper,
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
@@ -65,6 +67,7 @@ public class DiaryPageController {
         this.accountService = accountService;
         this.equipmentService = equipmentService;
         this.typeToInputMapper = typeToInputMapper;
+        this.emailService = emailService;
     }
 
     /**
@@ -215,6 +218,7 @@ public class DiaryPageController {
 
         try {
             TrainingEntity saved = trainingService.create(user, form);
+            emailService.sendTrainingCreatedNotification(user, saved.getName(), saved.getId());
             flash.addFlashAttribute("flashSuccess", "Trénink uložen.");
             return "redirect:/diary/" + saved.getId();
         } catch (IllegalArgumentException ex) {

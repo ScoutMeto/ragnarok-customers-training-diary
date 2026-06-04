@@ -88,7 +88,7 @@ public class EmailConfirmationService {
         account.setEmailConfirmationCodeExpiresAt(null);
         accountRepository.save(account);
 
-        emailService.sendWelcomeEmail(account);
+        // Phase 19b (ScoutMeto): uvítací mail po registraci zrušen.
         log.info("Email confirmed for account={}", email);
         return account;
     }

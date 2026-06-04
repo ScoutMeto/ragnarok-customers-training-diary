@@ -87,6 +87,14 @@ public class AccountEntity implements UserDetails {
     @Column(name = "notif_welcome", nullable = false)
     private boolean notifWelcome = true;
 
+    /** Phase 19b: potvrzení o vytvoření tréninku (klient si vytvořil trénink). */
+    @Column(name = "notif_training_created", nullable = false)
+    private boolean notifTrainingCreated = true;
+
+    /** Phase 19b: upozornění, že admin uvedl účet do neaktivního režimu. */
+    @Column(name = "notif_account_deactivated", nullable = false)
+    private boolean notifAccountDeactivated = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

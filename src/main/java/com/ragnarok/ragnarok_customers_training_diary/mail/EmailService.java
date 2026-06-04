@@ -158,6 +158,43 @@ public class EmailService {
     }
 
     // ============================================================================
+    // 6) Potvrzení o vytvoření tréninku (Phase 19b)
+    // ============================================================================
+
+    @Async
+    public void sendTrainingCreatedNotification(AccountEntity client, String trainingName, Long trainingId) {
+        if (!client.isNotifTrainingCreated()) return;
+        String subject = "Trénink uložen do deníku";
+        StringBuilder text = new StringBuilder();
+        text.append("Ahoj ").append(client.getFirstName()).append(",\n\n");
+        text.append("uložil(a) sis nový trénink");
+        if (trainingName != null && !trainingName.isBlank()) text.append(" „").append(trainingName).append("\"");
+        text.append(" do svého deníku.\n\n");
+        text.append("Otevři si ho: ").append(props.getBaseUrl()).append("/diary/").append(trainingId).append("\n\n");
+        text.append("Nechceš tyhle notifikace? Vypneš je v nastavení účtu.\n\n");
+        text.append("—\nRagnarok Training Diary");
+        send(client.getEmail(), subject, text.toString(), "training-created");
+    }
+
+    // ============================================================================
+    // 7) Deaktivace účtu adminem (Phase 19b)
+    // ============================================================================
+
+    @Async
+    public void sendAccountDeactivatedNotification(AccountEntity client) {
+        if (!client.isNotifAccountDeactivated()) return;
+        String subject = "Tvůj účet byl uveden do neaktivního režimu";
+        StringBuilder text = new StringBuilder();
+        text.append("Ahoj ").append(client.getFirstName()).append(",\n\n");
+        text.append("tvůj účet byl trenérem uveden do neaktivního (read-only) režimu. ");
+        text.append("Můžeš se i nadále přihlásit a prohlížet svoje záznamy, ale nelze přidávat ");
+        text.append("ani upravovat tréninky.\n\n");
+        text.append("Pokud je to omyl nebo máš dotaz, ozvi se trenérovi.\n\n");
+        text.append("—\nRagnarok Training Diary");
+        send(client.getEmail(), subject, text.toString(), "account-deactivated");
+    }
+
+    // ============================================================================
     // Low-level send
     // ============================================================================
 

@@ -88,16 +88,6 @@
                             <p class="rk-label" style="margin-bottom: var(--sp-3);">Notifikace na email</p>
                             <div class="rk-stack-2" style="font-size: var(--fs-sm);">
                                 <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
-                                    <input type="checkbox" th:field="*{notifGroupTrainingReminder}"
-                                           class="form-check-input" style="margin-top: 4px;">
-                                    <span>
-                                        <strong>Připomínka skupinového tréninku</strong>
-                                        <span class="text-muted" style="display:block; font-size: var(--fs-xs);">
-                                            Den předem mail, že zítra je trénink v gymu
-                                        </span>
-                                    </span>
-                                </label>
-                                <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
                                     <input type="checkbox" th:field="*{notifNewPlanAssigned}"
                                            class="form-check-input" style="margin-top: 4px;">
                                     <span>
@@ -114,16 +104,6 @@
                                         <strong>Nové komentáře</strong>
                                         <span class="text-muted" style="display:block; font-size: var(--fs-xs);">
                                             Když někdo okomentuje tvůj trénink
-                                        </span>
-                                    </span>
-                                </label>
-                                <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
-                                    <input type="checkbox" th:field="*{notifWelcome}"
-                                           class="form-check-input" style="margin-top: 4px;">
-                                    <span>
-                                        <strong>Uvítací mail po registraci</strong>
-                                        <span class="text-muted" style="display:block; font-size: var(--fs-xs);">
-                                            Krátký mail po potvrzení emailu
                                         </span>
                                     </span>
                                 </label>

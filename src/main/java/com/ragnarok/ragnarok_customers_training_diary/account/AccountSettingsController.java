@@ -34,18 +34,18 @@ public class AccountSettingsController {
     @Transactional
     public String updateNotifications(
             @AuthenticationPrincipal AccountEntity account,
-            @RequestParam(value = "notifGroupTrainingReminder", required = false) Boolean groupReminder,
             @RequestParam(value = "notifNewPlanAssigned", required = false) Boolean planAssigned,
             @RequestParam(value = "notifNewComment", required = false) Boolean newComment,
-            @RequestParam(value = "notifWelcome", required = false) Boolean welcome,
+            @RequestParam(value = "notifTrainingCreated", required = false) Boolean trainingCreated,
+            @RequestParam(value = "notifAccountDeactivated", required = false) Boolean accountDeactivated,
             RedirectAttributes redirectAttributes) {
 
         // HTML checkbox nezaslal = false. Nullable mapping → defaultně false.
         AccountEntity fresh = accountRepository.findById(account.getId()).orElseThrow();
-        fresh.setNotifGroupTrainingReminder(Boolean.TRUE.equals(groupReminder));
         fresh.setNotifNewPlanAssigned(Boolean.TRUE.equals(planAssigned));
         fresh.setNotifNewComment(Boolean.TRUE.equals(newComment));
-        fresh.setNotifWelcome(Boolean.TRUE.equals(welcome));
+        fresh.setNotifTrainingCreated(Boolean.TRUE.equals(trainingCreated));
+        fresh.setNotifAccountDeactivated(Boolean.TRUE.equals(accountDeactivated));
         accountRepository.save(fresh);
 
         redirectAttributes.addFlashAttribute("flashSuccess", "Nastavení notifikací uloženo.");

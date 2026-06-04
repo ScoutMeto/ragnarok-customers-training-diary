@@ -37,19 +37,6 @@
             <form th:action="@{/settings/notifications}" method="post" class="rk-stack-3">
                 <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
                               padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
-                    <input type="checkbox" name="notifGroupTrainingReminder" value="true"
-                           th:checked="${account.notifGroupTrainingReminder}"
-                           class="form-check-input" style="margin-top: 4px;">
-                    <span>
-                        <strong style="font-size: var(--fs-body);">Připomínka skupinového tréninku</strong>
-                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
-                            Každý večer v 18:00 mail, pokud zítra je v gymu skupinový trénink.
-                        </span>
-                    </span>
-                </label>
-
-                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
-                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
                     <input type="checkbox" name="notifNewPlanAssigned" value="true"
                            th:checked="${account.notifNewPlanAssigned}"
                            class="form-check-input" style="margin-top: 4px;">
@@ -76,13 +63,26 @@
 
                 <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
                               padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
-                    <input type="checkbox" name="notifWelcome" value="true"
-                           th:checked="${account.notifWelcome}"
+                    <input type="checkbox" name="notifTrainingCreated" value="true"
+                           th:checked="${account.notifTrainingCreated}"
                            class="form-check-input" style="margin-top: 4px;">
                     <span>
-                        <strong style="font-size: var(--fs-body);">Uvítací mail po registraci</strong>
+                        <strong style="font-size: var(--fs-body);">Potvrzení o vytvoření tréninku</strong>
                         <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
-                            Jednorázový welcome mail po potvrzení emailu (jen pro nové účty).
+                            Když si uložíš nový trénink do deníku, přijde ti potvrzovací mail.
+                        </span>
+                    </span>
+                </label>
+
+                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                              padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
+                    <input type="checkbox" name="notifAccountDeactivated" value="true"
+                           th:checked="${account.notifAccountDeactivated}"
+                           class="form-check-input" style="margin-top: 4px;">
+                    <span>
+                        <strong style="font-size: var(--fs-body);">Deaktivace účtu</strong>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                            Když trenér uvede tvůj účet do neaktivního (read-only) režimu.
                         </span>
                     </span>
                 </label>
