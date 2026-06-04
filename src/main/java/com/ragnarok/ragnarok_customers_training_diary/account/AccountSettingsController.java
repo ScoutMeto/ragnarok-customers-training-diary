@@ -17,9 +17,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AccountSettingsController {
 
     private final AccountRepository accountRepository;
+    private final com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService;
 
-    public AccountSettingsController(AccountRepository accountRepository) {
+    public AccountSettingsController(AccountRepository accountRepository,
+            com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService) {
         this.accountRepository = accountRepository;
+        this.equipmentService = equipmentService;
     }
 
     @GetMapping("/settings")
@@ -27,7 +30,24 @@ public class AccountSettingsController {
         // Načti čerstvý stav z DB (principal v session může být stale)
         AccountEntity fresh = accountRepository.findById(account.getId()).orElseThrow();
         model.addAttribute("account", fresh);
+        // Phase 19e: jen vlastní (custom) pomůcky — systémové smazat nelze
+        model.addAttribute("myEquipment", equipmentService.listVisibleTo(fresh).stream()
+                .filter(e -> !e.isSystem()).toList());
         return "account/settings";
+    }
+
+    /** Phase 19e: smazání vlastní pomůcky z nastavení. */
+    @PostMapping("/settings/equipment/{id}/delete")
+    public String deleteEquipment(@AuthenticationPrincipal AccountEntity account,
+            @org.springframework.web.bind.annotation.PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            equipmentService.deleteOwn(account, id);
+            redirectAttributes.addFlashAttribute("flashSuccess", "Pomůcka smazána.");
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/settings";
     }
 
     @PostMapping("/settings/notifications")
