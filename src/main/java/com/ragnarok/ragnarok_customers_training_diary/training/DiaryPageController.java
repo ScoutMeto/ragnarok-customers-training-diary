@@ -427,7 +427,7 @@ public class DiaryPageController {
         model.addAttribute("form", form);
         model.addAttribute("difficulties", TrainingDifficulty.values());
         model.addAttribute("exerciseTypes", java.util.List.of(TrainingExerciseType.values()));
-        model.addAttribute("catalogItems", catalogService.listVisibleTo(user));
+        model.addAttribute("catalogOptions", catalogService.optionsVisibleTo(user));
         model.addAttribute("tags", tagService.findVisibleTo(user));
         model.addAttribute("equipmentOptions", equipmentService.listVisibleTo(user));
     }

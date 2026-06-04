@@ -170,7 +170,7 @@ public class AdminGroupTrainingController {
     private void prepareFormModel(Model model) {
         model.addAttribute("difficulties", TrainingDifficulty.values());
         model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
-        model.addAttribute("catalogItems", catalogService.listAll());
+        model.addAttribute("catalogOptions", catalogService.allOptions());
         // Pro group trénink povolíme jen systémové tagy
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());
     }

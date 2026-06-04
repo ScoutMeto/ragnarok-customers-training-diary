@@ -189,7 +189,7 @@ public class AdminTrainingTemplateController {
     private void prepareFormModel(Model model) {
         model.addAttribute("difficulties", TrainingDifficulty.values());
         model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
-        model.addAttribute("catalogItems", catalogService.listAll());
+        model.addAttribute("catalogOptions", catalogService.allOptions());
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());
     }
 

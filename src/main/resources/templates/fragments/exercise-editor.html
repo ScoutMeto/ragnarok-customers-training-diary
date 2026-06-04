@@ -35,7 +35,7 @@
                                     th:value="${ex.catalogItemId}"
                                     class="form-select catalog-select">
                                 <option value="">— vyber z katalogu —</option>
-                                <option th:each="ci : ${catalogItems}"
+                                <option th:each="ci : ${catalogOptions}"
                                         th:value="${ci.id}"
                                         th:selected="${ex.catalogItemId == ci.id}"
                                         th:text="${ci.name} + ' (' + ${ci.equipment} + ')'">Cvik</option>
@@ -762,8 +762,8 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     // Předáme JS data o katalogu pro klonovaný dropdown
-    window.__catalogItems = /*[[${catalogItems}]]*/ [];
-    window.__catalogItems = window.__catalogItems.map(ci => ({ id: ci.id, name: ci.name, equipment: ci.equipment }));
+    // Phase 18: lehké DTO (id/name/equipment), NE celá entita — viz CatalogOption.
+    window.__catalogItems = /*[[${catalogOptions}]]*/ [];
     // Předáme seznam typů cviků pro klonovaný type-select
     window.__exerciseTypes = /*[[${exerciseTypes}]]*/ [];
     window.__exerciseTypes = window.__exerciseTypes.map(t => String(t));

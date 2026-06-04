@@ -41,6 +41,19 @@ public class ExerciseCatalogService {
         return repository.findVisibleTo(user.getId());
     }
 
+    /**
+     * Phase 18: lehké {@link CatalogOption} pro formuláře (select + inline JS).
+     * Nikdy neserializujeme celé entity do inline JS (Hibernate proxy / únik dat).
+     */
+    public List<CatalogOption> optionsVisibleTo(AccountEntity user) {
+        return repository.findVisibleTo(user.getId()).stream().map(CatalogOption::from).toList();
+    }
+
+    /** Phase 18: lehké {@link CatalogOption} pro všechny aktivní cviky (admin formuláře). */
+    public List<CatalogOption> allOptions() {
+        return repository.findByActiveTrueOrderByNameAsc().stream().map(CatalogOption::from).toList();
+    }
+
     public List<ExerciseCatalogItemEntity> search(String query) {
         if (query == null || query.isBlank()) {
             return listAll();
