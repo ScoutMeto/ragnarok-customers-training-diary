@@ -274,6 +274,12 @@ Když píšeš setter call, použij `entity.setSystem(true)`, ne `setIsSystem`.
 `spring.thymeleaf.cache=false` v lokálním profilu, ale **statické soubory (CSS, JS)** se
 cachují agresivně browserem. Pro vývoj používej Ctrl+F5 (hard refresh).
 
+### ⚠️ `th:each` proměnná NESMÍ být SpEL operátor (`eq`, `ne`, `lt`, `gt`, `le`, `ge`, `or`, `and`, `not`, `div`, `mod`)
+`th:each="eq : ${list}"` vyhodí za běhu `IllegalArgumentException: Iteration variable cannot be null`,
+protože `eq` je textový SpEL operátor (= rovnost). Render se **uťne uprostřed** → zbytek stránky
+(včetně `<script>` na konci) se neodešle → vypadá to jako úplně jiný bug (mrtvé tlačítko, prázdný
+seznam). Použij neutrální název (`item`, `equip`, `ex`, ...). Stálo to hodinu debugu v Phase 19 retestu.
+
 ### Postgres `user` je reserved keyword
 Proto je tabulka `account`, ne `user` — historicky byla `user`, opraveno v Fázi 0.
 
