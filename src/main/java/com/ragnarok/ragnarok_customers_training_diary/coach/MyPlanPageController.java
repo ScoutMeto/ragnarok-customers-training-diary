@@ -25,10 +25,13 @@ public class MyPlanPageController {
 
     private final CoachPlanService coachPlanService;
     private final MarkdownRenderer markdown;
+    private final TextPlanService textPlanService;
 
-    public MyPlanPageController(CoachPlanService coachPlanService, MarkdownRenderer markdown) {
+    public MyPlanPageController(CoachPlanService coachPlanService, MarkdownRenderer markdown,
+            TextPlanService textPlanService) {
         this.coachPlanService = coachPlanService;
         this.markdown = markdown;
+        this.textPlanService = textPlanService;
     }
 
     @GetMapping("/my-plan")
@@ -40,6 +43,8 @@ public class MyPlanPageController {
         if (active.isPresent()) {
             model.addAttribute("activeBodyHtml", markdown.renderToHtml(active.get().getBodyMarkdown()));
         }
+        // Phase 21: textové plány (editovatelné kopie od trenéra)
+        model.addAttribute("textPlans", textPlanService.listForUser(user.getId()));
         return "coach/my-plan";
     }
 
@@ -51,5 +56,29 @@ public class MyPlanPageController {
         model.addAttribute("plan", plan);
         model.addAttribute("bodyHtml", markdown.renderToHtml(plan.getBodyMarkdown()));
         return "coach/plan-detail";
+    }
+
+    // ----- Phase 21: textový plán (view + edit vlastní kopie) -----
+
+    @GetMapping("/my-plan/text/{id}")
+    public String showTextPlan(@AuthenticationPrincipal AccountEntity user,
+                               @PathVariable Long id, Model model) {
+        model.addAttribute("plan", textPlanService.getForUser(user, id));
+        return "coach/text-plan-detail";
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/my-plan/text/{id}")
+    public String saveTextPlan(@AuthenticationPrincipal AccountEntity user,
+                               @PathVariable Long id,
+                               @org.springframework.web.bind.annotation.RequestParam("title") String title,
+                               @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                               org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
+        try {
+            textPlanService.updateOwnCopy(user, id, title, body);
+            flash.addFlashAttribute("flashSuccess", "Plán uložen.");
+        } catch (RuntimeException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/my-plan/text/" + id;
     }
 }

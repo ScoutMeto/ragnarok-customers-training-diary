@@ -21,10 +21,14 @@
                 PRIVATE trénink v jeho deníku s odkazem na zdrojovou šablonu.
             </p>
         </div>
-        <div class="rk-page__actions">
+        <div class="rk-page__actions" style="display:flex; gap:8px; flex-wrap:wrap;">
             <a th:href="@{/admin/training-templates/new}" class="btn btn-accent btn-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
                 Nová šablona
+            </a>
+            <a th:href="@{/admin/text-plans}" class="btn btn-outline btn-icon" title="Prostý text — dlouhodobý plán, uživatel dostane editovatelnou kopii">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+                Nová šablona v textovém formátu
             </a>
         </div>
     </div>

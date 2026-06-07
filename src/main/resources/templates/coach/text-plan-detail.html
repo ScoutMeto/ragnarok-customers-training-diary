@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Můj plán')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('my-plan')}"></nav>
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <a th:href="@{/my-plan}">Můj plán</a><span class="sep">/</span>
+        <span class="current" th:text="${plan.title}">Plán</span>
+    </div>
+
+    <div class="rk-page__head"><div>
+        <h1 class="rk-page__title" th:text="${plan.title}">Plán</h1>
+        <p class="rk-page__sub">
+            Textový plán od trenéra · <span th:text="${#temporals.format(plan.createdAt, 'd. M. yyyy')}">datum</span>
+            · <span class="text-muted">tvoje kopie, můžeš ji upravit</span>
+        </p>
+    </div></div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}" class="alert alert-danger" th:text="${flashError}"></div>
+
+    <form th:action="@{/my-plan/text/{id}(id=${plan.id})}" method="post">
+        <div class="rk-card"><div class="rk-card__body">
+            <div class="rk-field" style="margin-bottom: var(--sp-4);">
+                <label class="rk-label" for="title">Název</label>
+                <input type="text" id="title" name="title" class="form-control" maxlength="128"
+                       th:value="${plan.title}" required>
+            </div>
+            <div class="rk-field">
+                <label class="rk-label" for="body">Text</label>
+                <textarea id="body" name="body" class="form-control" rows="20"
+                          style="font-family: monospace; white-space: pre;" th:text="${plan.body}"></textarea>
+            </div>
+        </div></div>
+        <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
+            <button type="submit" class="btn btn-accent btn-lg">Uložit změny</button>
+            <a th:href="@{/my-plan}" class="btn btn-outline btn-lg">Zpět</a>
+        </div>
+    </form>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

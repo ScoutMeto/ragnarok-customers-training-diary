@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Přiřadit textový plán')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('admin-templates')}"></nav>
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <span>Admin</span><span class="sep">/</span>
+        <a th:href="@{/admin/text-plans}">Textové šablony</a><span class="sep">/</span>
+        <span class="current">Přiřadit</span>
+    </div>
+
+    <div class="rk-page__head"><div>
+        <h1 class="rk-page__title">Přiřadit textový plán</h1>
+        <p class="rk-page__sub">Šablona „<strong th:text="${template.title}">název</strong>" → vznikne uživateli editovatelná kopie.</p>
+    </div></div>
+
+    <form th:action="@{/admin/text-plans/{id}/assign(id=${template.id})}" method="post">
+        <div class="rk-card"><div class="rk-card__body">
+            <div class="rk-field">
+                <label class="rk-label" for="clientId">Uživatel</label>
+                <select id="clientId" name="clientId" class="form-select" required>
+                    <option value="">— vyber uživatele —</option>
+                    <option th:each="c : ${clients}" th:value="${c.id}"
+                            th:text="${c.lastName + ' ' + c.firstName + ' (' + c.email + ')'}">Klient</option>
+                </select>
+            </div>
+        </div></div>
+        <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
+            <button type="submit" class="btn btn-accent btn-lg">Přiřadit</button>
+            <a th:href="@{/admin/text-plans}" class="btn btn-outline btn-lg">Zrušit</a>
+        </div>
+    </form>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
