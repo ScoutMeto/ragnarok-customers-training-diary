@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Výběr uživatele')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('admin')}"></nav>
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <span>Admin</span><span class="sep">/</span>
+        <span class="current" th:text="${next == 'analysis'} ? 'Statistiky uživatele' : 'Deník uživatele'">Deník uživatele</span>
+    </div>
+
+    <div class="rk-page__head"><div>
+        <h1 class="rk-page__title" th:text="${next == 'analysis'} ? 'Statistiky uživatele' : 'Deník uživatele'">Deník uživatele</h1>
+        <p class="rk-page__sub">Vyber uživatele, kterého chceš zobrazit. Uvidíš jeho data s plnými právy
+            (přidávat, upravovat, mazat) — stejně jako on. Návrat tlačítkem „Ukončit náhled".</p>
+    </div></div>
+
+    <div class="rk-card" th:if="${clients.isEmpty()}">
+        <div class="rk-card__body"><p class="text-muted" style="margin:0;">Žádní uživatelé.</p></div>
+    </div>
+
+    <div class="rk-card" th:each="c : ${clients}" style="margin-bottom: var(--sp-2);">
+        <a th:href="@{/admin/impersonate(username=${c.email}, next=${next})}" class="rk-card__body"
+           style="display:flex; justify-content:space-between; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+            <span>
+                <strong th:text="${c.lastName + ' ' + c.firstName}">Jméno</strong>
+                <span class="text-muted" style="display:block; font-size: var(--fs-sm);" th:text="${c.email}">email</span>
+            </span>
+            <span class="btn btn-accent btn-sm" th:text="${next == 'analysis'} ? 'Zobrazit statistiky →' : 'Zobrazit deník →'">Zobrazit →</span>
+        </a>
+    </div>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

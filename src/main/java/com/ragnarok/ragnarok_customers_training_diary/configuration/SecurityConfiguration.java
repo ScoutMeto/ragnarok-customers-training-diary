@@ -3,9 +3,12 @@ package com.ragnarok.ragnarok_customers_training_diary.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
@@ -23,8 +26,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class SecurityConfiguration {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SwitchUserFilter switchUserFilter) throws Exception {
         http
+                .addFilterAfter(switchUserFilter, AuthorizationFilter.class)
+                // /admin/impersonate je GET (CSRF se GETu netýká); /impersonate/exit povolíme
                 .csrf(csrf -> csrf.ignoringRequestMatchers(new AntPathRequestMatcher("/api/**")))
                 .authorizeHttpRequests(auth -> auth
                         // Statika a veřejné stránky
@@ -61,5 +66,25 @@ public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Phase 20c (ScoutMeto): impersonace — admin se „přepne" na uživatele a vidí jeho
+     * deník/statistiky s plnými právy (1:1, bez stopy). Po přepnutí přesměruje dle
+     * parametru {@code next} (diary/analysis). Návrat přes {@code /impersonate/exit}.
+     */
+    @Bean
+    public SwitchUserFilter switchUserFilter(UserDetailsService userDetailsService) {
+        SwitchUserFilter filter = new SwitchUserFilter();
+        filter.setUserDetailsService(userDetailsService);
+        // GET odkazy z pickeru → matchery na GET (default SwitchUserFilteru je POST)
+        filter.setSwitchUserMatcher(new AntPathRequestMatcher("/admin/impersonate", "GET"));
+        filter.setExitUserMatcher(new AntPathRequestMatcher("/impersonate/exit", "GET"));
+        filter.setSwitchFailureUrl("/admin/accounts?impersonateError");
+        filter.setSuccessHandler((request, response, authentication) -> {
+            String next = request.getParameter("next");
+            response.sendRedirect("analysis".equals(next) ? "/analysis" : "/diary");
+        });
+        return filter;
     }
 }

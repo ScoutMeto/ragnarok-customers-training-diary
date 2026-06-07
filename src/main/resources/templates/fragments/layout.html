@@ -40,6 +40,13 @@
 
 <!-- =============== NAVBAR =============== -->
 <nav th:fragment="navbar(active)" class="rk-nav">
+    <!-- Phase 20c: banner při impersonaci (admin prohlíží jako uživatel) -->
+    <div sec:authorize="hasRole('PREVIOUS_ADMINISTRATOR')"
+         style="background:#b3261e; color:#fff; padding:8px 16px; text-align:center; font-size:14px;">
+        👁 Prohlížíš jako uživatel <strong sec:authentication="principal.nickname">user</strong> —
+        máš jeho práva (přidávat, upravovat, mazat).
+        <a href="/impersonate/exit" style="color:#fff; text-decoration:underline; font-weight:600; margin-left:10px;">Ukončit náhled</a>
+    </div>
     <div class="rk-nav__inner">
         <button class="rk-nav__burger d-md-none" type="button"
                 data-bs-toggle="collapse" data-bs-target="#mobileNav"
@@ -58,10 +65,15 @@
         <div class="rk-nav__links d-none d-md-flex" sec:authorize="isAuthenticated()">
             <a class="rk-nav__link" th:href="@{/dashboard}"
                th:classappend="${active == 'dashboard'} ? ' active'">Dashboard</a>
-            <a class="rk-nav__link" th:href="@{/diary}"
+            <a class="rk-nav__link" th:href="@{/diary}" sec:authorize="!hasRole('ADMIN')"
                th:classappend="${active == 'diary'} ? ' active'">Můj deník</a>
-            <a class="rk-nav__link" th:href="@{/analysis}"
+            <a class="rk-nav__link" th:href="@{/analysis}" sec:authorize="!hasRole('ADMIN')"
                th:classappend="${active == 'analysis'} ? ' active'">Statistiky</a>
+            <!-- Phase 20c: admin místo vlastního deníku/statistik vybírá uživatele -->
+            <a class="rk-nav__link" th:href="@{/admin/impersonate-select(next='diary')}" sec:authorize="hasRole('ADMIN')"
+               th:classappend="${active == 'diary'} ? ' active'">Deník uživatele</a>
+            <a class="rk-nav__link" th:href="@{/admin/impersonate-select(next='analysis')}" sec:authorize="hasRole('ADMIN')"
+               th:classappend="${active == 'analysis'} ? ' active'">Statistiky uživatele</a>
             <a class="rk-nav__link" th:href="@{/catalog}"
                th:classappend="${active == 'catalog'} ? ' active'">Cviky</a>
             <a class="rk-nav__link" th:href="@{/reservations}"
@@ -112,8 +124,10 @@
     <div class="collapse rk-nav__mobile-wrap" id="mobileNav" sec:authorize="isAuthenticated()">
         <div class="rk-nav__mobile">
             <a class="rk-nav__link" th:href="@{/dashboard}">Dashboard</a>
-            <a class="rk-nav__link" th:href="@{/diary}">Můj deník</a>
-            <a class="rk-nav__link" th:href="@{/analysis}">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/diary}" sec:authorize="!hasRole('ADMIN')">Můj deník</a>
+            <a class="rk-nav__link" th:href="@{/analysis}" sec:authorize="!hasRole('ADMIN')">Statistiky</a>
+            <a class="rk-nav__link" th:href="@{/admin/impersonate-select(next='diary')}" sec:authorize="hasRole('ADMIN')">Deník uživatele</a>
+            <a class="rk-nav__link" th:href="@{/admin/impersonate-select(next='analysis')}" sec:authorize="hasRole('ADMIN')">Statistiky uživatele</a>
             <a class="rk-nav__link" th:href="@{/catalog}">Cviky</a>
             <a class="rk-nav__link" th:href="@{/reservations}" sec:authorize="!hasRole('ADMIN')">Rezervace</a>
             <a class="rk-nav__link" th:href="@{/my-plan}" sec:authorize="!hasRole('ADMIN')">Můj plán</a>
