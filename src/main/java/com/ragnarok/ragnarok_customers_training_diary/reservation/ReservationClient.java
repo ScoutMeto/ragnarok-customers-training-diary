@@ -137,4 +137,43 @@ public class ReservationClient {
             throw new ReservationException("Něco se pokazilo při komunikaci s rezervačním systémem.");
         }
     }
+
+    /**
+     * Phase 7.2: zruší rezervaci. Volá keyed endpoint
+     * {@code DELETE /api/cancelReservationForClient/{id}} se sdíleným klíčem v hlavičce X-Api-Key.
+     *
+     * @throws ReservationException při chybě
+     */
+    public void cancelReservation(Long reservationId) {
+        if (!properties.isEnabled()) {
+            throw new ReservationException("Rezervační systém je dočasně vypnutý.");
+        }
+        if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
+            throw new ReservationException("Zrušení rezervace není nakonfigurováno (chybí API klíč).");
+        }
+        try {
+            httpClient.delete()
+                    .uri("/api/cancelReservationForClient/{id}", reservationId)
+                    .header("X-Api-Key", properties.getApiKey())
+                    .retrieve()
+                    .toBodilessEntity();
+            log.info("[reservation] cancelled reservation_id={}", reservationId);
+        } catch (HttpStatusCodeException ex) {
+            HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+            log.warn("[reservation] cancelReservation HTTP {}: {}", status, ex.getResponseBodyAsString());
+            if (status == HttpStatus.FORBIDDEN) {
+                throw new ReservationException("Zrušení rezervace odmítnuto (neplatný klíč).");
+            }
+            if (status == HttpStatus.NOT_FOUND) {
+                throw new ReservationException("Rezervace už neexistuje.");
+            }
+            throw new ReservationException("Rezervační systém vrátil chybu " + status);
+        } catch (ResourceAccessException ex) {
+            log.warn("[reservation] cancelReservation network error: {}", ex.getMessage());
+            throw new ReservationException("Rezervační systém je nedostupný. Zkus to za chvíli.");
+        } catch (Exception ex) {
+            log.error("[reservation] cancelReservation unexpected error", ex);
+            throw new ReservationException("Něco se pokazilo při rušení rezervace.");
+        }
+    }
 }

@@ -82,4 +82,71 @@ public class ReservationService {
                 resp.reservationId(), account.getId(), trainingId);
         return resp.reservationId();
     }
+
+    // =============================================================================
+    // Phase 7.2: moje rezervace + historie + zrušení
+    // =============================================================================
+
+    /** Jedna „moje rezervace" pro UI. */
+    public record MyReservation(
+            Long reservationId,
+            Long trainingId,
+            String title,
+            LocalDateTime start,
+            LocalDateTime end,
+            int slots,
+            boolean past) {}
+
+    /**
+     * Moje rezervace v okně [dnes − {@code daysBack}, dnes + {@code daysAhead}].
+     * Páruje se podle jména + příjmení přihlášeného (rezervační systém v public
+     * odpovědi nevrací email). Vrací nadcházející i proběhlé (historie), chronologicky.
+     */
+    public List<MyReservation> listMyReservations(AccountEntity account, int daysBack, int daysAhead) {
+        if (account == null) {
+            return List.of();
+        }
+        LocalDate today = LocalDate.now();
+        LocalDateTime from = today.minusDays(daysBack).atStartOfDay();
+        LocalDateTime to = today.plusDays(daysAhead).atTime(23, 59);
+        LocalDateTime now = LocalDateTime.now();
+
+        String fn = safe(account.getFirstName());
+        String ln = safe(account.getLastName());
+
+        return client.listTrainings(from, to).stream()
+                .filter(t -> t.reservations() != null)
+                .flatMap(t -> t.reservations().stream()
+                        .filter(r -> fn.equalsIgnoreCase(safe(r.firstName()))
+                                && ln.equalsIgnoreCase(safe(r.secondName())))
+                        .map(r -> new MyReservation(
+                                r.reservationId(), t.trainingId(), t.title(), t.start(), t.end(),
+                                r.numberOfBookedEntries(),
+                                t.end() != null ? t.end().isBefore(now) : (t.start() != null && t.start().isBefore(now)))))
+                .sorted(Comparator.comparing(MyReservation::start,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    /**
+     * Zruší rezervaci přihlášeného klienta. Nejdřív ověří, že daná rezervace patří
+     * tomuto uživateli (objevuje se v jeho seznamu) — zabrání zrušení cizí rezervace.
+     */
+    public void cancelReservation(AccountEntity account, Long reservationId) {
+        if (account == null || reservationId == null) {
+            throw new ReservationException("Chybí údaje pro zrušení.");
+        }
+        boolean owned = listMyReservations(account, 365, 365).stream()
+                .anyMatch(r -> reservationId.equals(r.reservationId()));
+        if (!owned) {
+            throw new ReservationException("Tuto rezervaci nelze zrušit (nepatří ti, nebo už neexistuje).");
+        }
+        client.cancelReservation(reservationId);
+        log.info("[reservation] client account_id={} cancelled reservation_id={}",
+                account.getId(), reservationId);
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s.trim();
+    }
 }

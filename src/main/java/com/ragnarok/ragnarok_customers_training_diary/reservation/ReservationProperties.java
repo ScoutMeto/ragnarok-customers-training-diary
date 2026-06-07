@@ -22,6 +22,9 @@ public class ReservationProperties {
     /** Když {@code false}, klient nikdy nevolá rezervační API (užitečné v testech). */
     private boolean enabled = true;
 
+    /** Phase 7.2: sdílený klíč pro server-to-server cancel (hlavička X-Api-Key). */
+    private String apiKey = "";
+
     public String getBaseUrl() { return baseUrl; }
     public void setBaseUrl(String baseUrl) {
         // strip trailing slash
@@ -37,4 +40,7 @@ public class ReservationProperties {
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+    public String getApiKey() { return apiKey; }
+    public void setApiKey(String apiKey) { this.apiKey = apiKey; }
 }

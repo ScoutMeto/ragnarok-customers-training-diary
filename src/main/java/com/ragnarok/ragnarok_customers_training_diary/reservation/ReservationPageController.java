@@ -34,7 +34,25 @@ public class ReservationPageController {
         model.addAttribute("trainings", reservationService.listUpcomingTrainings(DAYS_AHEAD));
         model.addAttribute("daysAhead", DAYS_AHEAD);
         model.addAttribute("currentEmail", account != null ? account.getEmail() : null);
+        // Phase 7.2: moje rezervace — nadcházející + historie (párování dle jména)
+        var mine = reservationService.listMyReservations(account, 90, 60);
+        model.addAttribute("myUpcoming", mine.stream().filter(r -> !r.past()).toList());
+        model.addAttribute("myPast", mine.stream().filter(r -> r.past()).toList());
         return "reservations/list";
+    }
+
+    @PostMapping("/reservations/cancel")
+    public String cancelReservation(@AuthenticationPrincipal AccountEntity account,
+                                    @RequestParam("reservationId") Long reservationId,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            reservationService.cancelReservation(account, reservationId);
+            redirectAttributes.addFlashAttribute("flashSuccess", "Rezervace zrušena.");
+        } catch (ReservationException ex) {
+            log.warn("[reservation] cancel failed: {}", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashError", "Zrušení selhalo: " + ex.getMessage());
+        }
+        return "redirect:/reservations";
     }
 
     @PostMapping("/reservations/book")

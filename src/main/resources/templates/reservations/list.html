@@ -27,6 +27,44 @@
     <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
     <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
 
+    <!-- Phase 7.2: moje rezervace (nadcházející) + možnost zrušit -->
+    <div th:if="${myUpcoming != null and !myUpcoming.isEmpty()}" class="rk-card" style="margin-bottom: var(--sp-5);">
+        <div class="rk-card__head"><div class="rk-card__title">✅ Moje rezervace</div></div>
+        <div class="rk-card__body rk-stack-2">
+            <div th:each="r : ${myUpcoming}"
+                 style="display:flex; justify-content:space-between; align-items:center; gap:12px;
+                        border:1px solid var(--rk-border); border-radius: var(--rad-md); padding: var(--sp-3);">
+                <div>
+                    <strong th:text="${r.title}">Lekce</strong>
+                    <span class="text-muted" style="display:block; font-size: var(--fs-sm);">
+                        <span th:text="${r.start != null ? #temporals.format(r.start, 'EEEE d. M. yyyy HH:mm') : '—'}">termín</span>
+                        <span th:if="${r.slots > 1}"> · <span class="num" th:text="${r.slots}">1</span> míst</span>
+                    </span>
+                </div>
+                <form th:action="@{/reservations/cancel}" method="post"
+                      onsubmit="return confirm('Opravdu zrušit rezervaci?');">
+                    <input type="hidden" name="reservationId" th:value="${r.reservationId}">
+                    <button type="submit" class="btn btn-sm btn-danger-outline">Zrušit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 7.2: historie mých rezervací (proběhlé) -->
+    <details th:if="${myPast != null and !myPast.isEmpty()}" class="rk-card" style="margin-bottom: var(--sp-5);">
+        <summary class="rk-card__body" style="cursor:pointer; font-weight:600;">
+            Historie mých rezervací (<span class="num" th:text="${myPast.size()}">0</span>)
+        </summary>
+        <div class="rk-card__body rk-stack-2" style="padding-top:0;">
+            <div th:each="r : ${myPast}" class="text-muted"
+                 style="display:flex; justify-content:space-between; gap:12px; font-size: var(--fs-sm);
+                        border-top:1px solid var(--rk-border); padding-top: var(--sp-2);">
+                <span th:text="${r.title}">Lekce</span>
+                <span th:text="${r.start != null ? #temporals.format(r.start, 'd. M. yyyy HH:mm') : '—'}">termín</span>
+            </div>
+        </div>
+    </details>
+
     <div th:if="${trainings.isEmpty()}" class="rk-empty rk-card">
         <h3>Žádné nadcházející lekce</h3>
         <p>V rezervačním systému nejsou na nejbližší týden naplánované žádné lekce.</p>
