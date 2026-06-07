@@ -48,8 +48,15 @@
                             <label class="rk-label" for="movementPattern">Pohybový vzorec</label>
                             <select id="movementPattern" th:field="*{movementPattern}" class="form-select">
                                 <option value="">—</option>
-                                <option th:each="m : ${movementPatterns}" th:value="${m}" th:text="${m}">PUSH</option>
+                                <option th:each="mp : ${movementPatterns}" th:value="${mp.name}" th:text="${mp.name}">PUSH</option>
                             </select>
+                            <div class="catalog-attr-manage" data-kind="MOVEMENT_PATTERN" data-select="movementPattern">
+                                <div style="display:flex; gap:6px; margin-top:6px;">
+                                    <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní vzorec" maxlength="64">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
+                                </div>
+                                <div class="attr-custom-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -57,8 +64,15 @@
                             <label class="rk-label" for="equipment">Náčiní</label>
                             <select id="equipment" th:field="*{equipment}" class="form-select">
                                 <option value="">—</option>
-                                <option th:each="e : ${equipments}" th:value="${e}" th:text="${e}">KETTLEBELL</option>
+                                <option th:each="op : ${equipments}" th:value="${op.name}" th:text="${op.name}">KETTLEBELL</option>
                             </select>
+                            <div class="catalog-attr-manage" data-kind="EQUIPMENT" data-select="equipment">
+                                <div style="display:flex; gap:6px; margin-top:6px;">
+                                    <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní náčiní" maxlength="64">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
+                                </div>
+                                <div class="attr-custom-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -98,6 +112,67 @@
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: scripts}"></div>
+
+<!-- Phase 20a/b: správa rozšiřitelného číselníku (pohybový vzorec, náčiní) přes /api/catalog-options -->
+<script>
+(function () {
+    document.querySelectorAll('.catalog-attr-manage').forEach(function (box) {
+        const kind = box.getAttribute('data-kind');
+        const select = document.getElementById(box.getAttribute('data-select'));
+        const input = box.querySelector('.attr-new');
+        const addBtn = box.querySelector('.attr-add');
+        const list = box.querySelector('.attr-custom-list');
+
+        function rebuild(options) {
+            const current = select.value;
+            // ponech prázdnou volbu, zbytek přegeneruj
+            select.innerHTML = '<option value="">—</option>';
+            list.innerHTML = '';
+            options.forEach(function (o) {
+                const opt = document.createElement('option');
+                opt.value = o.name; opt.textContent = o.name;
+                select.appendChild(opt);
+                if (!o.system) {
+                    const chip = document.createElement('span');
+                    chip.style.cssText = 'display:inline-flex; align-items:center; gap:4px; border:1px solid var(--rk-border); border-radius:999px; padding:2px 8px; font-size:12px;';
+                    chip.appendChild(document.createTextNode(o.name));
+                    const x = document.createElement('button');
+                    x.type = 'button'; x.textContent = '−'; x.title = 'Smazat hodnotu';
+                    x.style.cssText = 'background:none; border:none; cursor:pointer; line-height:1; color:var(--rk-danger);';
+                    x.addEventListener('click', function () { del(o.id); });
+                    chip.appendChild(x);
+                    list.appendChild(chip);
+                }
+            });
+            // obnov vybranou hodnotu (i kdyby to byla vlastní)
+            if (current && !Array.prototype.some.call(select.options, o => o.value === current)) {
+                const opt = document.createElement('option');
+                opt.value = current; opt.textContent = current; select.appendChild(opt);
+            }
+            select.value = current;
+        }
+
+        function load() {
+            fetch('/api/catalog-options?kind=' + kind)
+                .then(r => r.json()).then(rebuild).catch(()=>{});
+        }
+        function add() {
+            const name = (input.value || '').trim();
+            if (!name) return;
+            fetch('/api/catalog-options', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kind: kind, name: name })
+            }).then(r => { if (r.ok) { input.value=''; select.value=name; load(); setTimeout(()=>{select.value=name;},100);} });
+        }
+        function del(id) {
+            fetch('/api/catalog-options/' + id, { method: 'DELETE' }).then(r => { if (r.ok) load(); });
+        }
+        addBtn.addEventListener('click', add);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+        load();
+    });
+})();
+</script>
 
 </body>
 </html>

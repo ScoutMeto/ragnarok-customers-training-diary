@@ -23,9 +23,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class CatalogPageController {
 
     private final ExerciseCatalogService catalogService;
+    private final CatalogAttributeOptionService attrOptionService;
 
-    public CatalogPageController(ExerciseCatalogService catalogService) {
+    public CatalogPageController(ExerciseCatalogService catalogService,
+            CatalogAttributeOptionService attrOptionService) {
         this.catalogService = catalogService;
+        this.attrOptionService = attrOptionService;
     }
 
     @GetMapping
@@ -119,7 +122,10 @@ public class CatalogPageController {
 
     private void prepareEnums(Model model) {
         model.addAttribute("bodyRegions", BodyRegion.values());
-        model.addAttribute("movementPatterns", MovementPattern.values());
-        model.addAttribute("equipments", Equipment.values());
+        // Phase 20a/b: pohybový vzorec + náčiní z rozšiřitelného číselníku (system + custom)
+        model.addAttribute("movementPatterns",
+                attrOptionService.list(CatalogAttributeOptionEntity.Kind.MOVEMENT_PATTERN));
+        model.addAttribute("equipments",
+                attrOptionService.list(CatalogAttributeOptionEntity.Kind.EQUIPMENT));
     }
 }

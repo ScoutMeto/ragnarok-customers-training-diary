@@ -40,9 +40,9 @@ public class ExerciseCatalogRestController {
                     e.getId(),
                     e.getName(),
                     e.getBodyRegion() != null ? e.getBodyRegion().name() : null,
-                    e.getMovementPattern() != null ? e.getMovementPattern().name() : null,
+                    e.getMovementPattern(),
                     e.getPrimaryMuscle(),
-                    e.getEquipment() != null ? e.getEquipment().name() : null
+                    e.getEquipment()
             );
         }
     }

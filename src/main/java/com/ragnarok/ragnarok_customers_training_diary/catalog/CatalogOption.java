@@ -11,9 +11,6 @@ package com.ragnarok.ragnarok_customers_training_diary.catalog;
 public record CatalogOption(Long id, String name, String equipment) {
 
     public static CatalogOption from(ExerciseCatalogItemEntity e) {
-        return new CatalogOption(
-                e.getId(),
-                e.getName(),
-                e.getEquipment() != null ? e.getEquipment().name() : null);
+        return new CatalogOption(e.getId(), e.getName(), e.getEquipment());
     }
 }

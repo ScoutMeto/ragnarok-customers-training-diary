@@ -42,9 +42,9 @@ public class ExerciseCatalogItemEntity {
     @Column(name = "body_region", length = 32)
     private BodyRegion bodyRegion;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "movement_pattern", length = 32)
-    private MovementPattern movementPattern;
+    /** Phase 20a: rozšiřitelný číselník (system enum hodnoty + admin custom) → uložen jako text. */
+    @Column(name = "movement_pattern", length = 64)
+    private String movementPattern;
 
     @Column(name = "primary_muscle", length = 64)
     private String primaryMuscle;
@@ -53,9 +53,9 @@ public class ExerciseCatalogItemEntity {
     @Column(name = "secondary_muscles", length = 255)
     private String secondaryMuscles;
 
-    @Enumerated(EnumType.STRING)
+    /** Phase 20b: rozšiřitelný číselník (system enum hodnoty + admin custom) → uložen jako text. */
     @Column(length = 64)
-    private Equipment equipment;
+    private String equipment;
 
     @Column(columnDefinition = "TEXT")
     private String description;
