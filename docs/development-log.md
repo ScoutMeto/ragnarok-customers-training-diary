@@ -19,7 +19,7 @@
 | R | UI redesign (Forge design system) | ✅ DONE | na `develop` |
 | 6 | Email confirmation + notifikace | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervacemi — kalendář + rezervace 1 klikem | ✅ DONE | na `develop` |
-| 7.2 | Rezervace: cancel + moje rezervace + historie | ⏳ TODO (vyžaduje admin přístup do rez. systému) | — |
+| 7.2 | Rezervace: cancel + moje rezervace + historie | ✅ DONE (keyed cancel endpoint v rez. systému + diary) | na `develop` |
 | **9** | **Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup** | ⏳ **IN PROGRESS** | na `develop` |
 | 10 | Inactive účty (read-only mód pro neplatiče) | ✅ DONE | na `develop` |
 | 11 | Per-exercise tagy (A2) + CARDIO/CORE typy (A1) + equipment override (A14) | ✅ DONE | na `develop` |
@@ -427,6 +427,23 @@ Detail + odpověď pro ScoutMeta: `docs/scoutmeto-feedback-round2.md`.
 
 **Tím je celý ScoutMeto feedback (kolo 1 + 2) zapracovaný.** Zbývá blokované 7.2 (rezervace — admin
 přístup do rez. systému).
+
+## ✅ Fáze 7.2 — Rezervace: cancel + moje rezervace + historie (DONE 2026-06-07)
+
+**Cross-repo feature** (diary + rezervační systém `ragnarok_customers_reservation_system2`).
+
+- **Rezervační systém** (samostatný commit v jeho repu): nový `DELETE /api/cancelReservationForClient/{id}`
+  chráněný hlavičkou `X-Api-Key` (property `ragnarok.client.api-key`). Permit v security configu,
+  klíč kontroluje controller. Starý admin `deleteReservation` zůstal admin-only.
+- **Diary:** `ReservationClient.cancelReservation` (X-Api-Key), `ReservationService.listMyReservations`
+  (párování dle jména+příjmení — public odpověď nevrací email) + `cancelReservation` (ověří vlastnictví),
+  UI sekce „Moje rezervace" (+ zrušit) a „Historie" na `/reservations`.
+
+### ⚠️ DEPLOY — sdílený klíč MUSÍ sedět v obou aplikacích
+- Rezervační systém: env var `RAGNAROK_CLIENT_API_KEY=<tajný-klíč>`
+- Diary: env var `RESERVATION_API_KEY=<stejný-tajný-klíč>`
+- **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
+  vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
 ## 🚨 Open issues / blockers / TODO
 
