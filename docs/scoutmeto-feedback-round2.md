@@ -109,6 +109,26 @@ stránky. Editace tréninku (klient i admin, deník i skupinový i šablona) te�
   na smyčce náčiní → náčiní se nezobrazilo a inline tag-JS na konci stránky se vůbec nenačetl
   (mrtvé tlačítko). Přejmenováno → obojí funguje. **Prosím otestuj znovu.**
 
-## ⏭️ Další kolo (dle odpovědí výše)
-20a/b (katalog rozšiřitelný číselník), 21 (textová šablona → Můj plán, editovatelná kopie),
-20c (admin Deník/Statistiky uživatele).
+## ✅ Další kolo — DODÁNO (2026-06-07), prosím o retest
+
+### 20a/b — katalog: rozšiřitelný číselník pohybového vzorce + náčiní
+Admin v katalogu (Cviky → upravit/nový) má u „Pohybový vzorec" a „Náčiní" pod roletou
+pole **„vlastní" + Přidat**; vlastní hodnoty se objeví v roletě a jdou smazat tlačítkem „−".
+Systémové hodnoty zůstávají a smazat nejdou. (Ověřeno: custom hodnota se uloží i k cviku.)
+
+### 21 — textová šablona plánu (prostý text)
+Admin → „Šablony tréninků" → vedle „+ Nová šablona" nové **„+ Nová šablona v textovém formátu"**
+→ napíšeš prostý text (poznámkový blok) → „Přiřadit" konkrétnímu uživateli.
+Uživatel to vidí v **„Můj plán" → sekce „Textové plány"** (datum + název), po rozkliknutí
+**čte i edituje** svoji kopii. Originál zůstává u trenéra jako šablona (editace kopie ho nemění).
+
+### 20c — admin „Deník uživatele" / „Statistiky uživatele"
+Admin v menu místo „Můj deník"/„Statistiky" má **„Deník uživatele"** a **„Statistiky uživatele"**
+→ vybereš klienta → uvidíš jeho deník/statistiky **s plnými právy** (přidat/upravit/smazat),
+1:1 jako on, bez zvláštní stopy. Nahoře červený pruh **„Prohlížíš jako … — Ukončit náhled"**.
+
+**Vše ověřeno end-to-end proti PostgreSQL. Můžeš testovat celé kolo najednou.**
+
+### 🔧 Pozn. k retestu z minula
+„Přidat tag" + „Moje náčiní" už fungují (byla to chyba `th:each` proměnné `eq` =
+rezervovaný SpEL operátor, uťala render stránky). Pokud testuješ ve své IDE, dej **clean rebuild**.

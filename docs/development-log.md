@@ -419,9 +419,14 @@ Detail + odpověď pro ScoutMeta: `docs/scoutmeto-feedback-round2.md`.
 - **Fáze 19d:** tagy „Unilaterální levá/pravá" (V28).
 - **Fáze 19e:** Nastavení → „Moje náčiní" (mazání vlastní pomůcky).
 
-**Zbývá (další kolo):** 20a/b admin katalog vlastní pohybový vzorec + náčiní · 20c admin
-„Deník/Statistiky uživatele" (výběr klienta) · 21 trénink jako prostý text. Otázky na ScoutMeta
-viz feedback dokument.
+**Kolo 3 (2026-06-07) — DODÁNO:**
+- **Retest fix:** „Přidat tag"/„Moje náčiní" — `th:each` proměnná `eq` byla SpEL operátor → uťatý render.
+- **20a/b:** katalog rozšiřitelný číselník pohybového vzorce + náčiní (V30, enum→String, /api/catalog-options).
+- **21:** textová šablona plánu (V31 text_plan, admin šablona → editovatelná kopie u uživatele v Můj plán).
+- **20c:** admin „Deník/Statistiky uživatele" přes Spring Security SwitchUserFilter (impersonace, banner, exit).
+
+**Tím je celý ScoutMeto feedback (kolo 1 + 2) zapracovaný.** Zbývá blokované 7.2 (rezervace — admin
+přístup do rez. systému).
 
 ## 🚨 Open issues / blockers / TODO
 
