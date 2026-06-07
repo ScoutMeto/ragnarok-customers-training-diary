@@ -90,8 +90,25 @@ stránky. Editace tréninku (klient i admin, deník i skupinový i šablona) te�
 - Admin „Deník/Statistiky uživatele" s výběrem klienta (20c)
 - Trénink jako prostý text / poznámkový blok (21)
 
-## Otázky, na které potřebuju odpověď (ať to dodám správně)
-1. **Pohybový vzorec/náčiní v katalogu:** volný text, nebo rozšiřitelný číselník (system + vlastní)?
-2. **Textový trénink:** je to totéž co existující „Plán od trenéra" (Markdown)? U dne / samostatný plán? Má jít „rozbalit do formuláře"?
-3. **Admin v cizím deníku:** bez stopy (1:1 jako klient), nebo někde označit, že zásah udělal trenér?
-4. **Unilateralita:** forma tagu (teď) je OK, nebo samostatné pole strana L/P?
+## Otázky → ODPOVĚZENO ScoutMetem (rozhodnutí pro další kolo)
+1. **Pohybový vzorec/náčiní v katalogu (20a/b):** ✅ **rozšiřitelný číselník** (system hodnoty
+   zůstanou + admin přidá vlastní), u vlastních tlačítko „−" pro odebrání. Jako tagy.
+2. **Textový trénink (21):** ✅ **samostatný dlouhodobý plán** (ne k tréninku). Admin: vedle
+   „+ Nová šablona" nové tlačítko **„+ Nová šablona v textovém formátu"** = prostý text (poznámkový blok).
+   Přiřadí konkrétnímu uživateli → objeví se v **„Můj plán"** jako seznam (identifikátor = datum + název),
+   po rozkliknutí jen text. **Uživatel si smí editovat svou kopii** (originál zůstává u trenéra jako šablona).
+   Jen čtení + případná editace jako prostý text, žádné „rozbalení do formuláře".
+3. **Admin v cizím deníku (20c):** ✅ **bez stopy** — chová se 1:1 jako User.
+4. **Unilateralita:** ✅ forma tagu je OK (hotovo v 19d).
+
+---
+
+## 🔧 Retest kolo 2 — opraveno (2026-06-07)
+- ✅ **„Přidat tag" nefungovalo** + ✅ **„Moje náčiní" se neaktualizovalo** — **jedna příčina**:
+  iterační proměnná `th:each` se jmenovala `eq` (rezervovaný SpEL operátor) → render /settings se uťal
+  na smyčce náčiní → náčiní se nezobrazilo a inline tag-JS na konci stránky se vůbec nenačetl
+  (mrtvé tlačítko). Přejmenováno → obojí funguje. **Prosím otestuj znovu.**
+
+## ⏭️ Další kolo (dle odpovědí výše)
+20a/b (katalog rozšiřitelný číselník), 21 (textová šablona → Můj plán, editovatelná kopie),
+20c (admin Deník/Statistiky uživatele).
