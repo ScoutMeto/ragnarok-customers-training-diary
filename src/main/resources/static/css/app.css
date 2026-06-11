@@ -47,6 +47,30 @@
     border-color: rgba(255,255,255,.32);
 }
 
+/* ---- Přepínač motivu (Light Mode / Batman Mode) ---- */
+.rk-theme-toggle {
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.18);
+    color: #C9C5BB;
+    font-family: var(--rk-font-display);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 5px 12px;
+    border-radius: var(--rad-pill);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .12s, color .12s, border-color .12s;
+}
+.rk-theme-toggle:hover {
+    background: rgba(255,255,255,.06);
+    color: #F1EFE9;
+    border-color: rgba(255,255,255,.32);
+}
+
 /* ---- Dropdown menu (admin) — override Bootstrap for Forge look ---- */
 .rk-nav .dropdown-menu {
     background: #161A21;

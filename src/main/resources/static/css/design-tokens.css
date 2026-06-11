@@ -1,64 +1,69 @@
 /* =====================================================================
-   RAGNAROK TRAINING DIARY — DESIGN TOKENS
-   Mobile-first. Bootstrap 5 compatible. Map to Bootstrap CSS vars where useful.
+   RAGNAROK TRAINING DIARY — DESIGN TOKENS (production)
+   ---------------------------------------------------------------------
+   Visual language unified with the public site ragnarokostrava.cz.
+   Mobile-first. Bootstrap 5 compatible (maps to --bs-* vars where useful).
+
+   DECISIONS BAKED IN (signed off by the team):
+     • Accent  = brick #9F371B  (the REZERVACE / nav colour on the site)
+     • Corners = ROUNDED  (the diary's own friendlier radii — final choice)
+     • Themes  = LIGHT + DARK, switched via <html data-theme="light|dark">
+
+   Theme switching: set the data-theme attribute on <html>. There is no
+   build step — every component reads CSS custom properties, so flipping
+   the attribute re-themes the whole app. See README for the toggle snippet.
    ===================================================================== */
 
 :root {
-  /* ---- Palette: Forge (default) ---- */
-  --rk-bg:            #F5F2EC;
-  --rk-bg-elev:       #FFFFFF;
-  --rk-surface-2:     #ECE7DD;
-  --rk-ink:           #0A0A0A;
-  --rk-ink-2:         #2A2925;
-  --rk-muted:         #6E6A62;
-  --rk-muted-2:       #9C9890;
-  --rk-border:        #E2DCD0;
-  --rk-border-strong: #C9C2B3;
-  --rk-line-faint:    #EEE9DE;
+  /* ---- Palette: LIGHT (default) ---- */
+  --rk-bg:            #FFFFFF;   /* page background — white, like the public site */
+  --rk-bg-elev:       #FFFFFF;   /* elevated cards (separated by border + soft shadow) */
+  --rk-surface-2:     #F2F2F2;   /* recessed surface: segmented controls, chips, photo blocks */
+  --rk-ink:           #0A0A0A;   /* primary text / headings */
+  --rk-ink-2:         #262626;   /* secondary text */
+  --rk-muted:         #6B6B6B;   /* muted text */
+  --rk-muted-2:       #9A9A9A;   /* faint text */
+  --rk-border:        #E6E6E6;   /* hairline borders */
+  --rk-border-strong: #D2D2D2;   /* stronger dividers, scrollbar */
+  --rk-line-faint:    #EFEFEF;   /* very faint internal lines */
 
-  --rk-primary:       #E85D2C;   /* forge orange */
-  --rk-primary-ink:   #FFFFFF;
-  --rk-primary-soft:  #FDE8DC;
-  --rk-primary-hover: #C84B1F;
+  /* Brand accent — brick. Change ONLY this block to re-accent the app. */
+  --rk-primary:       #9F371B;   /* brick */
+  --rk-primary-ink:   #FFFFFF;   /* text on top of accent */
+  --rk-primary-soft:  #F3DDD3;   /* tinted accent background (badges, RPE fill bg) */
+  --rk-primary-hover: #B5472A;   /* hover / active accent */
 
-  --rk-success:       #1F7A4D;
-  --rk-success-soft:  #DCEFE3;
-  --rk-warning:       #C58A1C;
-  --rk-warning-soft:  #F8ECD0;
-  --rk-danger:        #B91C1C;
-  --rk-danger-soft:   #F5DAD8;
-  --rk-info:          #1E5FAD;
-  --rk-info-soft:     #D8E5F5;
+  /* Semantic */
+  --rk-success:       #1F7A4D;  --rk-success-soft:  #DCEFE3;
+  --rk-warning:       #C58A1C;  --rk-warning-soft:  #F8ECD0;
+  --rk-danger:        #B91C1C;  --rk-danger-soft:   #F5DAD8;
+  --rk-info:          #1E5FAD;  --rk-info-soft:     #D8E5F5;
 
-  /* Tag colors (modality) */
-  --tag-strength:      #2A2925;
-  --tag-strength-bg:   #E2DCD0;
-  --tag-cardio:        #B73A1F;
-  --tag-cardio-bg:     #F8DDD3;
-  --tag-mobility:      #1E5C5C;
-  --tag-mobility-bg:   #D5E8E8;
-  --tag-kettlebell:    #7A2E0F;
-  --tag-kettlebell-bg: #F2D8C7;
-  --tag-conditioning:  #8A6B0F;
-  --tag-conditioning-bg:#F4E6BB;
-  --tag-bodyweight:    #2C5A2F;
-  --tag-bodyweight-bg: #D6E8D2;
-  --tag-os-resets:     #4A2C6B;
-  --tag-os-resets-bg:  #E3D7F0;
+  /* Tag colours (training modality) — neutral grays + brick family */
+  --tag-strength:      #262626;  --tag-strength-bg:    #ECECEC;
+  --tag-cardio:        #9F371B;  --tag-cardio-bg:      #F3DDD3;
+  --tag-mobility:      #1E5C5C;  --tag-mobility-bg:    #DCE9E9;
+  --tag-kettlebell:    #7A2E12;  --tag-kettlebell-bg:  #F0DACE;
+  --tag-conditioning:  #8A6B0F;  --tag-conditioning-bg:#F3E7C2;
+  --tag-bodyweight:    #2C5A2F;  --tag-bodyweight-bg:  #DCE9D7;
+  --tag-os-resets:     #4A2C6B;  --tag-os-resets-bg:   #E6DCF0;
 
-  /* ---- Type ---- */
-  --rk-font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* ---- Type ----
+     Display = heavy geometric uppercase, matching the RAGNAROK OSTRAVA wordmark
+     and section titles (SLUŽBY, VSTUPY NA LEKCE). Montserrat is the closest
+     freely-available match; swap to the site's exact face here if obtained. */
+  --rk-font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --rk-font-body:    "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --rk-font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --fs-display:  2.5rem;   /* 40 */
-  --fs-h1:       1.875rem; /* 30 */
-  --fs-h2:       1.5rem;   /* 24 */
-  --fs-h3:       1.25rem;  /* 20 */
-  --fs-h4:       1.0625rem;/* 17 */
-  --fs-body:     0.9375rem;/* 15 */
-  --fs-sm:       0.8125rem;/* 13 */
-  --fs-xs:       0.75rem;  /* 12 */
+  --fs-display:  2.5rem;    /* 40 */
+  --fs-h1:       1.875rem;  /* 30 */
+  --fs-h2:       1.5rem;    /* 24 */
+  --fs-h3:       1.25rem;   /* 20 */
+  --fs-h4:       1.0625rem; /* 17 */
+  --fs-body:     0.9375rem; /* 15 */
+  --fs-sm:       0.8125rem; /* 13 */
+  --fs-xs:       0.75rem;   /* 12 */
   --fs-mono-num: 1.5rem;
 
   --lh-tight:    1.15;
@@ -66,24 +71,18 @@
   --lh-normal:   1.5;
 
   /* ---- Spacing scale (4-based) ---- */
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 24px;
-  --sp-6: 32px;
-  --sp-7: 48px;
-  --sp-8: 64px;
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
 
-  /* ---- Radii ---- */
-  --rad-xs: 4px;
-  --rad-sm: 6px;
-  --rad-md: 10px;
-  --rad-lg: 14px;
-  --rad-xl: 20px;
+  /* ---- Radii — ROUNDED (final decision) ---- */
+  --rad-xs:   4px;
+  --rad-sm:   6px;
+  --rad-md:   10px;
+  --rad-lg:   14px;
+  --rad-xl:   20px;
   --rad-pill: 999px;
 
-  /* ---- Shadows (subtle, paper-like) ---- */
+  /* ---- Shadows — soft paper elevation (pairs with rounded corners) ---- */
   --sh-1: 0 1px 0 rgba(10,10,10,.04), 0 1px 2px rgba(10,10,10,.04);
   --sh-2: 0 1px 0 rgba(10,10,10,.04), 0 4px 12px rgba(10,10,10,.06);
   --sh-3: 0 2px 0 rgba(10,10,10,.04), 0 12px 32px rgba(10,10,10,.08);
@@ -100,54 +99,50 @@
   --bs-body-font-size: var(--fs-body);
   --bs-body-line-height: var(--lh-normal);
   --bs-primary: var(--rk-primary);
-  --bs-primary-rgb: 232, 93, 44;
+  --bs-primary-rgb: 159, 55, 27;
   --bs-border-color: var(--rk-border);
   --bs-border-radius: var(--rad-md);
   --bs-link-color: var(--rk-ink);
   --bs-link-hover-color: var(--rk-primary);
 }
 
-/* ---- Accent variants (set on <html data-accent="..."> via Tweaks) ---- */
-html[data-accent="indigo"]  { --rk-primary:#3B49DB; --rk-primary-hover:#2E3AB5; --rk-primary-soft:#DDE0FB; --bs-primary-rgb:59,73,219; }
-html[data-accent="lime"]    { --rk-primary:#5E8F00; --rk-primary-hover:#4A7100; --rk-primary-soft:#E4F0C9; --bs-primary-rgb:94,143,0; }
-html[data-accent="crimson"] { --rk-primary:#C0294A; --rk-primary-hover:#9B1F3B; --rk-primary-soft:#F8D8DF; --bs-primary-rgb:192,41,74; }
-html[data-accent="forge"]   { --rk-primary:#E85D2C; --rk-primary-hover:#C84B1F; --rk-primary-soft:#FDE8DC; --bs-primary-rgb:232,93,44; }
-
-/* ---- Dark mode ---- */
+/* =====================================================================
+   DARK THEME — set <html data-theme="dark">
+   Neutral near-black; brick lightened to #C0492C so it reads on dark.
+   ===================================================================== */
 html[data-theme="dark"] {
-  --rk-bg:            #0E1116;
-  --rk-bg-elev:       #161A21;
-  --rk-surface-2:     #1F252E;
-  --rk-ink:           #F1EFE9;
-  --rk-ink-2:         #D7D3CA;
-  --rk-muted:         #8A8579;
-  --rk-muted-2:       #5F5B53;
-  --rk-border:        #262B34;
-  --rk-border-strong: #3A4150;
-  --rk-line-faint:    #1B1F26;
-  --rk-primary-soft:  #3A1F14;
+  --rk-bg:            #0F0F0F;
+  --rk-bg-elev:       #181818;
+  --rk-surface-2:     #242424;
+  --rk-ink:           #F4F4F4;
+  --rk-ink-2:         #D6D6D6;
+  --rk-muted:         #8A8A8A;
+  --rk-muted-2:       #5E5E5E;
+  --rk-border:        #2A2A2A;
+  --rk-border-strong: #3C3C3C;
+  --rk-line-faint:    #1E1E1E;
+
+  --rk-primary:       #C0492C;   /* brick, lightened for contrast on near-black */
+  --rk-primary-hover: #D2593A;
+  --rk-primary-soft:  #341A12;
+
   --rk-success-soft:  #14321F;
   --rk-warning-soft:  #3A2D14;
   --rk-danger-soft:   #3A1414;
   --rk-info-soft:     #122A45;
+
+  /* Soft paper shadows tuned for dark */
   --sh-1: 0 1px 0 rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.5);
   --sh-2: 0 1px 0 rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.5);
   --sh-3: 0 2px 0 rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.6);
 
-  --tag-strength-bg:   #262B34;
-  --tag-cardio-bg:     #3A1A12;
-  --tag-mobility-bg:   #102826;
-  --tag-kettlebell-bg: #321A0C;
-  --tag-conditioning-bg:#2E260C;
-  --tag-bodyweight-bg: #18261A;
-  --tag-os-resets-bg:  #221432;
-  --tag-strength:      #D7D3CA;
-  --tag-cardio:        #F3B8A4;
-  --tag-mobility:      #9ED4D2;
-  --tag-kettlebell:    #E8B492;
-  --tag-conditioning:  #E8D08A;
-  --tag-bodyweight:    #B5D6B0;
-  --tag-os-resets:     #C7AEE4;
+  --tag-strength-bg:   #242424;  --tag-strength:      #D6D6D6;
+  --tag-cardio-bg:     #3A1A12;  --tag-cardio:        #F3B8A4;
+  --tag-mobility-bg:   #102826;  --tag-mobility:      #9ED4D2;
+  --tag-kettlebell-bg: #321A0C;  --tag-kettlebell:    #E8B492;
+  --tag-conditioning-bg:#2E260C; --tag-conditioning:  #E8D08A;
+  --tag-bodyweight-bg: #18261A;  --tag-bodyweight:    #B5D6B0;
+  --tag-os-resets-bg:  #221432;  --tag-os-resets:     #C7AEE4;
 }
 
 /* =====================================================================
@@ -164,7 +159,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-h1,h2,h3,h4,h5,h6 { font-family: var(--rk-font-display); font-weight: 600; letter-spacing: -0.01em; margin: 0; line-height: var(--lh-tight); }
+h1,h2,h3,h4,h5,h6 { font-family: var(--rk-font-display); font-weight: 700; letter-spacing: 0.01em; margin: 0; line-height: var(--lh-tight); }
 h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
 h3 { font-size: var(--fs-h3); }

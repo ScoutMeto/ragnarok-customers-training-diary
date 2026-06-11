@@ -12,19 +12,16 @@
         try {
             var t = localStorage.getItem('rk-theme')
                   || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            var a = localStorage.getItem('rk-accent') || 'forge';
             document.documentElement.setAttribute('data-theme', t);
-            document.documentElement.setAttribute('data-accent', a);
         } catch (e) {
             document.documentElement.setAttribute('data-theme', 'light');
-            document.documentElement.setAttribute('data-accent', 'forge');
         }
     </script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet">
 
     <!-- Bootstrap 5 -->
@@ -100,6 +97,12 @@
 
         <div class="rk-nav__spacer"></div>
 
+        <!-- Přepínač motivu: Light Mode / Batman Mode -->
+        <button type="button" class="rk-theme-toggle js-theme-toggle d-none d-md-inline-flex"
+                title="Přepnout motiv">
+            <span class="js-theme-toggle-label">Batman Mode</span>
+        </button>
+
         <div class="rk-nav__user" sec:authorize="isAuthenticated()">
             <span class="label d-none d-md-inline">
                 Přihlášen <strong sec:authentication="principal.nickname">user</strong>
@@ -137,6 +140,10 @@
             <a class="rk-nav__link" th:href="@{/admin/training-templates}" sec:authorize="hasRole('ADMIN')">Šablony tréninků</a>
             <a class="rk-nav__link" th:href="@{/admin/overview}" sec:authorize="hasRole('ADMIN')">Gym overview</a>
             <div class="rk-nav__mobile-sep"></div>
+            <button type="button" class="rk-nav__link js-theme-toggle"
+                    style="background:none;border:0;width:100%;text-align:left;">
+                🦇 <span class="js-theme-toggle-label">Batman Mode</span>
+            </button>
             <form th:action="@{/logout}" method="post">
                 <button type="submit" class="rk-nav__link" style="background:none;border:0;width:100%;text-align:left;">Odhlásit</button>
             </form>
@@ -153,6 +160,31 @@
 <!-- =============== SCRIPTS =============== -->
 <div th:fragment="scripts">
     <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+    <script>
+        // Přepínač motivu: Light Mode <-> Batman Mode (dark)
+        (function () {
+            function labelFor(theme) {
+                // tlačítko ukazuje cílový motiv (na co se přepneš)
+                return theme === 'dark' ? 'Light Mode' : 'Batman Mode';
+            }
+            function refreshLabels() {
+                var current = document.documentElement.getAttribute('data-theme') || 'light';
+                document.querySelectorAll('.js-theme-toggle-label').forEach(function (el) {
+                    el.textContent = labelFor(current);
+                });
+            }
+            document.querySelectorAll('.js-theme-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var root = document.documentElement;
+                    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    root.setAttribute('data-theme', next);
+                    try { localStorage.setItem('rk-theme', next); } catch (e) { /* private mode */ }
+                    refreshLabels();
+                });
+            });
+            refreshLabels();
+        })();
+    </script>
 </div>
 
 </body>
