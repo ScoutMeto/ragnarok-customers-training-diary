@@ -36,6 +36,20 @@ public class AccountSettingsController {
         return "account/settings";
     }
 
+    /** ScoutMeto kolo 4: přidání vlastní pomůcky přímo z nastavení (jako u tagů). */
+    @PostMapping("/settings/equipment")
+    public String addEquipment(@AuthenticationPrincipal AccountEntity account,
+            @RequestParam("name") String name,
+            RedirectAttributes redirectAttributes) {
+        if (name == null || name.isBlank()) {
+            redirectAttributes.addFlashAttribute("flashError", "Zadej název náčiní.");
+        } else {
+            equipmentService.ensureExistsForUser(account, name);
+            redirectAttributes.addFlashAttribute("flashSuccess", "Náčiní '" + name.trim() + "' přidáno.");
+        }
+        return "redirect:/settings";
+    }
+
     /** Phase 19e: smazání vlastní pomůcky z nastavení. */
     @PostMapping("/settings/equipment/{id}/delete")
     public String deleteEquipment(@AuthenticationPrincipal AccountEntity account,

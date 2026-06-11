@@ -624,7 +624,7 @@ public class TrainingService {
         for (int i = 0; i < input.getExercises().size(); i++) {
             TrainingExerciseInput ex = input.getExercises().get(i);
             if (!ex.isNamingValid()) {
-                errors.add("Cvik #" + (i + 1) + ": vyber buď cvik z katalogu, nebo zadej vlastní název.");
+                errors.add("Cvik #" + (i + 1) + ": vyber cvik z katalogu (vlastní cvik si přidáš v sekci Cviky).");
             }
         }
         if (!errors.isEmpty()) {

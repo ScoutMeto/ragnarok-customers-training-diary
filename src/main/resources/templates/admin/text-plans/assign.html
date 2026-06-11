@@ -13,7 +13,10 @@
 
     <div class="rk-page__head"><div>
         <h1 class="rk-page__title">Přiřadit textový plán</h1>
-        <p class="rk-page__sub">Šablona „<strong th:text="${template.title}">název</strong>" → vznikne uživateli editovatelná kopie.</p>
+        <p class="rk-page__sub">
+            Šablona „<strong th:text="${template.title}">název</strong>" je uložená.
+            Přiřazením vznikne uživateli editovatelná kopie — nebo ji nech nepřiřazenou a přiřaď později.
+        </p>
     </div></div>
 
     <form th:action="@{/admin/text-plans/{id}/assign(id=${template.id})}" method="post">
@@ -29,7 +32,7 @@
         </div></div>
         <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
             <button type="submit" class="btn btn-accent btn-lg">Přiřadit</button>
-            <a th:href="@{/admin/text-plans}" class="btn btn-outline btn-lg">Zrušit</a>
+            <a th:href="@{/admin/text-plans}" class="btn btn-outline btn-lg">Nechat nepřiřazeno</a>
         </div>
     </form>
 

@@ -40,15 +40,20 @@
                                         th:selected="${ex.catalogItemId == ci.id}"
                                         th:text="${ci.name} + ' (' + ${ci.equipment} + ')'">Cvik</option>
                             </select>
-                            <div class="form-text">Nebo zadej vlastní název níže.</div>
+                            <div class="form-text">Chybí ti cvik? Přidej si ho v sekci Cviky.</div>
                         </div>
-                        <div class="col-md-5 naming-col">
-                            <label class="form-label">Vlastní název</label>
+                        <!-- „Vlastní název" odstraněn z UI (katalog je rozšiřitelný) — pole zůstává
+                             skryté: nese legacy hodnoty a zástupný název sdružených typů (XOR). -->
+                        <div class="col-md-5 naming-col"
+                             th:if="${ex.customName != null and !#strings.isEmpty(ex.customName) and ex.type != null and ex.type.name() != 'SUPERSET' and ex.type.name() != 'COMPLEX' and ex.type.name() != 'CIRCUIT'}">
+                            <label class="form-label">Vlastní název (starší záznam)</label>
                             <input type="text" th:name="|exercises[${exStat.index}].customName|"
                                    th:value="${ex.customName}"
-                                   class="form-control custom-name-input"
-                                   placeholder="vlastní cvik...">
+                                   class="form-control custom-name-input">
                         </div>
+                        <input th:unless="${ex.customName != null and !#strings.isEmpty(ex.customName) and ex.type != null and ex.type.name() != 'SUPERSET' and ex.type.name() != 'COMPLEX' and ex.type.name() != 'CIRCUIT'}"
+                               type="hidden" th:name="|exercises[${exStat.index}].customName|"
+                               th:value="${ex.customName}" class="custom-name-input">
 
                         <div class="col-md-3">
                             <label class="form-label">RPE (1-10)</label>
@@ -511,12 +516,10 @@
                     <select data-name="catalogItemId" class="form-select catalog-select">
                         <option value="">— vyber z katalogu —</option>
                     </select>
-                    <div class="form-text">Nebo zadej vlastní název níže.</div>
+                    <div class="form-text">Chybí ti cvik? Přidej si ho v sekci Cviky.</div>
                 </div>
-                <div class="col-md-5 naming-col">
-                    <label class="form-label">Vlastní název</label>
-                    <input type="text" data-name="customName" class="form-control custom-name-input">
-                </div>
+                <!-- skryté: zástupný customName pro sdružené typy (superset/complex/circuit) -->
+                <input type="hidden" data-name="customName" class="custom-name-input">
                 <div class="col-md-3">
                     <label class="form-label">RPE (1-10)</label>
                     <input type="number" data-name="rpe" min="1" max="10" class="form-control">

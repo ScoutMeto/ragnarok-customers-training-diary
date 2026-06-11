@@ -52,7 +52,8 @@ public class AdminTextPlanController {
                          RedirectAttributes flash) {
         try {
             var created = textPlanService.createTemplate(admin, title, body);
-            flash.addFlashAttribute("flashSuccess", "Textová šablona vytvořena.");
+            flash.addFlashAttribute("flashSuccess",
+                    "Textová šablona vytvořena. Přiřaď ji klientovi, nebo ji nech nepřiřazenou.");
             return "redirect:/admin/text-plans/" + created.getId() + "/assign";
         } catch (IllegalArgumentException ex) {
             flash.addFlashAttribute("flashError", ex.getMessage());

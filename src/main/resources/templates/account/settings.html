@@ -117,16 +117,23 @@
         </div>
     </div>
 
-    <!-- Phase 19e: Moje náčiní -->
-    <div class="rk-card" style="margin-bottom: var(--sp-5);" th:if="${myEquipment != null and !myEquipment.isEmpty()}">
+    <!-- Phase 19e + ScoutMeto kolo 4: Moje náčiní (přidání + mazání) -->
+    <div class="rk-card" style="margin-bottom: var(--sp-5);">
         <div class="rk-card__head">
             <div class="rk-card__title">🏋️ Moje náčiní</div>
         </div>
         <div class="rk-card__body">
             <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--sp-4);">
-                Vlastní pomůcky, které sis přidal(a) při zapisování tréninku. Smaž ty, které už nepoužíváš.
+                Vlastní pomůcky pro zapisování tréninku (vidíš je jen ty). Přidej si jakékoliv
+                náčiní, nepoužívané smaž.
             </p>
-            <div class="d-flex flex-wrap gap-2">
+            <form th:action="@{/settings/equipment}" method="post"
+                  style="display:flex; gap:8px; margin-bottom: var(--sp-3);">
+                <input type="text" name="name" class="form-control" placeholder="název náčiní (např. TRX, švihadlo)"
+                       maxlength="60" required style="max-width: 320px;">
+                <button type="submit" class="btn btn-accent">Přidat náčiní</button>
+            </form>
+            <div class="d-flex flex-wrap gap-2" th:if="${myEquipment != null and !myEquipment.isEmpty()}">
                 <form th:each="equip : ${myEquipment}" method="post"
                       th:action="@{/settings/equipment/{id}/delete(id=${equip.id})}"
                       style="display:inline-flex; align-items:center; gap:6px; border:1px solid var(--rk-border); border-radius: var(--rad-md); padding: 4px 8px;">
