@@ -445,6 +445,33 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ Design sjednocení s ragnarokostrava.cz + ScoutMeto kolo 4 (DONE 2026-06-11)
+
+### Design (handoff balíček od Claude designera)
+- **Drop-in** `design-tokens.css` + `components.css` z balíčku
+  `design_handoff_ragnarok_theme` (lokálně ve složce Downloads, README s detaily).
+- Klíčová rozhodnutí (zapečená v tokenech): akcent **brick `#9F371B`** (barva REZERVACE
+  na webu), bílé pozadí, **Montserrat** display font (UPPERCASE nadpisy/tlačítka/nav),
+  zaoblené rohy, light + dark přes `data-theme` na `<html>`.
+- **Přepínač „Light Mode / Batman Mode"** (požadavek) — v navbaru vpravo (desktop)
+  + v mobilním menu; localStorage `rk-theme`, label ukazuje cílový motiv.
+- Dark akcent zesvětlený na `#C0492C` (kontrast na near-black) — jediná barva,
+  která se mezi motivy posouvá.
+- Odstraněny staré accent varianty (`data-accent` forge/indigo/lime/crimson).
+- Ověřeno: pokrytí 100 % rk-* tříd (diff class selektorů), computed styles
+  light/dark, toggle persistuje, konzole bez chyb, 116 testů zelených.
+
+### ScoutMeto kolo 4
+- **Text plán „Nepřiřazeno":** po vytvoření šablony lze na assign stránce zvolit
+  „Nechat nepřiřazeno" (šablona je uložená, přiřadí se později ze seznamu).
+- **„Vlastní název" cviku odstraněn z UI** — katalog je rozšiřitelný (vlastní cviky
+  přes /catalog). Pole zůstává jako `hidden` input: (a) nese zástupný název
+  sdružených typů superset/complex/circuit (XOR validace!), (b) legacy záznamy
+  s vlastním názvem ho zobrazí jako „Vlastní název (starší záznam)".
+- **Moje náčiní:** v /settings pole + tlačítko „Přidat náčiní"
+  (POST `/settings/equipment`, reuse `EquipmentOptionService.ensureExistsForUser`).
+  Karta viditelná vždy (dřív skrytá, když bylo prázdno).
+
 ## 🚨 Open issues / blockers / TODO
 
 - [x] ~~**Admin formuláře jsou zastaralé duplikáty**~~ **VYŘEŠENO 2026-06-03** — editor cviků

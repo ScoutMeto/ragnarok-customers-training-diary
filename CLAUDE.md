@@ -208,9 +208,10 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 5 | Statistiky (klient `/analysis` + admin `/admin/overview`) | ✅ DONE | na `develop` |
 | 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan markdown) | ✅ DONE | na `develop` |
 | — | UI redesign (Forge design system, Phase R) | ✅ DONE | na `develop` |
+| — | Design sjednocení s ragnarokostrava.cz — brick #9F371B, Montserrat, přepínač Light/Batman Mode | ✅ DONE | na `develop` (2026-06-11) |
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
-| 7.2 | Rezervace: cancel + "moje rezervace" + historie (vyžaduje admin přístup do rezervačního systému) | ⏳ TODO | rovnou na `develop` |
+| 7.2 | Rezervace: cancel + "moje rezervace" + historie (sdílený API klíč, cross-repo) | ✅ DONE | na `develop` (deploy: klíč v obou appkách!) |
 | 9 | Quick wins (ScoutMeto feedback): difficulty 3 úrovně × 9 labelů, nové tagy, smazat CUSTOMIZING, šablona save bug, gym overview cleanup | ⏳ IN PROGRESS | na `develop` |
 | 10–17 | Další ScoutMeto požadavky (inactive účty, per-exercise tagy/equipment, nové typy, korunka/flag, rozšířené statistiky, katalog cviků CRUD) | ⏳ TODO | viz `docs/development-log.md` |
 
