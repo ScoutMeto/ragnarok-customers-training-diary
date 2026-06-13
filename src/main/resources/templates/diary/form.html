@@ -34,9 +34,9 @@
         </div>
 
         <!-- ==================== Hlavičky tréninku ==================== -->
-        <div class="card mb-4">
+        <div class="card mb-4 tr-general">
             <div class="card-body">
-                <h3 class="card-title mb-3">Trénink</h3>
+                <h3 class="card-title mb-3">📋 Obecné informace o tréninku</h3>
 
                 <div class="row g-3">
                     <div class="col-md-3">
@@ -77,6 +77,63 @@
                         <label for="notes" class="form-label">Poznámky</label>
                         <textarea id="notes" th:field="*{notes}" class="form-control" rows="2"
                                   placeholder="cokoliv k tréninku — pocit, kontext, ..."></textarea>
+                    </div>
+
+                    <!-- ScoutMeto kolo 5: kondiční metriky (vše nepovinné) -->
+                    <div class="col-12">
+                        <hr style="margin: var(--sp-2) 0;">
+                        <div class="form-label" style="font-weight:600;">Kondiční metriky <span class="text-muted" style="font-weight:400;">(nepovinné)</span></div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="bodyweightKg" class="form-label">Tělesná hmotnost (kg)</label>
+                        <input type="number" step="0.1" min="0" id="bodyweightKg" th:field="*{bodyweightKg}"
+                               class="form-control" placeholder="—">
+                        <div class="form-text">Předvyplněná z minulého tréninku.</div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="restingHrBpm" class="form-label">Klidová TF ráno</label>
+                        <input type="number" min="20" max="250" id="restingHrBpm" th:field="*{restingHrBpm}"
+                               class="form-control" placeholder="tepů/min">
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="sleepQuality" class="form-label">Kvalita spánku (0–100)</label>
+                        <input type="number" min="0" max="100" id="sleepQuality" th:field="*{sleepQuality}"
+                               class="form-control" placeholder="0–100">
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="sleepQualityRpe" class="form-label">RPE spánku (1–10)</label>
+                        <input type="number" min="1" max="10" id="sleepQualityRpe" th:field="*{sleepQualityRpe}"
+                               class="form-control" placeholder="1–10">
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="avgHrBpm" class="form-label">Průměrná TF (trénink)</label>
+                        <input type="number" min="20" max="250" id="avgHrBpm" th:field="*{avgHrBpm}"
+                               class="form-control" placeholder="tepů/min">
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label for="maxHrBpm" class="form-label">Nejvyšší TF (trénink)</label>
+                        <input type="number" min="20" max="250" id="maxHrBpm" th:field="*{maxHrBpm}"
+                               class="form-control" placeholder="tepů/min">
+                    </div>
+
+                    <!-- ScoutMeto kolo 5: ženský cyklus (jen pro profil označený jako Žena) -->
+                    <div class="col-12" th:if="${showCycle}">
+                        <hr style="margin: var(--sp-2) 0;">
+                        <div class="form-label" style="font-weight:600;">Menstruační cyklus <span class="text-muted" style="font-weight:400;">(nepovinné)</span></div>
+                    </div>
+                    <div class="col-md-4 col-6" th:if="${showCycle}">
+                        <label for="cycleDay" class="form-label">Den cyklu</label>
+                        <input type="number" min="1" max="40" id="cycleDay" th:field="*{cycleDay}"
+                               class="form-control" placeholder="např. 12">
+                        <div class="form-text">Standardně rozpětí 1–28/35.</div>
+                    </div>
+                    <div class="col-md-8" th:if="${showCycle}">
+                        <label for="cyclePhase" class="form-label">Fáze cyklu</label>
+                        <select id="cyclePhase" th:field="*{cyclePhase}" class="form-select">
+                            <option value="">—</option>
+                            <option th:each="p : ${cyclePhases}" th:value="${p}"
+                                    th:text="${p.selectLabel}">Menstruační fáze (obvykle 1.–5. den)</option>
+                        </select>
                     </div>
 
                     <div class="col-12" th:if="${!tags.isEmpty()}">

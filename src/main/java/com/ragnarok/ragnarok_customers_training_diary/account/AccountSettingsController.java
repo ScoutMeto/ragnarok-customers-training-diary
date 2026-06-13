@@ -33,7 +33,34 @@ public class AccountSettingsController {
         // Phase 19e: jen vlastní (custom) pomůcky — systémové smazat nelze
         model.addAttribute("myEquipment", equipmentService.listVisibleTo(fresh).stream()
                 .filter(e -> !e.isSystem()).toList());
+        // ScoutMeto kolo 5: profil (pohlaví/věk) + zóny MTF
+        model.addAttribute("genders", Gender.values());
+        Integer mtf = fresh.getMaxHeartRate();
+        model.addAttribute("maxHeartRate", mtf);
+        model.addAttribute("cardioZones", mtf != null ? CardioZone.forMaxHeartRate(mtf) : null);
         return "account/settings";
+    }
+
+    /** ScoutMeto kolo 5: uložení profilu (pohlaví + datum narození). */
+    @PostMapping("/settings/profile")
+    @Transactional
+    public String updateProfile(
+            @AuthenticationPrincipal AccountEntity account,
+            @RequestParam(value = "gender", required = false) Gender gender,
+            @RequestParam(value = "birthDate", required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso =
+                    org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate birthDate,
+            RedirectAttributes redirectAttributes) {
+        AccountEntity fresh = accountRepository.findById(account.getId()).orElseThrow();
+        if (birthDate != null && birthDate.isAfter(java.time.LocalDate.now())) {
+            redirectAttributes.addFlashAttribute("flashError", "Datum narození nemůže být v budoucnosti.");
+            return "redirect:/settings";
+        }
+        fresh.setGender(gender);
+        fresh.setBirthDate(birthDate);
+        accountRepository.save(fresh);
+        redirectAttributes.addFlashAttribute("flashSuccess", "Profil uložen.");
+        return "redirect:/settings";
     }
 
     /** ScoutMeto kolo 4: přidání vlastní pomůcky přímo z nastavení (jako u tagů). */

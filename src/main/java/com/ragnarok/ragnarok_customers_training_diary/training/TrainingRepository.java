@@ -49,6 +49,13 @@ public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> 
      */
     Optional<TrainingEntity> findByIdAndOwner_Id(Long id, Long ownerId);
 
+    /**
+     * ScoutMeto kolo 5: poslední PRIVATE trénink klienta s vyplněnou hmotností —
+     * pro předvyplnění bodyweight v novém tréninku.
+     */
+    Optional<TrainingEntity> findFirstByOwner_IdAndVisibilityAndBodyweightKgIsNotNullOrderByTrainingDateDescIdDesc(
+            Long ownerId, TrainingVisibility visibility);
+
     /** Tréninky klienta v daném datovém rozsahu (pro statistiky a dashboard). */
     List<TrainingEntity> findByOwner_IdAndTrainingDateBetween(Long ownerId, LocalDate from, LocalDate to);
 

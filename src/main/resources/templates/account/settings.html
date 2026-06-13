@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="cs">
 <head th:replace="~{fragments/layout :: head('Nastavení účtu')}"></head>
 <body>
 
@@ -36,7 +37,8 @@
             </p>
 
             <form th:action="@{/settings/notifications}" method="post" class="rk-stack-3">
-                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                <label sec:authorize="!hasRole('ADMIN')"
+                       style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
                               padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
                     <input type="checkbox" name="notifNewPlanAssigned" value="true"
                            th:checked="${account.notifNewPlanAssigned}"
@@ -56,13 +58,19 @@
                            class="form-check-input" style="margin-top: 4px;">
                     <span>
                         <strong style="font-size: var(--fs-body);">Nové komentáře</strong>
-                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;">
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;"
+                              sec:authorize="!hasRole('ADMIN')">
                             Když někdo okomentuje tvůj trénink (trenér nebo jiný klient na skupinový).
+                        </span>
+                        <span class="text-muted" style="display:block; font-size: var(--fs-sm); margin-top: 4px;"
+                              sec:authorize="hasRole('ADMIN')">
+                            Když kdokoliv přidá jakýkoliv komentář (k vlastnímu i skupinovému tréninku) — budeš upozorněn(a) emailem.
                         </span>
                     </span>
                 </label>
 
-                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                <label sec:authorize="!hasRole('ADMIN')"
+                       style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
                               padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
                     <input type="checkbox" name="notifTrainingCreated" value="true"
                            th:checked="${account.notifTrainingCreated}"
@@ -75,7 +83,8 @@
                     </span>
                 </label>
 
-                <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+                <label sec:authorize="!hasRole('ADMIN')"
+                       style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
                               padding: var(--sp-3); border: 1px solid var(--rk-border); border-radius: var(--rad-md);">
                     <input type="checkbox" name="notifAccountDeactivated" value="true"
                            th:checked="${account.notifAccountDeactivated}"
@@ -92,6 +101,84 @@
                     <button type="submit" class="btn btn-accent">Uložit nastavení</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ScoutMeto kolo 5: Profil (pohlaví + datum narození) -->
+    <div class="rk-card" style="margin-bottom: var(--sp-5);" sec:authorize="!hasRole('ADMIN')">
+        <div class="rk-card__head">
+            <div class="rk-card__title">👤 Profil</div>
+        </div>
+        <div class="rk-card__body">
+            <form th:action="@{/settings/profile}" method="post" class="rk-stack-4">
+                <div class="rk-field">
+                    <span class="rk-label">Pohlaví</span>
+                    <div style="display:flex; gap: var(--sp-4); flex-wrap: wrap;">
+                        <label th:each="g : ${genders}" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="radio" name="gender" th:value="${g}" class="form-check-input"
+                                   th:checked="${account.gender == g}">
+                            <span th:text="${g.label}">Muž</span>
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="radio" name="gender" value="" class="form-check-input"
+                                   th:checked="${account.gender == null}">
+                            <span class="text-muted">Neuvedeno</span>
+                        </label>
+                    </div>
+                    <span class="rk-help">U profilu označeného „Žena" přibude záznam menstruačního cyklu u tréninku
+                        a cyklus-kalendář ve statistikách.</span>
+                </div>
+
+                <div class="rk-field" style="max-width: 240px;">
+                    <label class="rk-label" for="birthDate">Datum narození</label>
+                    <input type="date" id="birthDate" name="birthDate" class="form-control"
+                           th:value="${account.birthDate != null ? #temporals.format(account.birthDate, 'yyyy-MM-dd') : ''}">
+                    <span class="rk-help" th:if="${account.age != null}">
+                        Věk: <strong class="num" th:text="${account.age}">30</strong> let
+                    </span>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-accent">Uložit profil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ScoutMeto kolo 5: Maximální tepová frekvence + doporučené zóny -->
+    <div class="rk-card" style="margin-bottom: var(--sp-5);" sec:authorize="!hasRole('ADMIN')"
+         th:if="${maxHeartRate != null}">
+        <div class="rk-card__head">
+            <div class="rk-card__title">❤️ Doporučení pro rozvoj kardiorespirační kapacity</div>
+        </div>
+        <div class="rk-card__body">
+            <p style="margin-bottom: var(--sp-4);">
+                Maximální tepová frekvence (MTF):
+                <strong class="num" style="font-size: var(--fs-h3); color: var(--rk-primary);"
+                        th:text="${maxHeartRate} + ' tepů/min'">190 tepů/min</strong>
+                <span class="text-muted" style="font-size: var(--fs-sm);">— orientační, dle pohlaví a věku.</span>
+            </p>
+
+            <div class="rk-stack-3">
+                <div th:each="z : ${cardioZones}"
+                     th:style="'border-left: 4px solid var(' + ${z.colorVar} + '); padding: var(--sp-3) var(--sp-4); '
+                             + 'background: var(--rk-surface-2); border-radius: 0 var(--rad-md) var(--rad-md) 0;'">
+                    <div style="display:flex; justify-content:space-between; gap: var(--sp-3); flex-wrap: wrap; align-items: baseline;">
+                        <strong th:text="${z.title}">Zóna</strong>
+                        <span class="num" th:style="'color: var(' + ${z.colorVar} + '); font-weight:700;'">
+                            <span th:text="${z.percentText}">60–70 %</span> MTF*
+                            (<strong th:text="${z.bpmRange()}">114–133 tepů/min</strong>)
+                        </span>
+                    </div>
+                    <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 4px;" th:text="${z.feeling}">popis</div>
+                    <div style="font-size: var(--fs-sm); margin-top: 4px;">
+                        <strong>Doba trvání:</strong> <span th:text="${z.duration}">45–120 minut</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted" style="font-size: var(--fs-xs); margin-top: var(--sp-3);">
+                * MTF = maximální tepová frekvence. Hodnoty v závorce jsou přepočtené přímo pro tebe.
+            </p>
         </div>
     </div>
 
@@ -155,6 +242,12 @@
                 <strong>Přezdívka:</strong> <span th:text="${account.nickname}">nick</span><br>
                 <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
                 <strong>Telefon:</strong> <span th:text="${account.phone} ?: '—'">—</span><br>
+                <span sec:authorize="!hasRole('ADMIN')">
+                    <strong>Pohlaví:</strong> <span th:text="${account.gender != null ? account.gender.label : '—'}">—</span><br>
+                    <strong>Věk:</strong> <span th:text="${account.age != null ? account.age + ' let' : '—'}">—</span><br>
+                    <strong>Maximální tepová frekvence:</strong>
+                    <span class="num" th:text="${maxHeartRate != null ? maxHeartRate + ' tepů/min' : '— (doplň pohlaví a datum narození)'}">—</span><br>
+                </span>
                 <strong>Role:</strong>
                 <span th:class="|rk-badge ${account.role.name() == 'ADMIN' ? 'rk-badge--accent' : ''}|"
                       th:text="${account.role}">USER</span>

@@ -56,6 +56,15 @@ public class AccountEntity implements UserDetails {
 
     private String phone;
 
+    /** ScoutMeto kolo 5: pohlaví. {@code null} = neuvedeno. U žen se nabízí cyklus + cyklus-kalendář. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 8)
+    private Gender gender;
+
+    /** ScoutMeto kolo 5: datum narození (pro výpočet věku a maximální tepové frekvence). Nullable. */
+    @Column(name = "birth_date")
+    private java.time.LocalDate birthDate;
+
     @Column(name = "email_notifications_enabled", nullable = false)
     private boolean emailNotificationsEnabled = true;
 
@@ -117,6 +126,38 @@ public class AccountEntity implements UserDetails {
     /** Konvenience getter — `deletedAt == null`. */
     public boolean isActive() {
         return deletedAt == null;
+    }
+
+    /** Žena? (pro zobrazení cyklu — kontrola na {@code null}). */
+    public boolean isFemale() {
+        return gender == Gender.FEMALE;
+    }
+
+    /**
+     * Aktuální věk z {@link #birthDate}. {@code null}, pokud datum narození není vyplněné.
+     */
+    public Integer getAge() {
+        if (birthDate == null) {
+            return null;
+        }
+        return java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
+    }
+
+    /**
+     * Orientační maximální tepová frekvence (ScoutMeto kolo 5). Vzorec dle pohlaví:
+     *  - muži: 208 − 0,77 × věk
+     *  - ženy: 206 − 0,88 × věk
+     * {@code null}, pokud chybí věk nebo pohlaví.
+     */
+    public Integer getMaxHeartRate() {
+        Integer age = getAge();
+        if (age == null || gender == null) {
+            return null;
+        }
+        double mtf = (gender == Gender.FEMALE)
+                ? 206 - 0.88 * age
+                : 208 - 0.77 * age;
+        return (int) Math.round(mtf);
     }
 
     /** {@code true} pokud je účet deaktivovaný (read-only mód). */

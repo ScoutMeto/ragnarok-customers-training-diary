@@ -89,6 +89,30 @@
                class="text-muted"
                style="white-space: pre-wrap; margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-4); background: var(--rk-bg); border-radius: var(--rad-md); border: 1px dashed var(--rk-border); font-size: var(--fs-sm);"
                th:text="${training.notes}">Notes</p>
+
+            <!-- ScoutMeto kolo 5: kondiční metriky + cyklus (zobrazí se, jen pokud něco vyplněno) -->
+            <div th:if="${training.bodyweightKg != null or training.restingHrBpm != null
+                            or training.sleepQuality != null or training.sleepQualityRpe != null
+                            or training.avgHrBpm != null or training.maxHrBpm != null
+                            or training.cycleDay != null or training.cyclePhase != null}"
+                 class="rk-row" style="margin-top: var(--sp-4); gap: 8px; flex-wrap: wrap;">
+                <span th:if="${training.bodyweightKg != null}" class="rk-badge num"
+                      th:text="'⚖️ ' + ${training.bodyweightKg} + ' kg'">⚖️ 80 kg</span>
+                <span th:if="${training.restingHrBpm != null}" class="rk-badge num"
+                      th:text="'🛌 klid ' + ${training.restingHrBpm} + ' tep/min'">🛌 klid 55</span>
+                <span th:if="${training.avgHrBpm != null}" class="rk-badge num"
+                      th:text="'❤️ prům. ' + ${training.avgHrBpm}">❤️ prům. 140</span>
+                <span th:if="${training.maxHrBpm != null}" class="rk-badge num"
+                      th:text="'❤️ max ' + ${training.maxHrBpm}">❤️ max 175</span>
+                <span th:if="${training.sleepQuality != null}" class="rk-badge num"
+                      th:text="'😴 spánek ' + ${training.sleepQuality} + '/100'">😴 spánek 80/100</span>
+                <span th:if="${training.sleepQualityRpe != null}" class="rk-badge num"
+                      th:text="'😴 RPE ' + ${training.sleepQualityRpe}">😴 RPE 7</span>
+                <span th:if="${training.cycleDay != null}" class="rk-badge num"
+                      th:text="'🩸 den ' + ${training.cycleDay}">🩸 den 12</span>
+                <span th:if="${training.cyclePhase != null}" class="rk-badge"
+                      th:text="${training.cyclePhase.label}">Folikulární fáze</span>
+            </div>
         </div>
     </div>
 

@@ -1,11 +1,14 @@
 package com.ragnarok.ragnarok_customers_training_diary.training;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
 import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
 import com.ragnarok.ragnarok_customers_training_diary.common.NotFoundException;
 import com.ragnarok.ragnarok_customers_training_diary.mail.EmailService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +25,16 @@ public class TrainingCommentService {
 
     private final TrainingCommentRepository commentRepository;
     private final TrainingRepository trainingRepository;
+    private final AccountRepository accountRepository;
     private final EmailService emailService;
 
     public TrainingCommentService(TrainingCommentRepository commentRepository,
                                   TrainingRepository trainingRepository,
+                                  AccountRepository accountRepository,
                                   EmailService emailService) {
         this.commentRepository = commentRepository;
         this.trainingRepository = trainingRepository;
+        this.accountRepository = accountRepository;
         this.emailService = emailService;
     }
 
@@ -62,17 +68,24 @@ public class TrainingCommentService {
         comment.setText(text.trim());
         TrainingCommentEntity saved = commentRepository.save(comment);
 
-        // Phase 6: notifikace druhé strany. Soukromý trénink → vlastníkovi (pokud komentuje admin).
-        // Skupinový → trenérovi (createdBy). Nikdy nepošlu notifikaci sám sobě.
-        AccountEntity recipient = null;
-        if (!isGroup && training.getOwner() != null
-                && !training.getOwner().getId().equals(author.getId())) {
-            recipient = training.getOwner();
-        } else if (isGroup && training.getCreatedBy() != null
-                && !training.getCreatedBy().getId().equals(author.getId())) {
-            recipient = training.getCreatedBy();
+        // Notifikace (Phase 6 + ScoutMeto kolo 5). Příjemci (dedup dle id, nikdy ne sám sobě):
+        //  - majitel soukromého tréninku (klient)
+        //  - trenér skupinového tréninku (createdBy)
+        //  - VŠICHNI admini — Scout: admin má být upozorněn na jakýkoliv komentář kohokoliv.
+        // Vlastní guard notifNewComment řeší EmailService.
+        Map<Long, AccountEntity> recipients = new LinkedHashMap<>();
+        if (!isGroup && training.getOwner() != null) {
+            recipients.put(training.getOwner().getId(), training.getOwner());
         }
-        if (recipient != null) {
+        if (isGroup && training.getCreatedBy() != null) {
+            recipients.put(training.getCreatedBy().getId(), training.getCreatedBy());
+        }
+        for (AccountEntity admin : accountRepository
+                .findByRoleAndDeletedAtIsNullOrderByLastNameAscFirstNameAsc(AccountRole.ADMIN)) {
+            recipients.put(admin.getId(), admin);
+        }
+        recipients.remove(author.getId()); // nikdy ne sám sobě
+        for (AccountEntity recipient : recipients.values()) {
             emailService.sendNewCommentNotification(recipient, author,
                     training.getName(), training.getId(), saved.getText());
         }

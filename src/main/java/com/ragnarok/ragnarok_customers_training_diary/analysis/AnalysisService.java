@@ -360,6 +360,52 @@ public class AnalysisService {
         return map;
     }
 
+    /**
+     * ScoutMeto kolo 5: data pro cyklus-kalendář (jen ženy). Pro každý den s tréninkem
+     * vrací počet tréninků + den cyklu + fázi (z prvního tréninku dne, který má cyklus vyplněný).
+     */
+    public Map<LocalDate, CycleDayInfo> cycleCalendar(AccountEntity owner, LocalDate from, LocalDate to) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createQuery(
+                "SELECT t.trainingDate, t.cycleDay, t.cyclePhase FROM TrainingEntity t " +
+                "WHERE t.owner.id = :ownerId " +
+                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
+                "  AND t.trainingDate BETWEEN :from AND :to " +
+                "ORDER BY t.trainingDate ASC, t.id ASC")
+                .setParameter("ownerId", owner.getId())
+                .setParameter("from", from)
+                .setParameter("to", to)
+                .getResultList();
+        Map<LocalDate, CycleDayInfo> map = new TreeMap<>();
+        for (Object[] r : rows) {
+            LocalDate date = (LocalDate) r[0];
+            Short cycleDay = r[1] != null ? ((Number) r[1]).shortValue() : null;
+            var phase = (com.ragnarok.ragnarok_customers_training_diary.training.CyclePhase) r[2];
+            CycleDayInfo existing = map.get(date);
+            if (existing == null) {
+                map.put(date, new CycleDayInfo(1, cycleDay, phaseLetter(phase), phaseLabel(phase)));
+            } else {
+                // další trénink téhož dne: zvýšit počet, doplnit cyklus, pokud chyběl
+                Short day = existing.cycleDay() != null ? existing.cycleDay() : cycleDay;
+                String letter = existing.phaseLetter() != null ? existing.phaseLetter() : phaseLetter(phase);
+                String label = existing.phaseLabel() != null ? existing.phaseLabel() : phaseLabel(phase);
+                map.put(date, new CycleDayInfo(existing.count() + 1, day, letter, label));
+            }
+        }
+        return map;
+    }
+
+    private static String phaseLetter(com.ragnarok.ragnarok_customers_training_diary.training.CyclePhase p) {
+        return p != null ? p.getLetter() : null;
+    }
+
+    private static String phaseLabel(com.ragnarok.ragnarok_customers_training_diary.training.CyclePhase p) {
+        return p != null ? p.getLabel() : null;
+    }
+
+    /** Záznam dne v cyklus-kalendáři. */
+    public record CycleDayInfo(int count, Short cycleDay, String phaseLetter, String phaseLabel) {}
+
     // -----------------------------------------------------------------------------
     // Admin overview — napříč všemi klienty
     // -----------------------------------------------------------------------------

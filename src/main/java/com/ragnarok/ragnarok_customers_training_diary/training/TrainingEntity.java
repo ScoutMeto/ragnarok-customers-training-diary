@@ -101,6 +101,41 @@ public class TrainingEntity {
     @Column(name = "flagged", nullable = false)
     private boolean flagged = false;
 
+    // -------- ScoutMeto kolo 5: kondiční metriky (vše nullable, nepovinné) --------
+    /** Aktuální tělesná hmotnost (kg). Předvyplní se z předchozího tréninku. */
+    @Column(name = "bodyweight_kg", precision = 5, scale = 2)
+    private java.math.BigDecimal bodyweightKg;
+
+    /** Klidová tepová frekvence měřená ráno (tepy/min). */
+    @Column(name = "resting_hr_bpm")
+    private Short restingHrBpm;
+
+    /** Kvalita spánku 0–100. */
+    @Column(name = "sleep_quality")
+    private Short sleepQuality;
+
+    /** Subjektivní hodnocení spánku (RPE) 1–10. */
+    @Column(name = "sleep_quality_rpe")
+    private Short sleepQualityRpe;
+
+    /** Průměrná tepová frekvence během tréninku (tepy/min). */
+    @Column(name = "avg_hr_bpm")
+    private Short avgHrBpm;
+
+    /** Nejvyšší dosažená tepová frekvence během tréninku (tepy/min). */
+    @Column(name = "max_hr_bpm")
+    private Short maxHrBpm;
+
+    // -------- ScoutMeto kolo 5: ženský cyklus (jen u uživatelek FEMALE) --------
+    /** Den menstruačního cyklu (1–35). */
+    @Column(name = "cycle_day")
+    private Short cycleDay;
+
+    /** Fáze cyklu. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cycle_phase", length = 16)
+    private CyclePhase cyclePhase;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

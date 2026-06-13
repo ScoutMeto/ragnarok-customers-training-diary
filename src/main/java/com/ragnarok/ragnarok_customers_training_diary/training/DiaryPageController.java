@@ -193,6 +193,8 @@ public class DiaryPageController {
         firstExercise.getSets().add(new SetInput());
         firstExercise.getSets().add(new SetInput());
         form.getExercises().add(firstExercise);
+        // ScoutMeto kolo 5: předvyplň hmotnost z předchozího tréninku (poprvé prázdné)
+        form.setBodyweightKg(trainingService.lastBodyweight(user));
 
         prepareFormModel(model, form, user);
         return "diary/form";
@@ -434,6 +436,9 @@ public class DiaryPageController {
         model.addAttribute("catalogOptions", catalogService.optionsVisibleTo(user));
         model.addAttribute("tags", tagService.findVisibleTo(user));
         model.addAttribute("equipmentOptions", equipmentService.listVisibleTo(user));
+        // ScoutMeto kolo 5: cyklus jen pro ženy
+        model.addAttribute("showCycle", user.isFemale());
+        model.addAttribute("cyclePhases", CyclePhase.values());
     }
 
     /**
@@ -449,6 +454,15 @@ public class DiaryPageController {
         input.setDifficulty(entity.getDifficulty());
         input.setRpe(entity.getRpe());
         input.setNotes(entity.getNotes());
+        // ScoutMeto kolo 5: kondiční metriky + cyklus
+        input.setBodyweightKg(entity.getBodyweightKg());
+        input.setRestingHrBpm(entity.getRestingHrBpm());
+        input.setSleepQuality(entity.getSleepQuality());
+        input.setSleepQualityRpe(entity.getSleepQualityRpe());
+        input.setAvgHrBpm(entity.getAvgHrBpm());
+        input.setMaxHrBpm(entity.getMaxHrBpm());
+        input.setCycleDay(entity.getCycleDay());
+        input.setCyclePhase(entity.getCyclePhase());
         input.setTagIds(entity.getTags().stream().map(t -> t.getId()).collect(Collectors.toSet()));
 
         List<TrainingExerciseInput> exerciseInputs = entity.getExercises().stream().map(ex -> {

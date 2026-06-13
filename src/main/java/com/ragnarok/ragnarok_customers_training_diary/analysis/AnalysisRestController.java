@@ -122,6 +122,15 @@ public class AnalysisRestController {
         return service.frequencyHeatmap(user, from, to);
     }
 
+    /** ScoutMeto kolo 5: cyklus-kalendář (jen ženy). */
+    @GetMapping("/cycle-calendar")
+    public Map<LocalDate, AnalysisService.CycleDayInfo> cycleCalendar(
+            @AuthenticationPrincipal AccountEntity user,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return service.cycleCalendar(user, from, to);
+    }
+
     @GetMapping("/volume-per-difficulty")
     public List<AnalysisService.LabelValuePoint> volumePerDifficulty(
             @AuthenticationPrincipal AccountEntity user,

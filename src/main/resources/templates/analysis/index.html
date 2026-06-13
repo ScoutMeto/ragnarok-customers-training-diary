@@ -195,6 +195,23 @@
         <div id="heatmap" class="d-flex flex-wrap gap-1"></div>
     </div>
 
+    <!-- ScoutMeto kolo 5: cyklus-kalendář (jen ženy) -->
+    <div class="rk-chart" style="margin-bottom: var(--sp-4);" th:if="${showCycle}">
+        <h3>Cyklus</h3>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            Stejně jako kalendář tréninků — barva dle počtu tréninků. Nad polem je den cyklu,
+            uvnitř písmeno fáze (M/F/O/L). Najeď myší pro celý název fáze.
+        </p>
+        <div id="cycleCalendar" class="d-flex flex-wrap" style="gap: 4px;"></div>
+        <div id="cycleCaption" class="text-muted" style="font-size: var(--fs-sm); margin-top: var(--sp-2); min-height: 1.4em;"></div>
+        <div class="rk-row" style="gap: var(--sp-3); margin-top: var(--sp-3); font-size: var(--fs-xs);">
+            <span><strong>M</strong> Menstruační</span>
+            <span><strong>F</strong> Folikulární</span>
+            <span><strong>O</strong> Ovulační</span>
+            <span><strong>L</strong> Luteální</span>
+        </div>
+    </div>
+
     <!-- Phase 14 (A16): označené cviky korunkou -->
     <div class="rk-section-head" style="margin-top: var(--sp-6);">
         <h2>👑 Označené cviky (korunka)</h2>
@@ -374,6 +391,93 @@
     // Při kliku na "Načíst" (změna období) přepočti i tyhle sekce
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', function () { loadStats(); loadTagStats(); });
+})();
+</script>
+
+<!-- ScoutMeto kolo 5: cyklus-kalendář (jen ženy — element je v DOM jen pro ně) -->
+<script th:if="${showCycle}">
+(function () {
+    const root = document.getElementById('cycleCalendar');
+    const caption = document.getElementById('cycleCaption');
+    if (!root) return;
+
+    function isoDaysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
+    function isoToday() { return new Date().toISOString().slice(0, 10); }
+    function currentPeriod() {
+        const sel = document.getElementById('periodSelect');
+        const val = sel ? sel.value : '30';
+        if (val === 'custom') {
+            const f = document.getElementById('fromDate'), t = document.getElementById('toDate');
+            return { from: (f && f.value) || isoDaysAgo(30), to: (t && t.value) || isoToday() };
+        }
+        return { from: isoDaysAgo(parseInt(val, 10)), to: isoToday() };
+    }
+
+    const styles = getComputedStyle(document.documentElement);
+    const cSurface = styles.getPropertyValue('--rk-surface-2').trim();
+    const cSoft = styles.getPropertyValue('--rk-primary-soft').trim();
+    const cPrimary = styles.getPropertyValue('--rk-primary').trim();
+    const cInk = styles.getPropertyValue('--rk-primary-ink').trim() || '#fff';
+    const cBorder = styles.getPropertyValue('--rk-border').trim();
+
+    function render() {
+        const p = currentPeriod();
+        if (!p.from || !p.to) return;
+        fetch(`/api/analysis/cycle-calendar?from=${p.from}&to=${p.to}`, { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                root.innerHTML = '';
+                if (caption) caption.textContent = '';
+                const fromD = new Date(p.from), toD = new Date(p.to), oneDay = 86400000;
+                for (let t = fromD.getTime(); t <= toD.getTime(); t += oneDay) {
+                    const iso = new Date(t).toISOString().slice(0, 10);
+                    const info = data[iso]; // {count, cycleDay, phaseLetter, phaseLabel} | undefined
+                    const count = info ? info.count : 0;
+
+                    const cell = document.createElement('div');
+                    cell.style.width = '34px';
+                    cell.style.minHeight = '40px';
+                    cell.style.borderRadius = '6px';
+                    cell.style.border = '1px solid ' + cBorder;
+                    cell.style.display = 'flex';
+                    cell.style.flexDirection = 'column';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.cursor = 'pointer';
+                    cell.style.fontFamily = "'JetBrains Mono', monospace";
+                    if (count === 0) { cell.style.background = cSurface; cell.style.color = 'inherit'; }
+                    else if (count === 1) { cell.style.background = cSoft; cell.style.color = cPrimary; }
+                    else { cell.style.background = cPrimary; cell.style.color = cInk; }
+
+                    // den cyklu nahoře
+                    const day = document.createElement('span');
+                    day.style.fontSize = '10px';
+                    day.style.lineHeight = '1';
+                    day.textContent = (info && info.cycleDay != null) ? info.cycleDay : '·';
+                    // písmeno fáze uprostřed
+                    const letter = document.createElement('strong');
+                    letter.style.fontSize = '14px';
+                    letter.style.lineHeight = '1.2';
+                    letter.textContent = (info && info.phaseLetter) ? info.phaseLetter : '';
+                    cell.appendChild(day);
+                    cell.appendChild(letter);
+
+                    const phaseText = (info && info.phaseLabel) ? info.phaseLabel : 'žádný';
+                    const dayText = (info && info.cycleDay != null) ? (' · den ' + info.cycleDay) : '';
+                    const trainText = count ? (' · ' + count + ' trénink(ů)') : ' · žádný trénink';
+                    cell.title = iso + dayText + ' · ' + phaseText + trainText;
+                    cell.addEventListener('click', function () {
+                        if (caption) caption.textContent = iso + dayText + ' — ' + phaseText + trainText;
+                    });
+                    root.appendChild(cell);
+                }
+            })
+            .catch(() => { root.innerHTML = '<span class="text-muted">chyba načítání</span>'; });
+    }
+
+    render();
+    const rb = document.getElementById('refreshBtn');
+    if (rb) rb.addEventListener('click', render);
 })();
 </script>
 

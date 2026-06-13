@@ -25,6 +25,8 @@ public class AnalysisPageController {
         model.addAttribute("catalogItems", catalogService.listVisibleTo(user));
         // Phase 14 (A16): seznam cviků označených korunkou — sekce na konci stránky
         model.addAttribute("starredExercises", trainingService.listStarredExercises(user));
+        // ScoutMeto kolo 5: cyklus-kalendář jen pro ženy
+        model.addAttribute("showCycle", user.isFemale());
         return "analysis/index";
     }
 }

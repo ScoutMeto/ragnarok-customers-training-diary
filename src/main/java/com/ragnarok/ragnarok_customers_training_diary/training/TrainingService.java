@@ -185,6 +185,19 @@ public class TrainingService {
                 ownerId, TrainingVisibility.PRIVATE);
     }
 
+    /**
+     * ScoutMeto kolo 5: hmotnost z posledního tréninku klienta (pro předvyplnění
+     * nového tréninku). {@code null}, pokud klient ještě žádnou hmotnost nezadal.
+     */
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal lastBodyweight(AccountEntity owner) {
+        return trainingRepository
+                .findFirstByOwner_IdAndVisibilityAndBodyweightKgIsNotNullOrderByTrainingDateDescIdDesc(
+                        owner.getId(), TrainingVisibility.PRIVATE)
+                .map(TrainingEntity::getBodyweightKg)
+                .orElse(null);
+    }
+
     public TrainingEntity create(AccountEntity owner, TrainingInput input) {
         validateExerciseNaming(input);
 
@@ -502,6 +515,15 @@ public class TrainingService {
         training.setDifficulty(input.getDifficulty());
         training.setRpe(input.getRpe());
         training.setNotes(input.getNotes());
+        // ScoutMeto kolo 5: kondiční metriky + cyklus (nepovinné). U group/template zůstanou null.
+        training.setBodyweightKg(input.getBodyweightKg());
+        training.setRestingHrBpm(input.getRestingHrBpm());
+        training.setSleepQuality(input.getSleepQuality());
+        training.setSleepQualityRpe(input.getSleepQualityRpe());
+        training.setAvgHrBpm(input.getAvgHrBpm());
+        training.setMaxHrBpm(input.getMaxHrBpm());
+        training.setCycleDay(input.getCycleDay());
+        training.setCyclePhase(input.getCyclePhase());
     }
 
     private void applyExercises(TrainingEntity training, List<TrainingExerciseInput> exerciseInputs) {
