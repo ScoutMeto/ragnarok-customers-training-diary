@@ -472,6 +472,40 @@ přístup do rez. systému).
   (POST `/settings/equipment`, reuse `EquipmentOptionService.ensureExistsForUser`).
   Karta viditelná vždy (dřív skrytá, když bylo prázdno).
 
+## ✅ ScoutMeto kolo 5 (DONE 2026-06-13)
+
+Migrace **V32** (account: `gender`, `birth_date`; training: `bodyweight_kg`, `resting_hr_bpm`,
+`sleep_quality`, `sleep_quality_rpe`, `avg_hr_bpm`, `max_hr_bpm`, `cycle_day`, `cycle_phase` — vše nullable).
+
+**ADMIN**
+- Notifikace: v `/settings` se adminovi zobrazí **jen „Nové komentáře"** (ostatní přes `sec:authorize`).
+  `TrainingCommentService` teď notifikuje **všechny adminy** na jakýkoliv komentář (dedup příjemců dle id,
+  guard `notifNewComment` v `EmailService`).
+
+**USER**
+- Profil v `/settings`: pohlaví (Muž/Žena/Neuvedeno) + datum narození → `AccountEntity.getAge()` +
+  `getMaxHeartRate()` (♂ 208−0,77×věk, ♀ 206−0,88×věk). Karta **„Doporučení pro rozvoj
+  kardiorespirační kapacity"** (`CardioZone`, zóny Z2–Z5: % MTF + přepočtené BPM tučně).
+- Trénink (form + detail): kondiční metriky — hmotnost (předvyplněná z minulého tréninku přes
+  `TrainingRepository.findFirst...BodyweightKgIsNotNull...`), klidová/prům./max TF, kvalita spánku (0–100),
+  RPE spánku (1–10). Ženy navíc: den cyklu + fáze (`CyclePhase` M/F/O/L).
+- `/analysis`: kalendář **„Cyklus"** (jen ženy) — endpoint `/api/analysis/cycle-calendar`,
+  `AnalysisService.cycleCalendar` → `CycleDayInfo`. Buňka = barva dle počtu tréninků, nad ní den cyklu,
+  uvnitř písmeno fáze, hover/klik = název fáze.
+
+**OBECNÉ (design)**
+- **Batman/dark mode čitelnost:** Bootstrap `.card/.form-label/.form-text/.table` svázány s tokeny
+  v `app.css` (dřív tmavý text na tmavém pozadí u FREEFORM tabulky sérií).
+- **Oddělení formuláře tréninku:** obecné info má akcentní levý okraj + nadpis „Obecné informace",
+  cviky mají střídavé pozadí (`:nth-of-type(even)`) + výrazné brick číslo, sekce „Cviky" s oddělovačem.
+- **Logout pod Settings:** avatar v navbaru je dropdown (Nastavení + Odhlásit) — dřív samostatné
+  tlačítko přetékalo vpravo.
+
+Ověřeno E2E proti PostgreSQL (throwaway účet FEMALE): MTF 176 pro věk 34, zóny 106–176 BPM, trénink
+s metrikami+cyklem uložen/zobrazen, bodyweight prefill 72.5, cyklus-kalendář „den 12 · Folikulární",
+Batman kontrast (labely 20:1, nápovědy 8:1, hlavičky tabulky 7:1), admin settings jen Nové komentáře.
+116 testů zelených.
+
 ## 🚨 Open issues / blockers / TODO
 
 - [x] ~~**Admin formuláře jsou zastaralé duplikáty**~~ **VYŘEŠENO 2026-06-03** — editor cviků

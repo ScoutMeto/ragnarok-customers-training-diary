@@ -209,6 +209,7 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | 8 | Individuální plány od trenéra (TrainingTemplate + CoachPlan markdown) | ✅ DONE | na `develop` |
 | — | UI redesign (Forge design system, Phase R) | ✅ DONE | na `develop` |
 | — | Design sjednocení s ragnarokostrava.cz — brick #9F371B, Montserrat, přepínač Light/Batman Mode | ✅ DONE | na `develop` (2026-06-11) |
+| — | ScoutMeto kolo 5 — pohlaví/cyklus, kondiční metriky, MTF zóny, cyklus-kalendář, admin notifikace, design fixy (Batman kontrast/oddělení formuláře/logout) | ✅ DONE | na `develop` (2026-06-13, V32) |
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
 | 7.2 | Rezervace: cancel + "moje rezervace" + historie (sdílený API klíč, cross-repo) | ✅ DONE | na `develop` (deploy: klíč v obou appkách!) |
@@ -280,6 +281,12 @@ cachují agresivně browserem. Pro vývoj používej Ctrl+F5 (hard refresh).
 protože `eq` je textový SpEL operátor (= rovnost). Render se **uťne uprostřed** → zbytek stránky
 (včetně `<script>` na konci) se neodešle → vypadá to jako úplně jiný bug (mrtvé tlačítko, prázdný
 seznam). Použij neutrální název (`item`, `equip`, `ex`, ...). Stálo to hodinu debugu v Phase 19 retestu.
+
+### `mvnw spring-boot:run` servíruje šablony z `target/classes`, ne z `src`
+Při běhu přes `spring-boot:run` se Thymeleaf šablony čtou z `target/classes/templates/...`
+(zkopírované při `process-resources` na startu). I s `spring.thymeleaf.cache=false` se **úprava
+souboru v `src/main/resources` neprojeví bez restartu** (nebo bez devtools / ručního re-copy).
+Po editaci šablony app restartuj, jinak testuješ starou verzi (stálo to debug v kolo 5 retestu).
 
 ### Postgres `user` je reserved keyword
 Proto je tabulka `account`, ne `user` — historicky byla `user`, opraveno v Fázi 0.
