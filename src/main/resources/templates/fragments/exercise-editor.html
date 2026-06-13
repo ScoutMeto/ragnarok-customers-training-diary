@@ -3,7 +3,10 @@
 <body>
 <!-- Sdílený editor cviků pro diary/form, admin/group-trainings/form, admin/templates/form (DRY, Phase 12 parita) -->
 <th:block th:fragment="editor">
-        <h3 class="mb-3">Cviky</h3>
+        <h3 class="mb-3" style="text-transform:uppercase; letter-spacing:0.03em; font-family:var(--rk-font-display);
+                                border-top: 2px solid var(--rk-border-strong); padding-top: var(--sp-4);">
+            🏋️ Cviky
+        </h3>
 
         <div id="exercisesContainer">
             <div th:each="ex, exStat : ${form.exercises}"

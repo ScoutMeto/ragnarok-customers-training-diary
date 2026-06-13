@@ -103,19 +103,27 @@
             <span class="js-theme-toggle-label">Batman Mode</span>
         </button>
 
-        <div class="rk-nav__user" sec:authorize="isAuthenticated()">
-            <span class="label d-none d-md-inline">
-                Přihlášen <strong sec:authentication="principal.nickname">user</strong>
-            </span>
-            <a th:href="@{/settings}" class="d-none d-md-inline-block" title="Nastavení účtu"
-               style="text-decoration: none;">
+        <!-- ScoutMeto kolo 5: avatar = dropdown s Nastavením a Odhlásit (logout přesunut sem,
+             dřív přetékal vpravo a vyžadoval horizontální scroll) -->
+        <div class="rk-nav__user dropdown d-none d-md-flex" sec:authorize="isAuthenticated()">
+            <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+               title="Účet" style="text-decoration: none;">
                 <div class="rk-avatar"
                      th:text="${#strings.toUpperCase(#strings.substring(#authentication.principal.firstName, 0, 1))}"
                      style="cursor: pointer;">M</div>
             </a>
-            <form th:action="@{/logout}" method="post" class="d-none d-md-inline ms-2">
-                <button type="submit" class="rk-btn-logout" title="Odhlásit">Odhlásit</button>
-            </form>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header">
+                    Přihlášen <strong sec:authentication="principal.nickname">user</strong>
+                </li>
+                <li><a class="dropdown-item" th:href="@{/settings}">⚙️ Nastavení</a></li>
+                <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,.1);"></li>
+                <li>
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="dropdown-item">🚪 Odhlásit</button>
+                    </form>
+                </li>
+            </ul>
         </div>
         <div class="rk-nav__user" sec:authorize="!isAuthenticated()">
             <a class="rk-nav__link" th:href="@{/login}">Přihlásit</a>

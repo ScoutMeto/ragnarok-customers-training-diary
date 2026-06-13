@@ -211,6 +211,104 @@
     text-transform: uppercase;
 }
 
+/* =====================================================================
+   ScoutMeto kolo 5 — Bootstrap třídy vázané na tokeny (čitelnost v Batman/dark mode)
+   Diary formuláře používají Bootstrap .card / .form-label / .form-text / .table,
+   které mají natvrdo světlé/tmavé barvy a v dark mode nekontrastují. Svážeme je
+   s našimi tokeny → fungují v Light i Batman mode.
+   ===================================================================== */
+.card {
+    background: var(--rk-bg-elev);
+    border: 1px solid var(--rk-border);
+    border-radius: var(--rad-lg);
+    color: var(--rk-ink);
+    box-shadow: var(--sh-1);
+}
+.card-title { color: var(--rk-ink); }
+.form-label { color: var(--rk-ink-2); font-weight: 500; font-size: var(--fs-sm); }
+.form-text { color: var(--rk-muted); }
+.form-check-label { color: var(--rk-ink-2); }
+.col-form-label { color: var(--rk-ink-2); }
+.invalid-feedback { color: var(--rk-danger); }
+/* Bootstrap tabulky (např. sets-table u FREEFORM) — text i okraje z tokenů */
+.table {
+    --bs-table-color: var(--rk-ink);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--rk-line-faint);
+    color: var(--rk-ink);
+}
+.table > :not(caption) > * > * {
+    color: var(--rk-ink);
+    background-color: transparent;
+    border-bottom-color: var(--rk-line-faint);
+}
+.table > thead th { color: var(--rk-muted); }
+
+/* =====================================================================
+   ScoutMeto kolo 5 — přehlednost formuláře tréninku
+   Obecné info zřetelně oddělené (akcentní levý okraj), cviky se střídavým pozadím.
+   ===================================================================== */
+/* Obecné informace o tréninku */
+.tr-general {
+    border-left: 4px solid var(--rk-primary);
+}
+.tr-general .card-title {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-family: var(--rk-font-display);
+}
+/* Číslo cviku jako výrazný brick odznak */
+#exercisesContainer .exercise-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: var(--rad-pill);
+    background: var(--rk-primary);
+    color: var(--rk-primary-ink);
+    font-family: var(--rk-font-mono);
+    font-weight: 700;
+}
+/* Střídavé pozadí cviků pro snadnou orientaci */
+#exercisesContainer .exercise-card {
+    border-left: 3px solid var(--rk-border-strong);
+}
+#exercisesContainer .exercise-card:nth-of-type(even) {
+    background: var(--rk-surface-2);
+    border-left-color: var(--rk-primary);
+}
+
+/* =====================================================================
+   ScoutMeto kolo 5 — dropdown uživatele (Settings + Odhlásit) v navbaru
+   ===================================================================== */
+.rk-nav__user .dropdown-item {
+    color: #C9C5BB;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    border-radius: var(--rad-sm);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+}
+.rk-nav__user .dropdown-item:hover,
+.rk-nav__user .dropdown-item:focus {
+    background: rgba(255,255,255,.06);
+    color: #F1EFE9;
+}
+.rk-nav__user .dropdown-header {
+    color: #8A8579;
+    font-size: var(--fs-xs);
+    padding: 6px 10px;
+}
+
 /* ================== Timer modal (Phase 4) ================== */
 #timerModal {
     display: none;
