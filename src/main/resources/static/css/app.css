@@ -47,6 +47,14 @@
     border-color: rgba(255,255,255,.32);
 }
 
+/* ---- Logo v navbaru (ScoutMeto kolo 6) — bílá varianta na tmavé liště ---- */
+.rk-brand__logo {
+    height: 30px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+}
+
 /* ---- Přepínač motivu (Light Mode / Batman Mode) ---- */
 .rk-theme-toggle {
     align-items: center;

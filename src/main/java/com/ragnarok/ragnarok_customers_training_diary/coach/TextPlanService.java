@@ -30,14 +30,16 @@ public class TextPlanService {
     // ----- Admin: šablony -----
 
     public List<TextPlanEntity> listTemplates() {
-        return repository.findByTemplateTrueOrderByCreatedAtDesc();
+        return repository.findByTemplateTrueAndGroupOfferFalseOrderByCreatedAtDesc();
     }
 
     public TextPlanEntity getTemplate(Long id) {
         TextPlanEntity p = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Textová šablona (id=" + id + ") nenalezena."));
-        if (!p.isTemplate()) {
-            throw new NotFoundException("To není textová šablona.");
+        // Skupinová nabídka má taky template=true → musíme ji tady vyloučit, jinak by ji
+        // individuální /admin/text-plans flow (edit/assign/delete) omylem akceptoval.
+        if (!p.isTemplate() || p.isGroupOffer()) {
+            throw new NotFoundException("To není (individuální) textová šablona.");
         }
         return p;
     }
@@ -86,6 +88,78 @@ public class TextPlanService {
                 ? tpl.getCreatedBy().getFirstName() + " " + tpl.getCreatedBy().getLastName() : null;
         emailService.sendNewPlanAssignedNotification(user, "textový plán", tpl.getTitle(), trainerName);
         return saved;
+    }
+
+    // ----- ScoutMeto kolo 6: skupinové textové nabídky -----
+
+    public List<TextPlanEntity> listGroupOffers() {
+        return repository.findByGroupOfferTrueOrderByCreatedAtDesc();
+    }
+
+    public TextPlanEntity getGroupOffer(Long id) {
+        TextPlanEntity p = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Skupinová nabídka (id=" + id + ") nenalezena."));
+        if (!p.isGroupOffer()) {
+            throw new NotFoundException("To není skupinová textová nabídka.");
+        }
+        return p;
+    }
+
+    @Transactional
+    public TextPlanEntity createGroupOffer(AccountEntity admin, String title, String body) {
+        validate(title, body);
+        TextPlanEntity p = new TextPlanEntity();
+        p.setTitle(title.trim());
+        p.setBody(body);
+        p.setTemplate(true);
+        p.setGroupOffer(true);
+        p.setCreatedBy(admin);
+        return repository.save(p);
+    }
+
+    @Transactional
+    public TextPlanEntity updateGroupOffer(Long id, String title, String body) {
+        validate(title, body);
+        TextPlanEntity p = getGroupOffer(id);
+        p.setTitle(title.trim());
+        p.setBody(body);
+        return p;
+    }
+
+    @Transactional
+    public void deleteGroupOffer(Long id) {
+        repository.delete(getGroupOffer(id));
+    }
+
+    /** Už si uživatel tuto nabídku přidal? */
+    public boolean hasAddedOffer(Long userId, Long offerId) {
+        return repository.existsByOwner_IdAndSourceTemplate_Id(userId, offerId);
+    }
+
+    /** ID všech nabídek/šablon, které už uživatel má jako kopii (jeden dotaz — bez N+1). */
+    public java.util.Set<Long> addedSourceIds(Long userId) {
+        return repository.findAddedSourceIdsByOwnerId(userId);
+    }
+
+    /**
+     * Uživatel si přidá skupinovou textovou nabídku → vznikne jeho editovatelná kopie
+     * v „Můj plán". Idempotentní: pokud už ji má, nevytváří duplicitu.
+     */
+    @Transactional
+    public TextPlanEntity addGroupOfferToUser(Long offerId, AccountEntity user) {
+        TextPlanEntity offer = getGroupOffer(offerId);
+        if (repository.existsByOwner_IdAndSourceTemplate_Id(user.getId(), offerId)) {
+            return null; // už přidáno
+        }
+        TextPlanEntity copy = new TextPlanEntity();
+        copy.setTitle(offer.getTitle());
+        copy.setBody(offer.getBody());
+        copy.setTemplate(false);
+        copy.setGroupOffer(false);
+        copy.setOwner(user);
+        copy.setCreatedBy(offer.getCreatedBy());
+        copy.setSourceTemplate(offer);
+        return repository.save(copy);
     }
 
     // ----- Uživatel: kopie -----

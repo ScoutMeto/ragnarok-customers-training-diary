@@ -50,6 +50,7 @@ public class DiaryPageController {
     private final com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
     private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
+    private final com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService;
 
     public DiaryPageController(
             TrainingService trainingService,
@@ -59,7 +60,8 @@ public class DiaryPageController {
             com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService,
             com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService,
             com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper,
-            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService) {
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService,
+            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
@@ -68,6 +70,7 @@ public class DiaryPageController {
         this.equipmentService = equipmentService;
         this.typeToInputMapper = typeToInputMapper;
         this.emailService = emailService;
+        this.textPlanService = textPlanService;
     }
 
     /**
@@ -107,6 +110,14 @@ public class DiaryPageController {
         model.addAttribute("todayGroupTrainings", readOnly
                 ? java.util.List.of()
                 : trainingService.listGroupTrainingsForDay(java.time.LocalDate.now()));
+        // ScoutMeto kolo 6: skupinové textové tréninky (nabídka) + které už uživatel přidal
+        var textOffers = readOnly ? java.util.List.<com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanEntity>of()
+                : textPlanService.listGroupOffers();
+        model.addAttribute("textGroupOffers", textOffers);
+        // Které nabídky už uživatel má (jeden dotaz, bez N+1)
+        model.addAttribute("addedOfferIds", readOnly
+                ? java.util.Set.<Long>of()
+                : textPlanService.addedSourceIds(user.getId()));
         return "diary/list";
     }
 

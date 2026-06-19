@@ -44,6 +44,14 @@ public class TextPlanEntity {
     @Column(name = "is_template", nullable = false)
     private boolean template = false;
 
+    /**
+     * ScoutMeto kolo 6: skupinová nabídka. {@code true} + {@code template=true} + owner=null
+     * = textový skupinový trénink nabízený všem uživatelům. Uživatel si přidá kopii
+     * (group_offer=false, owner=user, sourceTemplate=tato nabídka) do svého „Můj plán".
+     */
+    @Column(name = "group_offer", nullable = false)
+    private boolean groupOffer = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private AccountEntity owner;

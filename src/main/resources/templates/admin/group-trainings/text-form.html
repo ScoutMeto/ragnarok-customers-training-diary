@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Skupinový textový trénink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('admin-group')}"></nav>
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <span>Admin</span><span class="sep">/</span>
+        <a th:href="@{/admin/group-trainings}">Skupinové tréninky</a><span class="sep">/</span>
+        <span class="current" th:text="${editingId != null} ? 'Úprava textového' : 'Nový textový'">Nový textový</span>
+    </div>
+
+    <div class="rk-page__head"><div>
+        <h1 class="rk-page__title"
+            th:text="${editingId != null} ? 'Upravit skupinový textový trénink' : 'Nový skupinový textový trénink'">
+            Nový skupinový textový trénink</h1>
+        <p class="rk-page__sub">
+            Textová podoba tréninku — nabídne se <strong>všem</strong> uživatelům. Kdo si ho přidá,
+            uloží se mu editovatelná kopie do sekce „Můj plán".
+        </p>
+    </div></div>
+
+    <form th:action="${editingId != null} ? @{/admin/group-trainings/text/{id}(id=${editingId})} : @{/admin/group-trainings/text}"
+          method="post">
+        <div class="rk-card"><div class="rk-card__body">
+            <div class="rk-field" style="margin-bottom: var(--sp-4);">
+                <label class="rk-label" for="title">Název</label>
+                <input type="text" id="title" name="title" class="form-control" maxlength="128"
+                       th:value="${planTitle}" placeholder="např. Domácí kettlebell okruh" required>
+            </div>
+            <div class="rk-field">
+                <label class="rk-label" for="body">Text tréninku</label>
+                <textarea id="body" name="body" class="form-control" rows="18"
+                          style="font-family: monospace; white-space: pre;"
+                          placeholder="Piš jako do poznámkového bloku…" th:text="${planBody}"></textarea>
+            </div>
+        </div></div>
+        <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
+            <button type="submit" class="btn btn-accent btn-lg">Uložit</button>
+            <a th:href="@{/admin/group-trainings}" class="btn btn-outline btn-lg">Zrušit</a>
+        </div>
+    </form>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

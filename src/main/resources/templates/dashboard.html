@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="cs">
-<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<head th:replace="~{fragments/layout :: head('Přehled')}"></head>
 <body>
 
 <nav th:replace="~{fragments/layout :: navbar('dashboard')}"></nav>
@@ -16,7 +16,7 @@
                 · pokračuj v tréninkovém režimu
             </p>
         </div>
-        <div class="rk-page__actions">
+        <div class="rk-page__actions" sec:authorize="!hasRole('ADMIN')">
             <a class="btn btn-outline" th:href="@{/diary}">Můj deník</a>
             <a th:unless="${readOnly}" class="btn btn-accent btn-icon" th:href="@{/diary/new}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -34,8 +34,8 @@
     <!-- Recent trainings + quick actions -->
     <div class="row g-4">
 
-        <!-- LEFT: Recent trainings -->
-        <div class="col-lg-8">
+        <!-- LEFT: Recent trainings (jen klient — admin nemá osobní deník) -->
+        <div class="col-lg-8" sec:authorize="!hasRole('ADMIN')">
             <div class="rk-section-head">
                 <h2>Poslední tréninky</h2>
                 <a th:href="@{/diary}" class="meta" style="color: var(--rk-primary); font-weight: 500;">Všechny →</a>
@@ -82,12 +82,13 @@
             </div>
         </div>
 
-        <!-- RIGHT: Quick actions + dnes v gymu -->
-        <div class="col-lg-4">
+        <!-- RIGHT: Quick actions + dnes v gymu (pro admina full-width, nemá osobní levý sloupec) -->
+        <div th:class="${isAdmin} ? 'col-lg-12' : 'col-lg-4'">
             <div class="rk-section-head"><h2>Rychlé akce</h2></div>
             <div class="rk-stack-3">
 
-                <a class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/diary}">
+                <a sec:authorize="!hasRole('ADMIN')"
+                   class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/diary}">
                     <div class="rk-row" style="justify-content: space-between;">
                         <div>
                             <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📓 Můj deník</div>
@@ -97,7 +98,8 @@
                     </div>
                 </a>
 
-                <a class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/analysis}">
+                <a sec:authorize="!hasRole('ADMIN')"
+                   class="rk-card" style="display:block; padding: var(--sp-4); text-decoration:none;" th:href="@{/analysis}">
                     <div class="rk-row" style="justify-content: space-between;">
                         <div>
                             <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);">📊 Statistiky</div>

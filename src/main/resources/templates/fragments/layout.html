@@ -55,13 +55,13 @@
         </button>
 
         <a class="rk-brand" th:href="@{/}">
-            <span class="rk-brand__mark">R</span>
-            Ragnarok <span class="rk-brand__sub d-none d-sm-inline">Training Diary</span>
+            <img th:src="@{/images/ragnarok-logo-white.png}" alt="Ragnarok" class="rk-brand__logo">
+            Ragnarok <span class="rk-brand__sub d-none d-sm-inline">Tréninkový deník</span>
         </a>
 
         <div class="rk-nav__links d-none d-md-flex" sec:authorize="isAuthenticated()">
             <a class="rk-nav__link" th:href="@{/dashboard}"
-               th:classappend="${active == 'dashboard'} ? ' active'">Dashboard</a>
+               th:classappend="${active == 'dashboard'} ? ' active'">Přehled</a>
             <a class="rk-nav__link" th:href="@{/diary}" sec:authorize="!hasRole('ADMIN')"
                th:classappend="${active == 'diary'} ? ' active'">Můj deník</a>
             <a class="rk-nav__link" th:href="@{/analysis}" sec:authorize="!hasRole('ADMIN')"
@@ -134,7 +134,7 @@
     <!-- Mobile collapse menu -->
     <div class="collapse rk-nav__mobile-wrap" id="mobileNav" sec:authorize="isAuthenticated()">
         <div class="rk-nav__mobile">
-            <a class="rk-nav__link" th:href="@{/dashboard}">Dashboard</a>
+            <a class="rk-nav__link" th:href="@{/dashboard}">Přehled</a>
             <a class="rk-nav__link" th:href="@{/diary}" sec:authorize="!hasRole('ADMIN')">Můj deník</a>
             <a class="rk-nav__link" th:href="@{/analysis}" sec:authorize="!hasRole('ADMIN')">Statistiky</a>
             <a class="rk-nav__link" th:href="@{/admin/impersonate-select(next='diary')}" sec:authorize="hasRole('ADMIN')">Deník uživatele</a>

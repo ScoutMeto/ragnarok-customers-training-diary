@@ -43,22 +43,88 @@ public class AdminGroupTrainingController {
     private final ExerciseCatalogService catalogService;
     private final TrainingTagRepository tagRepository;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
+    private final com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService;
 
     public AdminGroupTrainingController(
             TrainingService trainingService,
             ExerciseCatalogService catalogService,
             TrainingTagRepository tagRepository,
-            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper) {
+            com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper,
+            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagRepository = tagRepository;
         this.typeToInputMapper = typeToInputMapper;
+        this.textPlanService = textPlanService;
     }
 
     @GetMapping
     public String list(Model model) {
         model.addAttribute("trainings", trainingService.listAllGroupTrainings());
+        // ScoutMeto kolo 6: skupinové textové tréninky (nabídky pro všechny)
+        model.addAttribute("textOffers", textPlanService.listGroupOffers());
         return "admin/group-trainings/list";
+    }
+
+    // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 6: skupinový trénink v TEXTOVÉM formátu (nabídka pro všechny)
+    // -----------------------------------------------------------------------------
+
+    @GetMapping("/text/new")
+    public String newTextForm(Model model) {
+        model.addAttribute("editingId", null);
+        model.addAttribute("planTitle", "");
+        model.addAttribute("planBody", "");
+        return "admin/group-trainings/text-form";
+    }
+
+    @PostMapping("/text")
+    public String createText(@AuthenticationPrincipal AccountEntity admin,
+                             @org.springframework.web.bind.annotation.RequestParam("title") String title,
+                             @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                             RedirectAttributes flash) {
+        try {
+            textPlanService.createGroupOffer(admin, title, body);
+            flash.addFlashAttribute("flashSuccess", "Skupinový textový trénink vytvořen — nabízí se všem uživatelům.");
+        } catch (IllegalArgumentException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+            return "redirect:/admin/group-trainings/text/new";
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    @GetMapping("/text/{id}/edit")
+    public String editTextForm(@PathVariable Long id, Model model) {
+        var offer = textPlanService.getGroupOffer(id);
+        model.addAttribute("editingId", id);
+        model.addAttribute("planTitle", offer.getTitle());
+        model.addAttribute("planBody", offer.getBody());
+        return "admin/group-trainings/text-form";
+    }
+
+    @PostMapping("/text/{id}")
+    public String updateText(@PathVariable Long id,
+                             @org.springframework.web.bind.annotation.RequestParam("title") String title,
+                             @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                             RedirectAttributes flash) {
+        try {
+            textPlanService.updateGroupOffer(id, title, body);
+            flash.addFlashAttribute("flashSuccess", "Skupinový textový trénink upraven.");
+        } catch (IllegalArgumentException | NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    @PostMapping("/text/{id}/delete")
+    public String deleteText(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            textPlanService.deleteGroupOffer(id);
+            flash.addFlashAttribute("flashSuccess", "Skupinový textový trénink smazán.");
+        } catch (NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
     }
 
     // -----------------------------------------------------------------------------

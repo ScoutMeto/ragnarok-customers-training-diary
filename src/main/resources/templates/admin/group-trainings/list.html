@@ -25,6 +25,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
                 Nový skupinový trénink
             </a>
+            <a th:href="@{/admin/group-trainings/text/new}" class="btn btn-outline btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
+                Nový skupinový trénink v textovém formátu
+            </a>
         </div>
     </div>
 
@@ -69,6 +73,45 @@
                 <a th:href="@{/admin/group-trainings/{id}/edit(id=${t.id})}" class="btn btn-outline btn-sm">Upravit</a>
                 <form th:action="@{/admin/group-trainings/{id}/delete(id=${t.id})}" method="post" class="d-inline"
                       onsubmit="return confirm('Opravdu smazat tento skupinový trénink?');">
+                    <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- ScoutMeto kolo 6: skupinové textové tréninky (nabídka pro všechny) -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2 style="font-size: var(--fs-h3);">📄 Textové skupinové tréninky</h2>
+        <span class="meta">Nabízí se všem — uživatel si uloží kopii do „Můj plán"</span>
+    </div>
+
+    <div th:if="${textOffers == null or textOffers.isEmpty()}" class="rk-empty rk-card">
+        <p>Zatím žádný textový skupinový trénink.</p>
+        <a th:href="@{/admin/group-trainings/text/new}" class="btn btn-outline btn-sm">+ Nový skupinový trénink v textovém formátu</a>
+    </div>
+
+    <table class="rk-table" th:unless="${textOffers == null or textOffers.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Název</th>
+            <th>Vytvořeno</th>
+            <th>Trenér</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="o : ${textOffers}">
+            <td>
+                <span class="rk-badge" style="margin-right:6px;">📄 TEXTOVÝ</span>
+                <strong th:text="${o.title}">Název</strong>
+            </td>
+            <td class="num text-muted" th:text="${#temporals.format(o.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
+            <td class="text-muted" th:text="${o.createdBy != null ? o.createdBy.firstName + ' ' + o.createdBy.lastName : '—'}">Trenér</td>
+            <td class="text-end">
+                <a th:href="@{/admin/group-trainings/text/{id}/edit(id=${o.id})}" class="btn btn-outline btn-sm">Upravit</a>
+                <form th:action="@{/admin/group-trainings/text/{id}/delete(id=${o.id})}" method="post" class="d-inline"
+                      onsubmit="return confirm('Opravdu smazat tento textový skupinový trénink? Kopie u uživatelů zůstanou.');">
                     <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
                 </form>
             </td>

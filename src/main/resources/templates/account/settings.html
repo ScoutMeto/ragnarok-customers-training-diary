@@ -138,6 +138,21 @@
                     </span>
                 </div>
 
+                <!-- ScoutMeto kolo 6: vlastní změřená max. tepová frekvence (přebíjí výpočet) -->
+                <div class="rk-field" style="max-width: 320px;">
+                    <label class="rk-label" for="customMaxHr">Vlastní změřená maximální tepová frekvence</label>
+                    <input type="number" id="customMaxHr" name="customMaxHr" class="form-control"
+                           min="100" max="250" placeholder="nepovinné"
+                           th:value="${account.customMaxHr}">
+                    <span class="rk-help">
+                        Máš-li ji změřenou (test, sporttester), zadej ji — doporučené zóny se přepočítají z ní.
+                        <span th:if="${computedMaxHeartRate != null}">
+                            Bez zadání použijeme vypočtenou hodnotu
+                            <strong class="num" th:text="${computedMaxHeartRate} + ' tepů/min'">190</strong>.
+                        </span>
+                    </span>
+                </div>
+
                 <div>
                     <button type="submit" class="btn btn-accent">Uložit profil</button>
                 </div>
@@ -156,7 +171,9 @@
                 Maximální tepová frekvence (MTF):
                 <strong class="num" style="font-size: var(--fs-h3); color: var(--rk-primary);"
                         th:text="${maxHeartRate} + ' tepů/min'">190 tepů/min</strong>
-                <span class="text-muted" style="font-size: var(--fs-sm);">— orientační, dle pohlaví a věku.</span>
+                <span class="text-muted" style="font-size: var(--fs-sm);"
+                      th:text="${account.customMaxHr != null} ? '— tvoje vlastní změřená hodnota.' : '— orientační, dle pohlaví a věku.'">
+                    — orientační, dle pohlaví a věku.</span>
             </p>
 
             <div class="rk-stack-3">

@@ -65,6 +65,13 @@ public class AccountEntity implements UserDetails {
     @Column(name = "birth_date")
     private java.time.LocalDate birthDate;
 
+    /**
+     * ScoutMeto kolo 6: vlastní (změřená) maximální tepová frekvence. Když je vyplněná,
+     * přebíjí hodnotu z výpočtu — doporučené kardio zóny se počítají z ní. Nullable.
+     */
+    @Column(name = "custom_max_hr")
+    private Short customMaxHr;
+
     @Column(name = "email_notifications_enabled", nullable = false)
     private boolean emailNotificationsEnabled = true;
 
@@ -144,12 +151,12 @@ public class AccountEntity implements UserDetails {
     }
 
     /**
-     * Orientační maximální tepová frekvence (ScoutMeto kolo 5). Vzorec dle pohlaví:
+     * Orientační maximální tepová frekvence z výpočtu (ScoutMeto kolo 5). Vzorec dle pohlaví:
      *  - muži: 208 − 0,77 × věk
      *  - ženy: 206 − 0,88 × věk
      * {@code null}, pokud chybí věk nebo pohlaví.
      */
-    public Integer getMaxHeartRate() {
+    public Integer getComputedMaxHeartRate() {
         Integer age = getAge();
         if (age == null || gender == null) {
             return null;
@@ -158,6 +165,18 @@ public class AccountEntity implements UserDetails {
                 ? 206 - 0.88 * age
                 : 208 - 0.77 * age;
         return (int) Math.round(mtf);
+    }
+
+    /**
+     * Efektivní maximální tepová frekvence pro doporučené zóny (ScoutMeto kolo 6).
+     * Pokud uživatel zadal vlastní změřenou hodnotu ({@link #customMaxHr}), použije se ta,
+     * jinak vypočtená. {@code null}, když není ani jedna.
+     */
+    public Integer getMaxHeartRate() {
+        if (customMaxHr != null) {
+            return customMaxHr.intValue();
+        }
+        return getComputedMaxHeartRate();
     }
 
     /** {@code true} pokud je účet deaktivovaný (read-only mód). */

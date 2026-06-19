@@ -82,6 +82,44 @@
         </div>
     </div>
 
+    <!-- ==================== Textové skupinové tréninky (nabídka od trenéra, ScoutMeto kolo 6) ==================== -->
+    <div th:if="${textGroupOffers != null and !textGroupOffers.isEmpty()}" style="margin-bottom: var(--sp-6);">
+        <div class="rk-section-head">
+            <h2 style="font-size: var(--fs-h3);">📄 Textové tréninky od trenéra</h2>
+            <span class="meta">Skupinová nabídka — přidej si ji do „Můj plán"</span>
+        </div>
+        <div class="rk-stack-3">
+            <div th:each="o : ${textGroupOffers}" class="rk-card"
+                 style="border-left: 4px solid var(--rk-primary); border-style: dashed;">
+                <div class="rk-card__body">
+                    <div class="rk-row" style="justify-content: space-between; align-items: flex-start; gap: var(--sp-3);">
+                        <div style="min-width:0;">
+                            <div style="margin-bottom: 6px;">
+                                <span class="rk-group-pill">Skupinový</span>
+                                <span class="rk-badge" style="margin-left:6px;">📄 TEXTOVÝ</span>
+                            </div>
+                            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);"
+                                 th:text="${o.title}">Název</div>
+                            <p class="text-muted" style="font-size: var(--fs-sm); margin: 6px 0 0;">
+                                Tento trénink se uloží k pozdější editaci do sekce <strong>MŮJ PLÁN</strong>.
+                            </p>
+                        </div>
+                        <div style="flex-shrink:0;">
+                            <span th:if="${addedOfferIds != null and addedOfferIds.contains(o.id)}">
+                                <span class="rk-badge rk-badge--success" style="display:block; margin-bottom:6px; text-align:center;">✓ Přidáno</span>
+                                <a th:href="@{/my-plan}" class="btn btn-ghost btn-sm">Otevřít v Můj plán →</a>
+                            </span>
+                            <form th:unless="${addedOfferIds != null and addedOfferIds.contains(o.id)}"
+                                  th:action="@{/my-plan/text-offers/{id}/add(id=${o.id})}" method="post">
+                                <button type="submit" class="btn btn-accent btn-sm">+ Přidat k sobě</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== Moje tréninky ==================== -->
     <div class="rk-section-head">
         <h2 style="font-size: var(--fs-h3);">📓 Moje tréninky</h2>

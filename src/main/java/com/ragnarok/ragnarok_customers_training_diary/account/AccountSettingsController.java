@@ -35,8 +35,9 @@ public class AccountSettingsController {
                 .filter(e -> !e.isSystem()).toList());
         // ScoutMeto kolo 5: profil (pohlaví/věk) + zóny MTF
         model.addAttribute("genders", Gender.values());
-        Integer mtf = fresh.getMaxHeartRate();
+        Integer mtf = fresh.getMaxHeartRate();            // efektivní (vlastní ?: vypočtená)
         model.addAttribute("maxHeartRate", mtf);
+        model.addAttribute("computedMaxHeartRate", fresh.getComputedMaxHeartRate());  // ScoutMeto kolo 6
         model.addAttribute("cardioZones", mtf != null ? CardioZone.forMaxHeartRate(mtf) : null);
         return "account/settings";
     }
@@ -50,14 +51,21 @@ public class AccountSettingsController {
             @RequestParam(value = "birthDate", required = false)
             @org.springframework.format.annotation.DateTimeFormat(iso =
                     org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate birthDate,
+            @RequestParam(value = "customMaxHr", required = false) Short customMaxHr,
             RedirectAttributes redirectAttributes) {
         AccountEntity fresh = accountRepository.findById(account.getId()).orElseThrow();
         if (birthDate != null && birthDate.isAfter(java.time.LocalDate.now())) {
             redirectAttributes.addFlashAttribute("flashError", "Datum narození nemůže být v budoucnosti.");
             return "redirect:/settings";
         }
+        if (customMaxHr != null && (customMaxHr < 100 || customMaxHr > 250)) {
+            redirectAttributes.addFlashAttribute("flashError",
+                    "Vlastní maximální tepová frekvence musí být v rozmezí 100–250.");
+            return "redirect:/settings";
+        }
         fresh.setGender(gender);
         fresh.setBirthDate(birthDate);
+        fresh.setCustomMaxHr(customMaxHr);  // ScoutMeto kolo 6: vlastní změřená MTF (přebíjí výpočet)
         accountRepository.save(fresh);
         redirectAttributes.addFlashAttribute("flashSuccess", "Profil uložen.");
         return "redirect:/settings";

@@ -82,8 +82,18 @@ public class SecurityConfiguration {
         filter.setExitUserMatcher(new AntPathRequestMatcher("/impersonate/exit", "GET"));
         filter.setSwitchFailureUrl("/admin/accounts?impersonateError");
         filter.setSuccessHandler((request, response, authentication) -> {
-            String next = request.getParameter("next");
-            response.sendRedirect("analysis".equals(next) ? "/analysis" : "/diary");
+            // Stejný handler běží pro switch i exit. Při switchi má auth ROLE_PREVIOUS_ADMINISTRATOR
+            // (vznikne při přepnutí na uživatele); při exitu je zpět admin bez ní.
+            boolean isSwitch = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_PREVIOUS_ADMINISTRATOR".equals(a.getAuthority()));
+            if (isSwitch) {
+                String next = request.getParameter("next");
+                response.sendRedirect("analysis".equals(next) ? "/analysis" : "/diary");
+            } else {
+                // Po „Ukončit náhled" zpět na výběr uživatele (ScoutMeto kolo 6),
+                // ne na admin-ův prázdný deník.
+                response.sendRedirect("/admin/impersonate-select?next=diary");
+            }
         });
         return filter;
     }

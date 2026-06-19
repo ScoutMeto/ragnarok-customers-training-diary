@@ -26,12 +26,15 @@ public class MyPlanPageController {
     private final CoachPlanService coachPlanService;
     private final MarkdownRenderer markdown;
     private final TextPlanService textPlanService;
+    private final com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService;
 
     public MyPlanPageController(CoachPlanService coachPlanService, MarkdownRenderer markdown,
-            TextPlanService textPlanService) {
+            TextPlanService textPlanService,
+            com.ragnarok.ragnarok_customers_training_diary.account.AccountService accountService) {
         this.coachPlanService = coachPlanService;
         this.markdown = markdown;
         this.textPlanService = textPlanService;
+        this.accountService = accountService;
     }
 
     @GetMapping("/my-plan")
@@ -80,5 +83,28 @@ public class MyPlanPageController {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
         return "redirect:/my-plan/text/" + id;
+    }
+
+    // ----- ScoutMeto kolo 6: přidání skupinové textové nabídky k sobě (→ kopie v Můj plán) -----
+
+    @org.springframework.web.bind.annotation.PostMapping("/my-plan/text-offers/{id}/add")
+    public String addGroupOffer(@AuthenticationPrincipal AccountEntity user,
+                                @PathVariable Long id,
+                                org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
+        // Read-only (deaktivovaný) účet nesmí nic přidávat — konzistentní s gating v deníku (E1).
+        if (accountService.isDeactivated(user.getId())) {
+            flash.addFlashAttribute("flashError",
+                    "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
+            return "redirect:/my-plan";
+        }
+        try {
+            var copy = textPlanService.addGroupOfferToUser(id, user);
+            flash.addFlashAttribute("flashSuccess", copy != null
+                    ? "Trénink přidán do Mého plánu — můžeš si ho upravit."
+                    : "Tento trénink už v Mém plánu máš.");
+        } catch (RuntimeException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/my-plan";
     }
 }
