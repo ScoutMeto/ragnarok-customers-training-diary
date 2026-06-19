@@ -445,6 +445,51 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ ScoutMeto kolo 6 (DONE 2026-06-19)
+
+Migrace **V33** (`text_plan.group_offer`, `account.custom_max_hr`).
+
+**ADMIN**
+- Dashboard: pro admina skryté osobní bloky (tlačítka Můj deník / +Nový trénink, levý sloupec
+  „Poslední tréninky", karty Můj deník/Statistiky) — admin nemá osobní deník (`PageController.isAdmin`).
+- `/admin/group-trainings`: nové tlačítko **„+ Nový skupinový trénink v textovém formátu"** →
+  textový skupinový trénink (`TextPlanEntity.groupOffer=true`). Nabízí se VŠEM uživatelům na `/diary`
+  (sekce „Textové tréninky od trenéra", odlišená, badge SKUPINOVÝ + 📄 TEXTOVÝ, popisek
+  „uloží se do sekce MŮJ PLÁN"). Uživatel „Přidat k sobě" → editovatelná kopie v `/my-plan`
+  (idempotentní, `existsByOwner_IdAndSourceTemplate_Id`). Admin spravuje nabídky v group-trainings
+  (sekce „Textové skupinové tréninky"). Individuální text-šablony (`/admin/text-plans`) je nevidí.
+- Impersonace „Ukončit náhled": `SwitchUserFilter` success handler rozlišuje switch vs exit
+  (dle `ROLE_PREVIOUS_ADMINISTRATOR`) — po exitu redirect na `/admin/impersonate-select`
+  (výběr uživatele), ne na adminův prázdný deník.
+
+**USER**
+- Settings: vlastní změřená max. TF (`custom_max_hr`) — přebíjí vypočtenou; zóny se přepočítají
+  z ní (`getMaxHeartRate()` = custom ?: computed). Funguje i bez pohlaví/věku.
+- Diary form: „RPE spánku" → **„Subjektivně vnímaná kvalita spánku" (1–10)** + nápověda
+  „10 je vysoce kvalitní, 1 naprosto mizerný".
+
+**OBECNÉ (lišta)**
+- Logo Ragnaroku (kettlebell + viking helma) místo „R" — vyrenderováno z PDF přes PyMuPDF do
+  bílé varianty (`static/images/ragnarok-logo-white.png`) pro tmavou lištu + černé
+  (`ragnarok-logo.png`). „Training Diary" → **„Tréninkový deník"**, „Dashboard" → **„Přehled"**.
+
+Ověřeno E2E proti PostgreSQL (throwaway admin+klient): logo 200/png, admin bez osobních bloků,
+group text offer create→list→nabídka na /diary→přidat→kopie v /my-plan→idempotence (✓ Přidáno),
+nabídka neuniká do /admin/text-plans, impersonace exit→výběr uživatele, custom MTF 180→zóny 108–180.
+116 testů zelených.
+
+**Adversariální review (workflow, 4 dimenze) → opraveno:**
+- **V34** (FK fix): `text_plan.source_template_id` dostal `ON DELETE SET NULL` (jako V12 u `training`).
+  Bez toho smazání skupinové nabídky/šablony s existující kopií padalo na FK violation → HTTP 500
+  (a UI přitom slibuje „kopie zůstanou"). Ověřeno SQL: smazání nabídky → kopie přežije s NULL source.
+- `getTemplate` doplněn guard `|| isGroupOffer()` — ID skupinové nabídky už neprojde individuálním
+  `/admin/text-plans` flow (edit/assign/delete).
+- `addedOfferIds` ve `/diary` přes jeden dotaz (`findAddedSourceIdsByOwnerId`) místo N+1.
+- POST `/my-plan/text-offers/{id}/add` má read-only gating (deaktivovaný účet nepřidá).
+- Známé minor (neřešeno): idempotence přidání stojí na app-check (bez DB unique indexu) — pro
+  single-tenant gym je riziko double-submitu nízké; unique index by zároveň blokoval legitimní
+  re-assign individuální šablony, proto vynechán.
+
 ## ✅ Design sjednocení s ragnarokostrava.cz + ScoutMeto kolo 4 (DONE 2026-06-11)
 
 ### Design (handoff balíček od Claude designera)
