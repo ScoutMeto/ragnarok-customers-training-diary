@@ -8,10 +8,11 @@
         <div class="rk-auth__card">
             <div class="rk-auth__brand">
                 <span style="display:inline-flex; align-items:center; gap:10px;">
-                    <span class="rk-brand__mark" style="width:32px; height:32px; font-size:18px;">R</span>
+                    <img th:src="@{/images/ragnarok-logo.png}" alt="Ragnarok"
+                         style="height:40px; width:auto;">
                     Ragnarok
                 </span>
-                <span class="sub">Training Diary · osobní + skupinové tréninky</span>
+                <span class="sub">Tréninkový deník · osobní + skupinové tréninky</span>
             </div>
 
             <div class="rk-card">
@@ -26,6 +27,9 @@
                         nejdřív <a th:href="@{/confirm-email}" style="color: var(--rk-danger); font-weight: 600;">potvrď svůj email</a>.
                     </div>
                     <div th:if="${param.logout}" class="alert alert-info">Byl jsi odhlášen.</div>
+                    <div th:if="${param.reset}" class="alert alert-success">
+                        ✅ Heslo změněno — přihlas se novým heslem.
+                    </div>
                     <div th:if="${param.registered}" class="alert alert-success">Účet vytvořen, můžeš se přihlásit.</div>
                     <div th:if="${param.confirmed}" class="alert alert-success">
                         ✅ Email potvrzen — můžeš se přihlásit.
@@ -40,6 +44,7 @@
                         <div class="rk-field">
                             <div class="d-flex justify-content-between align-items-baseline">
                                 <label class="rk-label" for="password">Heslo</label>
+                                <a th:href="@{/forgot-password}" style="font-size: var(--fs-sm); color: var(--rk-primary); font-weight: 500;">Zapomněli jste heslo?</a>
                             </div>
                             <input class="form-control" id="password" name="password" type="password"
                                    placeholder="••••••••" autocomplete="current-password" required>

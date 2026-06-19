@@ -90,6 +90,14 @@ public class AccountEntity implements UserDetails {
     @Column(name = "email_confirmation_code_expires_at")
     private LocalDateTime emailConfirmationCodeExpiresAt;
 
+    // -------- ScoutMeto kolo 6: reset hesla přes emailový kód --------
+    /** 6místný kód pro reset hesla. {@code null}, když není reset rozjetý. */
+    @Column(name = "password_reset_code", length = 8)
+    private String passwordResetCode;
+
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
+
     // -------- Phase 6: notifikační preference --------
     @Column(name = "notif_group_training_reminder", nullable = false)
     private boolean notifGroupTrainingReminder = true;

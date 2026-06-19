@@ -55,6 +55,23 @@ public class EmailService {
     }
 
     // ============================================================================
+    // 1b) Kód pro reset zapomenutého hesla (ScoutMeto kolo 6)
+    // ============================================================================
+
+    @Async
+    public void sendPasswordResetCode(AccountEntity account, String code) {
+        String subject = "Ragnarok Training Diary — kód pro obnovu hesla";
+        String text =
+                "Ahoj " + account.getFirstName() + ",\n\n" +
+                "požádal(a) jsi o obnovu hesla. Tvůj kód:\n\n" +
+                "    " + code + "\n\n" +
+                "Zadej ho na stránce " + props.getBaseUrl() + "/reset-password spolu s novým heslem.\n\n" +
+                "Kód platí 60 minut. Pokud jsi o obnovu nežádal(a), tento mail ignoruj — heslo zůstává beze změny.\n\n" +
+                "—\nRagnarok Training Diary";
+        send(account.getEmail(), subject, text, "password-reset");
+    }
+
+    // ============================================================================
     // 2) Welcome mail po potvrzení emailu
     // ============================================================================
 

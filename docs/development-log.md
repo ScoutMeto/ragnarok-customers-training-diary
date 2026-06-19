@@ -472,6 +472,17 @@ Migrace **V33** (`text_plan.group_offer`, `account.custom_max_hr`).
 - Logo Ragnaroku (kettlebell + viking helma) místo „R" — vyrenderováno z PDF přes PyMuPDF do
   bílé varianty (`static/images/ragnarok-logo-white.png`) pro tmavou lištu + černé
   (`ragnarok-logo.png`). „Training Diary" → **„Tréninkový deník"**, „Dashboard" → **„Přehled"**.
+  Logo i na **login/registr/confirm/reset** stránkách (černá varianta na světlém pozadí).
+  ⚠️ Statické obrázky se servírují z `target/classes/static/` — po přidání PNG je nutný rebuild,
+  jinak `/images/...` vrací 404 (stará instance loga „nevidí").
+
+**Zapomenuté heslo (ScoutMeto kolo 6 follow-up)**
+- Login má odkaz **„Zapomněli jste heslo?"** → `/forgot-password` (email) → pošle 6místný kód
+  (`PasswordResetService`, `EmailService.sendPasswordResetCode`) → `/reset-password` (kód + nové
+  heslo 2×) → ověří kód+expiraci, uloží BCrypt, kód zruší → `/login?reset`. Migrace **V35**
+  (`account.password_reset_code` + `password_reset_expires_at`, oddělené od email-confirmation).
+  Neúniká existenci účtů (neutrální hláška). Ověřeno E2E: forgot→kód z DB→reset→login novým heslem→
+  kód vynulován.
 
 Ověřeno E2E proti PostgreSQL (throwaway admin+klient): logo 200/png, admin bez osobních bloků,
 group text offer create→list→nabídka na /diary→přidat→kopie v /my-plan→idempotence (✓ Přidáno),

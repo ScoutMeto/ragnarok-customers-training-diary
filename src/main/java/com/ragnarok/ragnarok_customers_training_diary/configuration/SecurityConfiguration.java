@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                         // Statika a veřejné stránky
                         .requestMatchers("/", "/login", "/register", "/error").permitAll()
                         .requestMatchers("/confirm-email", "/confirm-email/**").permitAll()
+                        .requestMatchers("/forgot-password", "/reset-password").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/webjars/**", "/images/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // API endpointy pro registraci (anonymous přístup)
