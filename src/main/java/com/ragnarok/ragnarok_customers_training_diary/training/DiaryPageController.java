@@ -86,6 +86,7 @@ public class DiaryPageController {
                        @RequestParam(value = "tagId", required = false) Long tagId,
                        @RequestParam(value = "exercise", required = false) String exercise,
                        @RequestParam(value = "flagged", required = false, defaultValue = "false") boolean flagged,
+                       @RequestParam(value = "month", required = false) String month,
                        Model model) {
         boolean filterActive = tagId != null
                 || (exercise != null && !exercise.isBlank())
@@ -94,6 +95,26 @@ public class DiaryPageController {
         List<TrainingEntity> trainings = filterActive
                 ? trainingService.listMyTrainingsFiltered(user, tagId, exercise, flagged)
                 : trainingService.listMyTrainings(user);
+
+        // ScoutMeto kolo 7: posun po měsících — MOJE TRÉNINKY zobrazují jen zvolený měsíc
+        java.time.YearMonth currentMonth;
+        try {
+            currentMonth = month != null ? java.time.YearMonth.parse(month) : java.time.YearMonth.now();
+        } catch (java.time.format.DateTimeParseException ex) {
+            currentMonth = java.time.YearMonth.now();
+        }
+        final java.time.YearMonth ym = currentMonth;
+        model.addAttribute("hasAnyTrainings", !trainings.isEmpty());
+        trainings = trainings.stream()
+                .filter(t -> t.getTrainingDate() != null
+                        && java.time.YearMonth.from(t.getTrainingDate()).equals(ym))
+                .toList();
+        model.addAttribute("currentMonth", currentMonth);
+        model.addAttribute("prevMonth", currentMonth.minusMonths(1).toString());
+        model.addAttribute("nextMonth", currentMonth.plusMonths(1).toString());
+        model.addAttribute("monthLabel", String.format("%02d/%d",
+                currentMonth.getMonthValue(), currentMonth.getYear()));
+
         model.addAttribute("trainings", trainings);
         model.addAttribute("filterActive", filterActive);
 

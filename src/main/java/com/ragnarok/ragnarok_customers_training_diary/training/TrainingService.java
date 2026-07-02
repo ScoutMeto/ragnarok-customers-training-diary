@@ -198,6 +198,12 @@ public class TrainingService {
                 .orElse(null);
     }
 
+    /** ScoutMeto kolo 7: celkový počet záznamů (PRIVATE tréninků) v deníku uživatele. */
+    @Transactional(readOnly = true)
+    public long countMyTrainings(AccountEntity owner) {
+        return trainingRepository.countByOwner_Id(owner.getId());
+    }
+
     public TrainingEntity create(AccountEntity owner, TrainingInput input) {
         validateExerciseNaming(input);
 

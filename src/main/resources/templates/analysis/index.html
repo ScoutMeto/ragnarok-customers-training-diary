@@ -212,6 +212,16 @@
         </div>
     </div>
 
+    <!-- ScoutMeto kolo 7: celkový počet záznamů v deníku -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2>📓 Počet záznamů v deníku</h2>
+    </div>
+    <div class="rk-kpi" style="max-width: 320px; margin-bottom: var(--sp-5);">
+        <div class="rk-kpi__label">Veškeré tréninky v deníku (za celou historii)</div>
+        <div class="rk-kpi__value"><span th:text="${diaryEntryCount}">0</span>
+            <span class="rk-kpi__unit">záznamů</span></div>
+    </div>
+
     <!-- Phase 14 (A16): označené cviky korunkou -->
     <div class="rk-section-head" style="margin-top: var(--sp-6);">
         <h2>👑 Označené cviky (korunka)</h2>

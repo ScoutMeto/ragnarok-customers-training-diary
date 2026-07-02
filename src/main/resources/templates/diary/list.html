@@ -123,7 +123,16 @@
     <!-- ==================== Moje tréninky ==================== -->
     <div class="rk-section-head">
         <h2 style="font-size: var(--fs-h3);">📓 Moje tréninky</h2>
-        <span class="meta"><span class="num" th:text="${trainings.size()}">42</span> záznamů</span>
+        <!-- ScoutMeto kolo 7: posun po měsících -->
+        <span class="meta" style="display:inline-flex; align-items:center; gap: var(--sp-2);">
+            <a th:href="@{/diary(month=${prevMonth},tagId=${selectedTagId},exercise=${selectedExercise},flagged=${flaggedOnly ? 'true' : null})}"
+               class="btn btn-outline btn-sm" title="Předchozí měsíc">←</a>
+            <strong class="num" style="color: var(--rk-ink); font-size: var(--fs-body);"
+                    th:text="${monthLabel}">07/2026</strong>
+            <a th:href="@{/diary(month=${nextMonth},tagId=${selectedTagId},exercise=${selectedExercise},flagged=${flaggedOnly ? 'true' : null})}"
+               class="btn btn-outline btn-sm" title="Další měsíc">→</a>
+            <span><span class="num" th:text="${trainings.size()}">42</span> záznamů</span>
+        </span>
     </div>
 
     <!-- Phase 14/15 (B8): filtr tréninků podle tagu / cviku / vlaječky -->
@@ -171,15 +180,22 @@
         Žádný trénink neodpovídá filtru. <a th:href="@{/diary}" style="color: var(--rk-primary); font-weight:600;">Zrušit filtr →</a>
     </p>
 
-    <div th:if="${trainings.isEmpty() and todayGroupTrainings.isEmpty() and !filterActive}" class="rk-empty rk-card">
+    <div th:if="${trainings.isEmpty() and !hasAnyTrainings and todayGroupTrainings.isEmpty() and !filterActive}" class="rk-empty rk-card">
         <h3>Zatím nemáš žádný trénink</h3>
         <p>Začni s prvním záznamem do svého deníku — zaloguj cviky, sety, RPE.</p>
         <a th:href="@{/diary/new}" class="btn btn-accent">Začít první trénink</a>
     </div>
 
-    <div th:if="${trainings.isEmpty() and !todayGroupTrainings.isEmpty() and !filterActive}" class="text-muted"
+    <div th:if="${trainings.isEmpty() and !hasAnyTrainings and !todayGroupTrainings.isEmpty() and !filterActive}" class="text-muted"
          style="font-size: var(--fs-sm);">
         Zatím nemáš žádný vlastní trénink. <a th:href="@{/diary/new}" style="color: var(--rk-primary); font-weight: 600;">Začít první →</a>
+    </div>
+
+    <!-- ScoutMeto kolo 7: prázdný měsíc (deník ale záznamy má — jsou v jiných měsících) -->
+    <div th:if="${trainings.isEmpty() and hasAnyTrainings and !filterActive}" class="text-muted"
+         style="font-size: var(--fs-sm);">
+        V měsíci <strong class="num" th:text="${monthLabel}">07/2026</strong> nemáš žádný záznam —
+        použij šipky pro posun na jiný měsíc.
     </div>
 
     <div class="rk-stack-3" th:unless="${trainings.isEmpty()}">

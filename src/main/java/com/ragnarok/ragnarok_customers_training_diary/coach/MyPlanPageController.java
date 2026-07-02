@@ -85,6 +85,20 @@ public class MyPlanPageController {
         return "redirect:/my-plan/text/" + id;
     }
 
+    /** ScoutMeto kolo 7: smazání vlastní kopie textového plánu. */
+    @org.springframework.web.bind.annotation.PostMapping("/my-plan/text/{id}/delete")
+    public String deleteTextPlan(@AuthenticationPrincipal AccountEntity user,
+                                 @PathVariable Long id,
+                                 org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
+        try {
+            textPlanService.deleteOwnCopy(user, id);
+            flash.addFlashAttribute("flashSuccess", "Textový plán smazán.");
+        } catch (RuntimeException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/my-plan";
+    }
+
     // ----- ScoutMeto kolo 6: přidání skupinové textové nabídky k sobě (→ kopie v Můj plán) -----
 
     @org.springframework.web.bind.annotation.PostMapping("/my-plan/text-offers/{id}/add")

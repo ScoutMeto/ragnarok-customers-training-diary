@@ -27,6 +27,8 @@ public class AnalysisPageController {
         model.addAttribute("starredExercises", trainingService.listStarredExercises(user));
         // ScoutMeto kolo 5: cyklus-kalendář jen pro ženy
         model.addAttribute("showCycle", user.isFemale());
+        // ScoutMeto kolo 7: celkový počet záznamů v deníku
+        model.addAttribute("diaryEntryCount", trainingService.countMyTrainings(user));
         return "analysis/index";
     }
 }

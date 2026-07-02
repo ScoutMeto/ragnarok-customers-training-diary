@@ -86,12 +86,20 @@
             Dlouhodobé plány od trenéra v textovém formátu. Tvoje kopie — můžeš si je upravit.
         </p>
         <div class="rk-card" th:each="tp : ${textPlans}" style="margin-bottom: var(--sp-2);">
-            <a th:href="@{/my-plan/text/{id}(id=${tp.id})}" class="rk-card__body"
-               style="display:flex; justify-content:space-between; align-items:center; gap:12px; text-decoration:none; color:inherit;">
-                <span><strong th:text="${tp.title}">Název</strong></span>
+            <div class="rk-card__body"
+                 style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <a th:href="@{/my-plan/text/{id}(id=${tp.id})}"
+                   style="flex:1; min-width:0; text-decoration:none; color:inherit;">
+                    <strong th:text="${tp.title}">Název</strong>
+                </a>
                 <span class="text-muted" style="font-size: var(--fs-sm);"
                       th:text="${#temporals.format(tp.createdAt, 'd. M. yyyy')}">datum</span>
-            </a>
+                <!-- ScoutMeto kolo 7: smazání vlastní kopie -->
+                <form th:action="@{/my-plan/text/{id}/delete(id=${tp.id})}" method="post"
+                      onsubmit="return confirm('Opravdu smazat tento textový plán? Akce je nevratná.');">
+                    <button type="submit" class="btn btn-danger-outline btn-sm" title="Smazat">Smazat</button>
+                </form>
+            </div>
         </div>
     </div>
 

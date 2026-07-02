@@ -255,6 +255,13 @@ public class TextPlanService {
         p.setBody(body);
     }
 
+    /** ScoutMeto kolo 7: uživatel smaže svou kopii textového plánu. */
+    @Transactional
+    public void deleteOwnCopy(AccountEntity user, Long id) {
+        TextPlanEntity p = getForUser(user, id);
+        repository.delete(p);
+    }
+
     private void validate(String title, String body) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("Název je povinný.");
