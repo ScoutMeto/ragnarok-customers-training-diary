@@ -25,9 +25,15 @@ public class ReservationService {
     private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
 
     private final ReservationClient client;
+    private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
+    private final ReservationWaitlistService waitlistService;
 
-    public ReservationService(ReservationClient client) {
+    public ReservationService(ReservationClient client,
+            com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService,
+            ReservationWaitlistService waitlistService) {
         this.client = client;
+        this.emailService = emailService;
+        this.waitlistService = waitlistService;
     }
 
     /**
@@ -129,21 +135,45 @@ public class ReservationService {
     }
 
     /**
-     * Zruší rezervaci přihlášeného klienta. Nejdřív ověří, že daná rezervace patří
-     * tomuto uživateli (objevuje se v jeho seznamu) — zabrání zrušení cizí rezervace.
+     * Zruší rezervaci přihlášeného klienta. Ověří (ScoutMeto kolo 7):
+     * (1) rezervace patří uživateli, (2) lekce ještě neproběhla,
+     * (3) do začátku zbývá víc než 30 minut. Po zrušení pošle potvrzovací e-mail.
+     *
+     * @return zrušená rezervace (pro hlášku v UI s dnem a názvem lekce)
      */
-    public void cancelReservation(AccountEntity account, Long reservationId) {
+    public MyReservation cancelReservation(AccountEntity account, Long reservationId) {
         if (account == null || reservationId == null) {
             throw new ReservationException("Chybí údaje pro zrušení.");
         }
-        boolean owned = listMyReservations(account, 365, 365).stream()
-                .anyMatch(r -> reservationId.equals(r.reservationId()));
-        if (!owned) {
-            throw new ReservationException("Tuto rezervaci nelze zrušit (nepatří ti, nebo už neexistuje).");
+        MyReservation reservation = listMyReservations(account, 365, 365).stream()
+                .filter(r -> reservationId.equals(r.reservationId()))
+                .findFirst()
+                .orElseThrow(() -> new ReservationException(
+                        "Tuto rezervaci nelze zrušit (nepatří ti, nebo už neexistuje)."));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (reservation.start() != null) {
+            if (reservation.start().isBefore(now)) {
+                throw new ReservationException("Lekce už proběhla nebo právě probíhá — rezervaci nelze zrušit.");
+            }
+            if (now.plusMinutes(30).isAfter(reservation.start())) {
+                throw new ReservationException(
+                        "Do začátku lekce zbývá méně než 30 minut — rezervaci už nelze zrušit.");
+            }
         }
+
         client.cancelReservation(reservationId);
         log.info("[reservation] client account_id={} cancelled reservation_id={}",
                 account.getId(), reservationId);
+        emailService.sendReservationCancelledNotification(account,
+                reservation.title(), reservation.start());
+        // ScoutMeto kolo 7: uvolnilo se místo → okamžitá promoce prvního náhradníka
+        try {
+            waitlistService.promoteForTraining(reservation.trainingId());
+        } catch (RuntimeException ex) {
+            log.warn("[waitlist] instant promotion after cancel failed: {}", ex.getMessage());
+        }
+        return reservation;
     }
 
     private static String safe(String s) {

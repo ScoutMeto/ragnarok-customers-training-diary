@@ -212,6 +212,54 @@ public class EmailService {
     }
 
     // ============================================================================
+    // 8) Rezervace zrušena (ScoutMeto kolo 7)
+    // ============================================================================
+
+    @Async
+    public void sendReservationCancelledNotification(AccountEntity account, String lessonTitle,
+                                                     java.time.LocalDateTime lessonStart) {
+        String subject = "Rezervace zrušena" + (lessonTitle != null ? ": " + lessonTitle : "");
+        StringBuilder text = new StringBuilder();
+        text.append("Ahoj ").append(account.getFirstName()).append(",\n\n");
+        text.append("tvoje rezervace na lekci");
+        if (lessonTitle != null) text.append(" „").append(lessonTitle).append("\"");
+        if (lessonStart != null) {
+            text.append(" dne ").append(lessonStart.toLocalDate().format(DATE_FMT))
+                .append(" v ").append(lessonStart.toLocalTime().format(TIME_FMT));
+        }
+        text.append(" byla zrušena.\n\n");
+        text.append("Kdyby sis to rozmyslel(a), můžeš se znovu zapsat v aplikaci: ")
+            .append(props.getBaseUrl()).append("/reservations\n\n");
+        text.append("—\nRagnarok Training Diary");
+        send(account.getEmail(), subject, text.toString(), "reservation-cancelled");
+    }
+
+    // ============================================================================
+    // 9) Náhradník povýšen — místo se uvolnilo, rezervace vytvořena (ScoutMeto kolo 7)
+    // ============================================================================
+
+    @Async
+    public void sendWaitlistPromotedNotification(AccountEntity account, String lessonTitle,
+                                                 java.time.LocalDateTime lessonStart) {
+        String subject = "Na lekci je volno — máš rezervaci!"
+                + (lessonTitle != null ? " (" + lessonTitle + ")" : "");
+        StringBuilder text = new StringBuilder();
+        text.append("Ahoj ").append(account.getFirstName()).append(",\n\n");
+        text.append("na lekci");
+        if (lessonTitle != null) text.append(" „").append(lessonTitle).append("\"");
+        if (lessonStart != null) {
+            text.append(" dne ").append(lessonStart.toLocalDate().format(DATE_FMT))
+                .append(" v ").append(lessonStart.toLocalTime().format(TIME_FMT));
+        }
+        text.append(" se uvolnilo místo. Byl(a) jsi na seznamu náhradníků, takže jsme ti\n");
+        text.append("rovnou vytvořili rezervaci — počítáme s tebou!\n\n");
+        text.append("Pokud se nemůžeš zúčastnit, zruš rezervaci v aplikaci (nejpozději 30 minut\n");
+        text.append("před začátkem): ").append(props.getBaseUrl()).append("/reservations\n\n");
+        text.append("—\nRagnarok Training Diary");
+        send(account.getEmail(), subject, text.toString(), "waitlist-promoted");
+    }
+
+    // ============================================================================
     // Low-level send
     // ============================================================================
 

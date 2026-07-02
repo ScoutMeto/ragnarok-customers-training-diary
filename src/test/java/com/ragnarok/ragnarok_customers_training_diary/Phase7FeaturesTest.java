@@ -38,7 +38,9 @@ class Phase7FeaturesTest {
     @BeforeEach
     void setup() {
         client = Mockito.mock(ReservationClient.class);
-        service = new ReservationService(client);
+        service = new ReservationService(client,
+                Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.mail.EmailService.class),
+                Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistService.class));
 
         account = new AccountEntity();
         account.setId(42L);

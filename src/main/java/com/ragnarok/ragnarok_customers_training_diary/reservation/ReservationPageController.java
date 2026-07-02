@@ -24,9 +24,12 @@ public class ReservationPageController {
     private static final int DAYS_AHEAD = 7;
 
     private final ReservationService reservationService;
+    private final ReservationWaitlistService waitlistService;
 
-    public ReservationPageController(ReservationService reservationService) {
+    public ReservationPageController(ReservationService reservationService,
+                                     ReservationWaitlistService waitlistService) {
         this.reservationService = reservationService;
+        this.waitlistService = waitlistService;
     }
 
     @GetMapping("/reservations")
@@ -38,7 +41,70 @@ public class ReservationPageController {
         var mine = reservationService.listMyReservations(account, 90, 60);
         model.addAttribute("myUpcoming", mine.stream().filter(r -> !r.past()).toList());
         model.addAttribute("myPast", mine.stream().filter(r -> r.past()).toList());
+        // ScoutMeto kolo 7: mapa lekce → moje rezervace (tlačítko Zrušit přímo u karty lekce)
+        java.util.Map<Long, ReservationService.MyReservation> myByTraining = new java.util.HashMap<>();
+        for (var r : mine) {
+            if (!r.past() && r.trainingId() != null) {
+                myByTraining.putIfAbsent(r.trainingId(), r);
+            }
+        }
+        model.addAttribute("myByTraining", myByTraining);
+        // hranice pro zobrazení tlačítka: do startu musí zbývat víc než 30 minut
+        model.addAttribute("nowPlus30", java.time.LocalDateTime.now().plusMinutes(30));
+
+        // ScoutMeto kolo 7: náhradníci — moje čekání + počty na lekci
+        java.util.Map<Long, ReservationWaitlistEntity> myWaitlist = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> myWaitlistPosition = new java.util.HashMap<>();
+        if (account != null) {
+            for (var w : waitlistService.listForAccount(account.getId())) {
+                if (w.getStatus() == ReservationWaitlistEntity.Status.WAITING) {
+                    myWaitlist.put(w.getExtTrainingId(), w);
+                    Integer pos = waitlistService.positionOf(account.getId(), w.getExtTrainingId());
+                    if (pos != null) myWaitlistPosition.put(w.getExtTrainingId(), pos);
+                }
+            }
+        }
+        model.addAttribute("myWaitlist", myWaitlist);
+        model.addAttribute("myWaitlistPosition", myWaitlistPosition);
+        java.util.Map<Long, Long> waitlistCounts = new java.util.HashMap<>();
+        for (var t : reservationService.listUpcomingTrainings(DAYS_AHEAD)) {
+            if (t.isFull() && t.trainingId() != null) {
+                waitlistCounts.put(t.trainingId(), waitlistService.countWaiting(t.trainingId()));
+            }
+        }
+        model.addAttribute("waitlistCounts", waitlistCounts);
         return "reservations/list";
+    }
+
+    // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 7: náhradník
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/reservations/waitlist")
+    public String joinWaitlist(@AuthenticationPrincipal AccountEntity account,
+                               @RequestParam("trainingId") Long trainingId,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            waitlistService.join(account, trainingId);
+            redirectAttributes.addFlashAttribute("flashSuccess",
+                    "Jsi na seznamu náhradníků. Když se uvolní místo, vytvoříme ti rezervaci a dáme vědět e-mailem.");
+        } catch (ReservationException ex) {
+            redirectAttributes.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/reservations";
+    }
+
+    @PostMapping("/reservations/waitlist/leave")
+    public String leaveWaitlist(@AuthenticationPrincipal AccountEntity account,
+                                @RequestParam("trainingId") Long trainingId,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            waitlistService.leave(account, trainingId);
+            redirectAttributes.addFlashAttribute("flashSuccess", "Odhlásili jsme tě ze seznamu náhradníků.");
+        } catch (ReservationException ex) {
+            redirectAttributes.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/reservations";
     }
 
     @PostMapping("/reservations/cancel")
@@ -46,8 +112,14 @@ public class ReservationPageController {
                                     @RequestParam("reservationId") Long reservationId,
                                     RedirectAttributes redirectAttributes) {
         try {
-            reservationService.cancelReservation(account, reservationId);
-            redirectAttributes.addFlashAttribute("flashSuccess", "Rezervace zrušena.");
+            var cancelled = reservationService.cancelReservation(account, reservationId);
+            String when = cancelled.start() != null
+                    ? " dne " + cancelled.start().toLocalDate() + " v "
+                        + cancelled.start().toLocalTime().toString().substring(0, 5)
+                    : "";
+            redirectAttributes.addFlashAttribute("flashSuccess",
+                    "Rezervace na lekci „" + (cancelled.title() != null ? cancelled.title() : "Lekce")
+                            + "\"" + when + " byla zrušena. Potvrzení ti přijde na e-mail.");
         } catch (ReservationException ex) {
             log.warn("[reservation] cancel failed: {}", ex.getMessage());
             redirectAttributes.addFlashAttribute("flashError", "Zrušení selhalo: " + ex.getMessage());

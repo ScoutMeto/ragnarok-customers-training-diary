@@ -41,11 +41,16 @@
                         <span th:if="${r.slots > 1}"> · <span class="num" th:text="${r.slots}">1</span> míst</span>
                     </span>
                 </div>
-                <form th:action="@{/reservations/cancel}" method="post"
+                <form th:if="${r.start == null or r.start.isAfter(nowPlus30)}"
+                      th:action="@{/reservations/cancel}" method="post"
                       onsubmit="return confirm('Opravdu zrušit rezervaci?');">
                     <input type="hidden" name="reservationId" th:value="${r.reservationId}">
                     <button type="submit" class="btn btn-sm btn-danger-outline">Zrušit</button>
                 </form>
+                <span th:if="${r.start != null and !r.start.isAfter(nowPlus30)}"
+                      class="text-muted" style="font-size: var(--fs-xs);">
+                    Do startu &lt; 30 min — už nelze zrušit
+                </span>
             </div>
         </div>
     </div>
@@ -106,6 +111,32 @@
             </div>
             <div class="rk-workout__aside" style="cursor: default;">
                 <span th:if="${isFull}" class="rk-badge rk-badge--danger">OBSAZENO</span>
+
+                <!-- ScoutMeto kolo 7: náhradník na plnou lekci -->
+                <th:block th:if="${isFull and !started}"
+                          th:with="myWait=${myWaitlist != null ? myWaitlist.get(t.trainingId()) : null},
+                                   waitCount=${waitlistCounts != null and waitlistCounts.get(t.trainingId()) != null ? waitlistCounts.get(t.trainingId()) : 0}">
+                    <span th:if="${myWait != null}" class="rk-badge rk-badge--info">
+                        NÁHRADNÍK — pořadí <span class="num"
+                            th:text="${myWaitlistPosition != null ? myWaitlistPosition.get(t.trainingId()) : '?'}">1</span>
+                    </span>
+                    <form th:if="${myWait != null}" th:action="@{/reservations/waitlist/leave}" method="post"
+                          onsubmit="return confirm('Odhlásit se ze seznamu náhradníků?');">
+                        <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
+                        <button type="submit" class="btn btn-ghost btn-sm">Odhlásit se z náhradníků</button>
+                    </form>
+                    <form th:if="${myWait == null and (capacity == 0 or waitCount < capacity)}"
+                          th:action="@{/reservations/waitlist}" method="post"
+                          onsubmit="return confirm('Přihlásit se jako náhradník? Když se uvolní místo, vytvoříme ti rezervaci automaticky.');">
+                        <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
+                        <button type="submit" class="btn btn-outline btn-sm">🙋 Přihlásit se jako náhradník</button>
+                    </form>
+                    <span th:if="${myWait == null and capacity > 0 and waitCount >= capacity}"
+                          class="text-muted" style="font-size: var(--fs-xs);">Náhradníci plní</span>
+                    <span th:if="${waitCount > 0}" class="text-muted" style="font-size: var(--fs-xs);">
+                        náhradníků: <span class="num" th:text="${waitCount}">0</span>
+                    </span>
+                </th:block>
                 <span th:if="${!isFull and !started}" class="rk-badge rk-badge--success" style="background: var(--rk-success-soft); color: var(--rk-success);">
                     VOLNO
                 </span>
@@ -121,15 +152,30 @@
                         Zapsat se
                     </button>
                 </form>
+
+                <!-- ScoutMeto kolo 7: zrušení přímo u lekce — jen kde mám rezervaci,
+                     lekce neproběhla a do startu zbývá víc než 30 minut -->
+                <th:block th:with="myRes=${myByTraining != null ? myByTraining.get(t.trainingId()) : null}">
+                    <form th:if="${myRes != null and !started and (t.start() == null or t.start().isAfter(nowPlus30))}"
+                          th:action="@{/reservations/cancel}" method="post"
+                          onsubmit="return confirm('Opravdu zrušit rezervaci na tuto lekci?');">
+                        <input type="hidden" name="reservationId" th:value="${myRes.reservationId()}">
+                        <button type="submit" class="btn btn-danger-outline btn-sm">Zrušit rezervaci</button>
+                    </form>
+                    <span th:if="${myRes != null and !started and t.start() != null and !t.start().isAfter(nowPlus30)}"
+                          class="text-muted" style="font-size: var(--fs-xs);">
+                        Do startu &lt; 30 min — už nelze zrušit
+                    </span>
+                </th:block>
             </div>
         </article>
     </div>
 
     <div style="margin-top: var(--sp-6); padding: var(--sp-4); background: var(--rk-surface-2); border-radius: var(--rad-md); font-size: var(--fs-sm); color: var(--rk-muted);">
         <strong style="color: var(--rk-ink);">ℹ️ Poznámka:</strong>
-        Rezervace se vytvářejí v externím rezervačním systému gymu. Pokud potřebuješ
-        <strong>zrušit</strong> nebo <strong>upravit</strong> rezervaci, zatím ji napiš trenérovi
-        (email nebo telefon) — diary ti to v této verzi neumožní. Plánujeme to do další iterace.
+        Rezervace se vytvářejí v externím rezervačním systému gymu. Zapsat se i
+        <strong>zrušit rezervaci</strong> můžeš přímo tady — zrušení je možné nejpozději
+        <strong>30 minut před začátkem</strong> lekce. Potvrzení ti vždy přijde na e-mail.
     </div>
 
 </main>
