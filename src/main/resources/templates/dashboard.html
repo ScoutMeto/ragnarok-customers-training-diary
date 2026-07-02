@@ -31,6 +31,28 @@
         tréninky a statistiky. Pro obnovení všech funkcí kontaktuj trenéra.
     </div>
 
+    <!-- ScoutMeto kolo 7: členství (vstupy / konec) — červeně při prošlém -->
+    <div sec:authorize="!hasRole('ADMIN')" th:if="${account.hasMembershipInfo()}"
+         class="rk-card" style="margin-bottom: var(--sp-5); padding: var(--sp-4);"
+         th:styleappend="${account.membershipExpired} ? 'border-color: var(--rk-danger); background: var(--rk-danger-soft);' : ''">
+        <div class="rk-row" style="justify-content: space-between; align-items: center; gap: var(--sp-3);">
+            <div style="font-family: var(--rk-font-display); font-weight: 600; font-size: var(--fs-h4);"
+                 th:style="${account.membershipExpired} ? 'color: var(--rk-danger);' : ''">
+                🎟️ Členství
+            </div>
+            <div th:style="${account.membershipExpired} ? 'color: var(--rk-danger); font-weight: 700;' : ''">
+                <span th:if="${account.membershipEntries != null}">
+                    Zbývá <strong class="num" th:text="${account.membershipEntries}">10</strong> vstupů
+                </span>
+                <span th:if="${account.membershipEntries != null and account.membershipUntil != null}"> · </span>
+                <span th:if="${account.membershipUntil != null}">
+                    platnost do <strong class="num" th:text="${#temporals.format(account.membershipUntil, 'dd.MM.yyyy')}">31.12.2026</strong>
+                </span>
+                <span th:if="${account.membershipExpired}" style="margin-left:8px;">— členství prošlé, domluv se s trenérem</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent trainings + quick actions -->
     <div class="row g-4">
 

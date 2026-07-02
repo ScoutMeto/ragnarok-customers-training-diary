@@ -161,6 +161,30 @@ public class AdminAccountController {
     }
 
     // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 7: členství (vstupy / datum konce)
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/{id}/membership")
+    public String updateMembership(
+            @PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestParam(value = "membershipEntries", required = false) Short membershipEntries,
+            @org.springframework.web.bind.annotation.RequestParam(value = "membershipUntil", required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate membershipUntil,
+            RedirectAttributes flash) {
+        AccountEntity account = accountService.getById(id);
+        if (account.getRole() == AccountRole.ADMIN) {
+            flash.addFlashAttribute("flashError", "Admin účty členství neevidují.");
+            return "redirect:/admin/accounts/" + id;
+        }
+        account.setMembershipEntries(membershipEntries);
+        account.setMembershipUntil(membershipUntil);
+        accountService.save(account);
+        flash.addFlashAttribute("flashSuccess", "Členství uloženo.");
+        return "redirect:/admin/accounts/" + id;
+    }
+
+    // -----------------------------------------------------------------------------
     // Soft delete
     // -----------------------------------------------------------------------------
 

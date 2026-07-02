@@ -72,6 +72,27 @@ public class AccountEntity implements UserDetails {
     @Column(name = "custom_max_hr")
     private Short customMaxHr;
 
+    // -------- ScoutMeto kolo 7: členství (edituje admin) --------
+    /** Zbývající počet vstupů. {@code null} = neeviduje se po vstupech. */
+    @Column(name = "membership_entries")
+    private Short membershipEntries;
+
+    /** Datum konce členství. {@code null} = neeviduje se datem. */
+    @Column(name = "membership_until")
+    private java.time.LocalDate membershipUntil;
+
+    /** Členství prošlé? (vstupy ≤ 0 nebo datum v minulosti) — pole se barví červeně. */
+    public boolean isMembershipExpired() {
+        boolean entriesOut = membershipEntries != null && membershipEntries <= 0;
+        boolean dateOut = membershipUntil != null && membershipUntil.isBefore(java.time.LocalDate.now());
+        return entriesOut || dateOut;
+    }
+
+    /** Má účet vůbec evidované členství? */
+    public boolean hasMembershipInfo() {
+        return membershipEntries != null || membershipUntil != null;
+    }
+
     @Column(name = "email_notifications_enabled", nullable = false)
     private boolean emailNotificationsEnabled = true;
 

@@ -91,7 +91,9 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal AccountEntity account, Model model) {
-        model.addAttribute("account", account);
+        // ScoutMeto kolo 7: čerstvý stav z DB (členství edituje admin za běhu session)
+        AccountEntity fresh = accountService.getById(account.getId());
+        model.addAttribute("account", fresh);
         // ScoutMeto kolo 6: admin nemá osobní deník — schováme osobní bloky na dashboardu
         boolean isAdmin = account.getRole() == com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.ADMIN;
         model.addAttribute("isAdmin", isAdmin);

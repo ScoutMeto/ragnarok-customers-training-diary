@@ -92,6 +92,11 @@ public class AccountService {
                 .orElseThrow(() -> new NotFoundException("Účet (id=" + id + ") nenalezen."));
     }
 
+    /** Uloží změny účtu (ScoutMeto kolo 7: členství apod.). */
+    public AccountEntity save(AccountEntity account) {
+        return accountRepository.save(account);
+    }
+
     /** Admin vytvoří nový účet (klient nebo další admin). Automaticky potvrzený. */
     @Transactional
     public AccountEntity createByAdmin(RegistrationRequest request, AccountRole role) {

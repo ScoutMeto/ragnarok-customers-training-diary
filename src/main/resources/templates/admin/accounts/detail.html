@@ -67,6 +67,38 @@
         </div>
     </div>
 
+    <!-- ScoutMeto kolo 7: členství (vstupy / datum konce) — jen USER účty -->
+    <div class="rk-card" style="margin-bottom: var(--sp-5);" th:if="${account.role.name() == 'USER'}"
+         th:styleappend="${account.membershipExpired} ? 'border-color: var(--rk-danger); box-shadow: 0 0 0 3px var(--rk-danger-soft);' : ''">
+        <div class="rk-card__head">
+            <div class="rk-card__title">🎟️ Členství
+                <span th:if="${account.membershipExpired}" class="rk-badge rk-badge--danger" style="margin-left:6px;">PROŠLÉ</span>
+            </div>
+        </div>
+        <div class="rk-card__body">
+            <form th:action="@{/admin/accounts/{id}/membership(id=${account.id})}" method="post"
+                  class="rk-row" style="align-items: flex-end; gap: var(--sp-4);">
+                <div class="rk-field" style="max-width: 200px;">
+                    <label class="rk-label" for="membershipEntries">Zbývající vstupy</label>
+                    <input type="number" id="membershipEntries" name="membershipEntries" class="form-control"
+                           th:value="${account.membershipEntries}" placeholder="—"
+                           th:style="${account.membershipEntries != null and account.membershipEntries <= 0} ? 'border-color: var(--rk-danger); color: var(--rk-danger);' : ''">
+                </div>
+                <div class="rk-field" style="max-width: 220px;">
+                    <label class="rk-label" for="membershipUntil">Konec členství (datum)</label>
+                    <input type="date" id="membershipUntil" name="membershipUntil" class="form-control"
+                           th:value="${account.membershipUntil != null ? #temporals.format(account.membershipUntil, 'yyyy-MM-dd') : ''}"
+                           th:style="${account.membershipUntil != null and account.membershipUntil.isBefore(T(java.time.LocalDate).now())} ? 'border-color: var(--rk-danger); color: var(--rk-danger);' : ''">
+                </div>
+                <button type="submit" class="btn btn-accent">Uložit členství</button>
+            </form>
+            <p class="rk-help" style="margin-top: var(--sp-2);">
+                Vyplň buď počet vstupů, nebo datum (prázdné = neeviduje se). Při 0/minusu
+                nebo prošlém datu se pole zbarví červeně — u admina i na přehledu klienta.
+            </p>
+        </div>
+    </div>
+
     <div class="rk-section-head">
         <h2>Deník</h2>
         <span class="meta">

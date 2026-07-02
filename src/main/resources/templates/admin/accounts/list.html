@@ -43,6 +43,7 @@
             <th>Email</th>
             <th>Telefon</th>
             <th>Role</th>
+            <th>Členství</th>
             <th>Vytvořen</th>
             <th></th>
         </tr>
@@ -67,6 +68,17 @@
                 <span th:class="|rk-badge ${a.role.name() == 'ADMIN' ? 'rk-badge--accent' : ''}|"
                       th:text="${a.role}">USER</span>
                 <span th:if="${a.deactivated}" class="rk-badge rk-badge--danger" style="margin-left: 4px;">NEAKTIVNÍ</span>
+            </td>
+            <!-- ScoutMeto kolo 7: členství — vstupy nebo datum; červeně při prošlém; '-' pro adminy -->
+            <td th:style="${a.membershipExpired} ? 'color: var(--rk-danger); font-weight: 700;' : ''">
+                <span th:if="${a.role.name() == 'ADMIN'}" class="text-muted">-</span>
+                <th:block th:if="${a.role.name() == 'USER'}">
+                    <span th:if="${a.membershipEntries != null}" class="num"
+                          th:text="${a.membershipEntries} + ' vstupů'">10 vstupů</span>
+                    <span th:if="${a.membershipUntil != null}" class="num"
+                          th:text="'do ' + ${#temporals.format(a.membershipUntil, 'dd.MM.yyyy')}">do 31.12.2026</span>
+                    <span th:if="${!a.hasMembershipInfo()}" class="text-muted">—</span>
+                </th:block>
             </td>
             <td class="num text-muted" th:text="${#temporals.format(a.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
             <td class="text-end">
