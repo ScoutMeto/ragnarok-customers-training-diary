@@ -53,6 +53,51 @@
         </div>
     </div>
 
+    <!-- ScoutMeto kolo 7: sekce Výhody (společná tabulka, edituje admin v Overview).
+         Skrytou tabulku USER nevidí vůbec; impersonující admin ji vidí šedě + tlačítko zpět. -->
+    <div sec:authorize="!hasRole('ADMIN')" th:if="${benefits != null and !benefits.isEmpty()}"
+         th:with="isImpersonatingAdmin=${#authorization.expression('hasRole(''PREVIOUS_ADMINISTRATOR'')')},
+                  benefitsHidden=${!account.benefitsVisible}">
+        <th:block th:if="${!benefitsHidden or isImpersonatingAdmin}">
+            <form th:if="${benefitsHidden}" th:action="@{/benefits/restore-visibility}" method="post"
+                  style="margin-bottom: var(--sp-2);">
+                <button type="submit" class="btn btn-outline btn-sm">
+                    👁 Tabulka Výhody je uživateli skrytá — zobrazit zpět
+                </button>
+            </form>
+            <div class="rk-card" style="margin-bottom: var(--sp-5);"
+                 th:style="${benefitsHidden} ? 'opacity: 0.5;' : ''">
+                <div class="rk-card__head"><div class="rk-card__title">🎁 Výhody</div></div>
+                <div class="rk-card__body" style="padding-top: var(--sp-3);">
+                    <table class="rk-table" style="box-shadow: none; border: 0;">
+                        <thead>
+                        <tr><th>Výhoda</th><th>Popis</th><th>Jak využít</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="b : ${benefits}">
+                            <td><strong th:text="${b.name}">Název</strong></td>
+                            <td class="text-muted" th:text="${b.description} ?: ''">Popis</td>
+                            <td>
+                                <span th:if="${b.helpType.name() == 'TEXT'}" th:text="${b.helpText} ?: '—'">nápověda</span>
+                                <details th:if="${b.helpType.name() == 'BUTTON'}">
+                                    <summary class="btn btn-accent btn-sm" style="list-style:none; display:inline-flex;"
+                                             th:text="${b.buttonLabel != null and !b.buttonLabel.isBlank() ? b.buttonLabel : 'Využít výhodu'}">Využít výhodu</summary>
+                                    <form th:if="${!benefitsHidden}" th:action="@{/benefits/{id}/use(id=${b.id})}"
+                                          method="post" style="margin-top: var(--sp-2);">
+                                        <textarea name="userText" class="form-control" rows="2" maxlength="1000"
+                                                  placeholder="Tvůj vzkaz (nepovinné)…"></textarea>
+                                        <button type="submit" class="btn btn-accent btn-sm" style="margin-top: 6px;">Odeslat požadavek</button>
+                                    </form>
+                                </details>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </th:block>
+    </div>
+
     <!-- Recent trainings + quick actions -->
     <div class="row g-4">
 

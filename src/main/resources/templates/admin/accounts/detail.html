@@ -96,6 +96,18 @@
                 Vyplň buď počet vstupů, nebo datum (prázdné = neeviduje se). Při 0/minusu
                 nebo prošlém datu se pole zbarví červeně — u admina i na přehledu klienta.
             </p>
+            <hr style="margin: var(--sp-3) 0;">
+            <!-- ScoutMeto kolo 7: viditelnost sekce Výhody pro tohoto uživatele -->
+            <form th:action="@{/admin/accounts/{id}/benefits-toggle(id=${account.id})}" method="post"
+                  class="rk-row" style="gap: var(--sp-3); align-items: center;">
+                <span style="font-size: var(--fs-sm);">
+                    Sekce <strong>Výhody</strong> na přehledu:
+                    <span th:class="|rk-badge ${account.benefitsVisible ? 'rk-badge--success' : 'rk-badge--danger'}|"
+                          th:text="${account.benefitsVisible ? 'VIDITELNÁ' : 'SKRYTÁ'}">VIDITELNÁ</span>
+                </span>
+                <button type="submit" class="btn btn-outline btn-sm"
+                        th:text="${account.benefitsVisible ? 'Skrýt uživateli' : 'Zobrazit uživateli'}">Skrýt</button>
+            </form>
         </div>
     </div>
 

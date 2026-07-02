@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head th:replace="~{fragments/layout :: head('Výhoda')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar('admin-overview')}"></nav>
+<main class="rk-page">
+
+    <div class="rk-crumb">
+        <span>Admin</span><span class="sep">/</span>
+        <a th:href="@{/admin/overview}">Gym overview</a><span class="sep">/</span>
+        <span class="current" th:text="${editing} ? 'Upravit výhodu' : 'Nová výhoda'">Nová výhoda</span>
+    </div>
+
+    <div class="rk-page__head"><div>
+        <h1 class="rk-page__title" th:text="${editing} ? 'Upravit výhodu' : 'Nová výhoda'">Nová výhoda</h1>
+        <p class="rk-page__sub">Řádek společné tabulky Výhody na přehledu uživatelů.</p>
+    </div></div>
+
+    <form th:action="${editing} ? @{/admin/overview/benefits/{id}(id=${benefit.id})} : @{/admin/overview/benefits}"
+          method="post">
+        <div class="rk-card"><div class="rk-card__body rk-stack-4">
+            <div class="rk-row" style="gap: var(--sp-4); align-items: flex-end;">
+                <div class="rk-field" style="flex:1; min-width: 240px;">
+                    <label class="rk-label" for="name">Název výhody (1. sloupec) <span class="req">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control" maxlength="128" required
+                           th:value="${benefit.name}">
+                </div>
+                <div class="rk-field" style="max-width: 120px;">
+                    <label class="rk-label" for="position">Pořadí</label>
+                    <input type="number" id="position" name="position" class="form-control"
+                           th:value="${benefit.position}">
+                </div>
+            </div>
+
+            <div class="rk-field">
+                <label class="rk-label" for="description">Popis výhody (2. sloupec)</label>
+                <textarea id="description" name="description" class="form-control" rows="2"
+                          th:text="${benefit.description}"></textarea>
+            </div>
+
+            <div class="rk-field">
+                <span class="rk-label">Nápověda „jak výhodu využít" (3. sloupec)</span>
+                <div style="display:flex; gap: var(--sp-4);">
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="helpType" value="TEXT" class="form-check-input js-help-type"
+                               th:checked="${benefit.helpType == null or benefit.helpType.name() == 'TEXT'}"> Jen text
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="helpType" value="BUTTON" class="form-check-input js-help-type"
+                               th:checked="${benefit.helpType != null and benefit.helpType.name() == 'BUTTON'}"> Tlačítko (odešle e-mail)
+                    </label>
+                </div>
+            </div>
+
+            <div class="rk-field" id="helpTextField">
+                <label class="rk-label" for="helpText">Text nápovědy</label>
+                <input type="text" id="helpText" name="helpText" class="form-control"
+                       placeholder="např. Pro další informace kontaktuj coache."
+                       th:value="${benefit.helpText}">
+            </div>
+
+            <div id="buttonFields" class="rk-stack-3"
+                 style="border-left: 3px solid var(--rk-border-strong); padding-left: var(--sp-4);">
+                <div class="rk-field">
+                    <label class="rk-label" for="buttonLabel">Popisek tlačítka</label>
+                    <input type="text" id="buttonLabel" name="buttonLabel" class="form-control" maxlength="64"
+                           placeholder="default: Využít výhodu" th:value="${benefit.buttonLabel}">
+                </div>
+                <div class="rk-field">
+                    <label class="rk-label" for="buttonEmail">Cílový e-mail (kam se požadavek posílá) <span class="req">*</span></label>
+                    <input type="email" id="buttonEmail" name="buttonEmail" class="form-control"
+                           placeholder="partner@example.cz" th:value="${benefit.buttonEmail}">
+                </div>
+                <div class="rk-field">
+                    <label class="rk-label" for="buttonSubject">Předmět e-mailu</label>
+                    <input type="text" id="buttonSubject" name="buttonSubject" class="form-control"
+                           placeholder="default: Ragnarok — využití výhody: (název)" th:value="${benefit.buttonSubject}">
+                </div>
+                <div class="rk-field">
+                    <label class="rk-label" for="buttonPresetText">Přednastavený text (skrytý — USER ho nevidí)</label>
+                    <textarea id="buttonPresetText" name="buttonPresetText" class="form-control" rows="3"
+                              placeholder="Ověření: tento e-mail byl odeslán z aplikace Ragnarok Training Diary…"
+                              th:text="${benefit.buttonPresetText}"></textarea>
+                    <span class="rk-help">Přiloží se do mailu jako ověření, že požadavek jde z aplikace
+                        (uživatel má na výhodu nárok). Pod ním se automaticky doplní jméno, e-mail a telefon uživatele.</span>
+                </div>
+            </div>
+        </div></div>
+        <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
+            <button type="submit" class="btn btn-accent btn-lg">Uložit</button>
+            <a th:href="@{/admin/overview}" class="btn btn-outline btn-lg">Zrušit</a>
+        </div>
+    </form>
+
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+    // Přepínání polí dle typu nápovědy (text vs tlačítko)
+    (function () {
+        function refresh() {
+            var isButton = document.querySelector('.js-help-type[value="BUTTON"]').checked;
+            document.getElementById('buttonFields').style.display = isButton ? '' : 'none';
+            document.getElementById('helpTextField').style.display = isButton ? 'none' : '';
+        }
+        document.querySelectorAll('.js-help-type').forEach(function (r) {
+            r.addEventListener('change', refresh);
+        });
+        refresh();
+    })();
+</script>
+</body>
+</html>

@@ -25,10 +25,13 @@ public class PageController {
 
     private final AccountService accountService;
     private final TrainingService trainingService;
+    private final com.ragnarok.ragnarok_customers_training_diary.benefit.BenefitService benefitService;
 
-    public PageController(AccountService accountService, TrainingService trainingService) {
+    public PageController(AccountService accountService, TrainingService trainingService,
+            com.ragnarok.ragnarok_customers_training_diary.benefit.BenefitService benefitService) {
         this.accountService = accountService;
         this.trainingService = trainingService;
+        this.benefitService = benefitService;
     }
 
     @GetMapping("/")
@@ -107,6 +110,8 @@ public class PageController {
         model.addAttribute("todayGroupTrainings", readOnly
                 ? java.util.List.of()
                 : trainingService.listGroupTrainingsForDay(LocalDate.now()));
+        // ScoutMeto kolo 7: tabulka Výhody (jen klient; skrytou vidí šedě jen impersonující admin)
+        model.addAttribute("benefits", isAdmin ? java.util.List.of() : benefitService.listAll());
         return "dashboard";
     }
 }

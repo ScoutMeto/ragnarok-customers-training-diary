@@ -73,6 +73,55 @@
         </div>
     </div>
 
+    <!-- ScoutMeto kolo 7: editor tabulky Výhody (společná pro všechny USER) -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2 style="font-size: var(--fs-h3);">🎁 Výhody</h2>
+        <span class="meta">Společná tabulka na přehledu všech uživatelů — per-user viditelnost vypneš na detailu účtu</span>
+    </div>
+
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}"   class="alert alert-danger"  th:text="${flashError}"></div>
+
+    <div style="margin-bottom: var(--sp-3);">
+        <a th:href="@{/admin/overview/benefits/new}" class="btn btn-accent btn-sm">+ Nová výhoda</a>
+    </div>
+
+    <div th:if="${benefits == null or benefits.isEmpty()}" class="rk-empty rk-card">
+        <p>Zatím žádná výhoda. Přidej první řádek tabulky.</p>
+    </div>
+
+    <table class="rk-table" th:unless="${benefits == null or benefits.isEmpty()}">
+        <thead>
+        <tr>
+            <th style="width:60px;">Pořadí</th>
+            <th>Výhoda</th>
+            <th>Popis</th>
+            <th>Nápověda (3. sloupec)</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="b : ${benefits}">
+            <td class="num" th:text="${b.position}">0</td>
+            <td><strong th:text="${b.name}">Název</strong></td>
+            <td class="text-muted" th:text="${#strings.abbreviate(b.description ?: '', 60)}">Popis</td>
+            <td>
+                <span th:if="${b.helpType.name() == 'TEXT'}" class="rk-badge">TEXT</span>
+                <span th:if="${b.helpType.name() == 'BUTTON'}" class="rk-badge rk-badge--accent">TLAČÍTKO</span>
+                <span th:if="${b.helpType.name() == 'BUTTON'}" class="text-muted" style="font-size: var(--fs-xs); margin-left:4px;"
+                      th:text="'→ ' + ${b.buttonEmail}">→ email</span>
+            </td>
+            <td class="text-end" style="white-space: nowrap;">
+                <a th:href="@{/admin/overview/benefits/{id}/edit(id=${b.id})}" class="btn btn-outline btn-sm">Upravit</a>
+                <form th:action="@{/admin/overview/benefits/{id}/delete(id=${b.id})}" method="post" class="d-inline"
+                      onsubmit="return confirm('Smazat tuto výhodu?');">
+                    <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

@@ -81,6 +81,10 @@ public class AccountEntity implements UserDetails {
     @Column(name = "membership_until")
     private java.time.LocalDate membershipUntil;
 
+    /** ScoutMeto kolo 7: viditelnost sekce Výhody na přehledu (vypíná admin per-user). */
+    @Column(name = "benefits_visible", nullable = false)
+    private boolean benefitsVisible = true;
+
     /** Členství prošlé? (vstupy ≤ 0 nebo datum v minulosti) — pole se barví červeně. */
     public boolean isMembershipExpired() {
         boolean entriesOut = membershipEntries != null && membershipEntries <= 0;

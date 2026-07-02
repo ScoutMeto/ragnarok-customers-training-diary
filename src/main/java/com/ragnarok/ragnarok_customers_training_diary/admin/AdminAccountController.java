@@ -184,6 +184,18 @@ public class AdminAccountController {
         return "redirect:/admin/accounts/" + id;
     }
 
+    /** ScoutMeto kolo 7: zapnutí/vypnutí sekce Výhody pro konkrétního uživatele. */
+    @PostMapping("/{id}/benefits-toggle")
+    public String toggleBenefits(@PathVariable Long id, RedirectAttributes flash) {
+        AccountEntity account = accountService.getById(id);
+        account.setBenefitsVisible(!account.isBenefitsVisible());
+        accountService.save(account);
+        flash.addFlashAttribute("flashSuccess", account.isBenefitsVisible()
+                ? "Sekce Výhody je pro uživatele viditelná."
+                : "Sekce Výhody je pro uživatele skrytá.");
+        return "redirect:/admin/accounts/" + id;
+    }
+
     // -----------------------------------------------------------------------------
     // Soft delete
     // -----------------------------------------------------------------------------

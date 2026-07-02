@@ -260,6 +260,36 @@ public class EmailService {
     }
 
     // ============================================================================
+    // 10) Požadavek na využití výhody (ScoutMeto kolo 7)
+    // ============================================================================
+
+    /**
+     * Odešle požadavek uživatele na využití výhody na adresu nastavenou adminem.
+     * Pořadí obsahu: text uživatele (nepovinný) → přednastavený text aplikace
+     * (ověření původu) → kontaktní údaje uživatele.
+     */
+    @Async
+    public void sendBenefitRequest(
+            com.ragnarok.ragnarok_customers_training_diary.benefit.BenefitItemEntity benefit,
+            AccountEntity user, String userText) {
+        String subject = benefit.getButtonSubject() != null && !benefit.getButtonSubject().isBlank()
+                ? benefit.getButtonSubject()
+                : "Ragnarok — využití výhody: " + benefit.getName();
+        StringBuilder text = new StringBuilder();
+        if (userText != null && !userText.isBlank()) {
+            text.append(userText.trim()).append("\n\n");
+        }
+        if (benefit.getButtonPresetText() != null && !benefit.getButtonPresetText().isBlank()) {
+            text.append(benefit.getButtonPresetText().trim()).append("\n\n");
+        }
+        text.append("---\n");
+        text.append("Jméno: ").append(user.getFirstName()).append(" ").append(user.getLastName()).append("\n");
+        text.append("E-mail: ").append(user.getEmail()).append("\n");
+        text.append("Telefon: ").append(user.getPhone() != null ? user.getPhone() : "—").append("\n");
+        send(benefit.getButtonEmail(), subject, text.toString(), "benefit-request");
+    }
+
+    // ============================================================================
     // Low-level send
     // ============================================================================
 
