@@ -26,7 +26,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
                 Nová šablona
             </a>
-            <a th:href="@{/admin/text-plans}" class="btn btn-outline btn-icon" title="Prostý text — dlouhodobý plán, uživatel dostane editovatelnou kopii">
+            <a th:href="@{/admin/text-plans/new}" class="btn btn-outline btn-icon" title="Prostý text — dlouhodobý plán, uživatel dostane editovatelnou kopii">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
                 Nová šablona v textovém formátu
             </a>
@@ -70,6 +70,76 @@
         </tr>
         </tbody>
     </table>
+
+    <!-- ScoutMeto kolo 7: stránkování klasických šablon (20 naposled vytvořených) -->
+    <div th:if="${templatesPage != null and templatesPage.totalPages > 1}"
+         class="rk-row" style="justify-content: center; gap: var(--sp-3); margin-top: var(--sp-3);">
+        <a th:if="${templatesPage.hasPrevious()}"
+           th:href="@{/admin/training-templates(page=${templatesPage.number - 1},textPage=${param.textPage != null ? param.textPage[0] : 0})}"
+           class="btn btn-outline btn-sm">← Novější</a>
+        <span class="text-muted" style="font-size: var(--fs-sm);">
+            Stránka <span class="num" th:text="${templatesPage.number + 1}">1</span> /
+            <span class="num" th:text="${templatesPage.totalPages}">1</span>
+        </span>
+        <a th:if="${templatesPage.hasNext()}"
+           th:href="@{/admin/training-templates(page=${templatesPage.number + 1},textPage=${param.textPage != null ? param.textPage[0] : 0})}"
+           class="btn btn-outline btn-sm">Starší →</a>
+    </div>
+
+    <!-- ScoutMeto kolo 7: privátní textové tréninky přímo tady (dřív schované na /admin/text-plans) -->
+    <div class="rk-section-head" style="margin-top: var(--sp-6);">
+        <h2 style="font-size: var(--fs-h3);">📄 Privátní textové tréninky</h2>
+        <span class="meta">Textová šablona — přiřazením vznikne uživateli editovatelná kopie v „Můj plán"</span>
+    </div>
+
+    <div th:if="${textTemplates == null or textTemplates.isEmpty()}" class="rk-empty rk-card">
+        <p>Zatím žádná textová šablona.</p>
+        <a th:href="@{/admin/text-plans/new}" class="btn btn-outline btn-sm">+ Nová šablona v textovém formátu</a>
+    </div>
+
+    <table class="rk-table" th:unless="${textTemplates == null or textTemplates.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Název</th>
+            <th>Vytvořeno</th>
+            <th>Autor</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="tpl : ${textTemplates}">
+            <td>
+                <span class="rk-badge" style="margin-right:6px;">📄 TEXTOVÝ</span>
+                <strong th:text="${tpl.title}">Název</strong>
+            </td>
+            <td class="num text-muted" th:text="${#temporals.format(tpl.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
+            <td class="text-muted" th:text="${tpl.createdBy != null ? tpl.createdBy.firstName + ' ' + tpl.createdBy.lastName : '—'}">Trenér</td>
+            <td class="text-end">
+                <a th:href="@{/admin/text-plans/{id}/assign(id=${tpl.id})}" class="btn btn-accent btn-sm">📤 Přiřadit</a>
+                <a th:href="@{/admin/text-plans/{id}/edit(id=${tpl.id})}" class="btn btn-outline btn-sm">Upravit</a>
+                <form th:action="@{/admin/text-plans/{id}/delete(id=${tpl.id})}" method="post" class="d-inline"
+                      onsubmit="return confirm('Smazat tuto textovou šablonu? Kopie u uživatelů zůstanou.');">
+                    <button type="submit" class="btn btn-danger-outline btn-sm">Smazat</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- stránkování textových šablon -->
+    <div th:if="${textTemplatesPage != null and textTemplatesPage.totalPages > 1}"
+         class="rk-row" style="justify-content: center; gap: var(--sp-3); margin-top: var(--sp-3);">
+        <a th:if="${textTemplatesPage.hasPrevious()}"
+           th:href="@{/admin/training-templates(page=${param.page != null ? param.page[0] : 0},textPage=${textTemplatesPage.number - 1})}"
+           class="btn btn-outline btn-sm">← Novější</a>
+        <span class="text-muted" style="font-size: var(--fs-sm);">
+            Stránka <span class="num" th:text="${textTemplatesPage.number + 1}">1</span> /
+            <span class="num" th:text="${textTemplatesPage.totalPages}">1</span>
+        </span>
+        <a th:if="${textTemplatesPage.hasNext()}"
+           th:href="@{/admin/training-templates(page=${param.page != null ? param.page[0] : 0},textPage=${textTemplatesPage.number + 1})}"
+           class="btn btn-outline btn-sm">Starší →</a>
+    </div>
 
 </main>
 

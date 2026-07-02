@@ -252,13 +252,34 @@ public class TrainingService {
 
     @Transactional(readOnly = true)
     public List<TrainingEntity> listGroupTrainingsForDay(LocalDate date) {
-        return trainingRepository.findByVisibilityAndTrainingDateOrderByStartTimeAsc(
+        // ScoutMeto kolo 7: klienti vidí jen publikované (drafty zůstávají adminovi)
+        return trainingRepository.findByVisibilityAndTrainingDateAndPublishedTrueOrderByStartTimeAsc(
                 TrainingVisibility.GROUP, date);
     }
 
     @Transactional(readOnly = true)
     public List<TrainingEntity> listAllGroupTrainings() {
         return trainingRepository.findByVisibilityOrderByTrainingDateDescIdDesc(TrainingVisibility.GROUP);
+    }
+
+    /** ScoutMeto kolo 7: stránkovaný admin výpis skupinových tréninků (naposled vytvořené). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<TrainingEntity> listGroupTrainingsPaged(int page, int size) {
+        return trainingRepository.findByVisibility(TrainingVisibility.GROUP,
+                org.springframework.data.domain.PageRequest.of(Math.max(0, page), size,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")));
+    }
+
+    /** ScoutMeto kolo 7: publikace/skrytí skupinového tréninku (draft flow). */
+    public void setGroupPublished(Long trainingId, boolean published) {
+        TrainingEntity training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + trainingId + ") nenalezen."));
+        if (training.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Trénink není skupinový.");
+        }
+        training.setPublished(published);
+        trainingRepository.save(training);
     }
 
     /**
@@ -501,6 +522,110 @@ public class TrainingService {
         }
 
         return create(owner, input);
+    }
+
+    // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 7: admin přiřazení + duplikace skupinových tréninků
+    // -----------------------------------------------------------------------------
+
+    /** Stránkovaný admin výpis šablon (naposled vytvořené). */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<TrainingEntity> listTemplatesPaged(int page, int size) {
+        return trainingRepository.findByVisibility(TrainingVisibility.TEMPLATE,
+                org.springframework.data.domain.PageRequest.of(Math.max(0, page), size,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")));
+    }
+
+    /**
+     * Admin „natvrdo" přiřadí skupinový trénink konkrétnímu klientovi na dané datum —
+     * vznikne PRIVATE kopie (s předepsanými cviky/sety) se {@code sourceTemplate} odkazem
+     * na zdrojový GROUP trénink. Prevence: klient nestihne přidat trénink před koncem týdne.
+     */
+    public TrainingEntity assignGroupToClient(Long groupTrainingId, AccountEntity client,
+                                              LocalDate date,
+                                              com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper toInputMapper) {
+        TrainingEntity source = trainingRepository.findById(groupTrainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + groupTrainingId + ") nenalezen."));
+        if (source.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Trénink není skupinový.");
+        }
+
+        TrainingInput input = copyToInput(source, date, source.getName() != null
+                ? source.getName() : "Skupinový trénink", toInputMapper);
+        TrainingEntity created = create(client, input);
+        created.setSourceTemplate(source);
+        TrainingEntity saved = trainingRepository.save(created);
+
+        String trainerName = source.getCreatedBy() != null
+                ? source.getCreatedBy().getFirstName() + " " + source.getCreatedBy().getLastName()
+                : null;
+        emailService.sendNewPlanAssignedNotification(client, "skupinový trénink",
+                source.getName(), trainerName);
+        return saved;
+    }
+
+    /**
+     * Duplikuje skupinový trénink — přesná kopie (cviky, sety, configy, tagy, publikace),
+     * jediná automatická změna je datum = dnes. Kopie je dál plně editovatelná.
+     */
+    public TrainingEntity duplicateGroup(Long groupTrainingId, AccountEntity admin,
+                                         com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper toInputMapper) {
+        TrainingEntity source = trainingRepository.findById(groupTrainingId)
+                .orElseThrow(() -> new NotFoundException("Trénink (id=" + groupTrainingId + ") nenalezen."));
+        if (source.getVisibility() != TrainingVisibility.GROUP) {
+            throw new IllegalArgumentException("Trénink není skupinový.");
+        }
+
+        TrainingInput input = copyToInput(source, LocalDate.now(),
+                source.getName(), toInputMapper);
+        TrainingEntity copy = createGroup(admin, input);
+        copy.setPublished(source.isPublished());
+        return trainingRepository.save(copy);
+    }
+
+    /** Plná kopie tréninku do {@link TrainingInput} (cviky, sety vč. hodnot, tagy, náčiní, configy). */
+    private TrainingInput copyToInput(TrainingEntity source, LocalDate date, String name,
+                                      com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper toInputMapper) {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(date);
+        input.setStartTime(source.getStartTime());
+        input.setEndTime(source.getEndTime());
+        input.setName(name);
+        input.setDifficulty(source.getDifficulty());
+        input.setRpe(source.getRpe());
+        input.setNotes(source.getNotes());
+        java.util.Set<Long> systemTagIds = new java.util.HashSet<>();
+        for (TrainingTagEntity t : source.getTags()) {
+            if (t.isSystem()) systemTagIds.add(t.getId());
+        }
+        input.setTagIds(systemTagIds);
+
+        for (TrainingExerciseEntity sourceEx : source.getExercises()) {
+            TrainingExerciseInput exInput = new TrainingExerciseInput();
+            exInput.setType(sourceEx.getType());
+            exInput.setCatalogItemId(sourceEx.getCatalogItem() != null ? sourceEx.getCatalogItem().getId() : null);
+            exInput.setCustomName(sourceEx.getCustomName());
+            exInput.setRpe(sourceEx.getRpe());
+            exInput.setNotes(sourceEx.getNotes());
+            exInput.setTagIds(sourceEx.getTags().stream().map(TrainingTagEntity::getId)
+                    .collect(java.util.stream.Collectors.toSet()));
+            exInput.setEquipmentName(sourceEx.getEquipmentName());
+            exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
+            exInput.setEquipmentCount(sourceEx.getEquipmentCount());
+            exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
+            for (var s : sourceEx.getSets()) {
+                SetInput si = new SetInput();
+                si.setWeightKg(s.getWeightKg());
+                si.setReps(s.getReps());
+                si.setRpe(s.getRpe());
+                si.setNote(s.getNote());
+                exInput.getSets().add(si);
+            }
+            toInputMapper.fillInput(exInput, sourceEx);
+            input.getExercises().add(exInput);
+        }
+        return input;
     }
 
     // =============================================================================

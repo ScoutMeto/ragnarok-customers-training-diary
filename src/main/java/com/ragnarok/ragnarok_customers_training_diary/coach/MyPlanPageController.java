@@ -97,6 +97,14 @@ public class MyPlanPageController {
                     "Tvůj účet je neaktivní (jen náhled). Pro obnovení funkcí kontaktuj trenéra.");
             return "redirect:/my-plan";
         }
+        // ScoutMeto kolo 7: uživatel smí přidat jen nabídku aktuálně viditelnou
+        // (publikovaná v tomto týdnu) — drafty a minulé týdny jen přes admin přiřazení.
+        boolean visible = textPlanService.listVisibleGroupOffers().stream()
+                .anyMatch(o -> o.getId().equals(id));
+        if (!visible) {
+            flash.addFlashAttribute("flashError", "Tato nabídka už není aktuální.");
+            return "redirect:/diary";
+        }
         try {
             var copy = textPlanService.addGroupOfferToUser(id, user);
             flash.addFlashAttribute("flashSuccess", copy != null

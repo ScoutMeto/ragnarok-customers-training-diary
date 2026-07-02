@@ -53,22 +53,36 @@ public class AdminTrainingTemplateController {
     private final TrainingTagRepository tagRepository;
     private final AccountRepository accountRepository;
     private final ExerciseTypeConfigToInputMapper typeToInputMapper;
+    private final com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService;
+
+    /** Velikost stránky admin výpisů (ScoutMeto kolo 7: „20 a 20"). */
+    private static final int PAGE_SIZE = 20;
 
     public AdminTrainingTemplateController(TrainingService trainingService,
                                             ExerciseCatalogService catalogService,
                                             TrainingTagRepository tagRepository,
                                             AccountRepository accountRepository,
-                                            ExerciseTypeConfigToInputMapper typeToInputMapper) {
+                                            ExerciseTypeConfigToInputMapper typeToInputMapper,
+                                            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagRepository = tagRepository;
         this.accountRepository = accountRepository;
         this.typeToInputMapper = typeToInputMapper;
+        this.textPlanService = textPlanService;
     }
 
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("templates", trainingService.listAllTemplates());
+    public String list(@RequestParam(value = "page", defaultValue = "0") int page,
+                       @RequestParam(value = "textPage", defaultValue = "0") int textPage,
+                       Model model) {
+        // ScoutMeto kolo 7: stránkované výpisy (20 naposled vytvořených) + textové šablony inline
+        var templatesPage = trainingService.listTemplatesPaged(page, PAGE_SIZE);
+        model.addAttribute("templates", templatesPage.getContent());
+        model.addAttribute("templatesPage", templatesPage);
+        var textTemplatesPage = textPlanService.listTemplatesPaged(textPage, PAGE_SIZE);
+        model.addAttribute("textTemplates", textTemplatesPage.getContent());
+        model.addAttribute("textTemplatesPage", textTemplatesPage);
         return "admin/templates/list";
     }
 

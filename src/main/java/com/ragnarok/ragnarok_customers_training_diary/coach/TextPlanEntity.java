@@ -52,6 +52,20 @@ public class TextPlanEntity {
     @Column(name = "group_offer", nullable = false)
     private boolean groupOffer = false;
 
+    /**
+     * ScoutMeto kolo 7: publikace skupinové nabídky. {@code false} = draft — uživatelé
+     * nabídku nevidí, admin ji vidí zašedlou s akcí Publikovat.
+     */
+    @Column(name = "published", nullable = false)
+    private boolean published = true;
+
+    /**
+     * Datum publikace — určuje týden, ve kterém uživatelé nabídku vidí (pondělní reset).
+     * {@code null} u draftů; nastavuje se při publikaci (i opakované).
+     */
+    @Column(name = "published_at")
+    private java.time.LocalDate publishedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private AccountEntity owner;

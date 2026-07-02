@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
-<head th:replace="~{fragments/layout :: head('Přiřadit textový plán')}"></head>
+<head th:replace="~{fragments/layout :: head('Přiřadit textový trénink')}"></head>
 <body>
-<nav th:replace="~{fragments/layout :: navbar('admin-templates')}"></nav>
+<nav th:replace="~{fragments/layout :: navbar('admin-group')}"></nav>
 <main class="rk-page">
 
     <div class="rk-crumb">
         <span>Admin</span><span class="sep">/</span>
-        <a th:href="@{/admin/training-templates}">Textové šablony</a><span class="sep">/</span>
-        <span class="current">Přiřadit</span>
+        <a th:href="@{/admin/group-trainings}">Skupinové tréninky</a><span class="sep">/</span>
+        <span class="current">Přiřadit textový</span>
     </div>
 
     <div class="rk-page__head"><div>
-        <h1 class="rk-page__title">Přiřadit textový plán</h1>
+        <h1 class="rk-page__title">Přiřadit textový trénink</h1>
         <p class="rk-page__sub">
-            Šablona „<strong th:text="${template.title}">název</strong>" je uložená.
-            Přiřazením vznikne uživateli editovatelná kopie — nebo ji nech nepřiřazenou a přiřaď později.
+            Textový trénink „<strong th:text="${offer.title}">název</strong>" se zkopíruje klientovi
+            do sekce „Můj plán" jako editovatelná kopie — nezmizí mu s novým týdnem.
         </p>
     </div></div>
 
-    <form th:action="@{/admin/text-plans/{id}/assign(id=${template.id})}" method="post">
+    <form th:action="@{/admin/group-trainings/text/{id}/assign(id=${offer.id})}" method="post">
         <div class="rk-card"><div class="rk-card__body">
             <div class="rk-field">
                 <label class="rk-label" for="clientId">Uživatel</label>
@@ -32,7 +32,7 @@
         </div></div>
         <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
             <button type="submit" class="btn btn-accent btn-lg">Přiřadit</button>
-            <a th:href="@{/admin/training-templates}" class="btn btn-outline btn-lg">Nechat nepřiřazeno</a>
+            <a th:href="@{/admin/group-trainings}" class="btn btn-outline btn-lg">Zrušit</a>
         </div>
     </form>
 

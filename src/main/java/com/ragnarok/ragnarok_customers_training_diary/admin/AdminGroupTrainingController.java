@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -44,25 +45,38 @@ public class AdminGroupTrainingController {
     private final TrainingTagRepository tagRepository;
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
     private final com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService;
+    private final com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository accountRepository;
 
     public AdminGroupTrainingController(
             TrainingService trainingService,
             ExerciseCatalogService catalogService,
             TrainingTagRepository tagRepository,
             com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper,
-            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService) {
+            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService,
+            com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository accountRepository) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagRepository = tagRepository;
         this.typeToInputMapper = typeToInputMapper;
         this.textPlanService = textPlanService;
+        this.accountRepository = accountRepository;
     }
 
+    /** Velikost stránky admin výpisů (ScoutMeto kolo 7: „20 a 20"). */
+    private static final int PAGE_SIZE = 20;
+
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("trainings", trainingService.listAllGroupTrainings());
+    public String list(@RequestParam(value = "page", defaultValue = "0") int page,
+                       @RequestParam(value = "textPage", defaultValue = "0") int textPage,
+                       Model model) {
+        // ScoutMeto kolo 7: stránkované výpisy — 20 naposled vytvořených, šipky vpřed/vzad
+        var trainingsPage = trainingService.listGroupTrainingsPaged(page, PAGE_SIZE);
+        model.addAttribute("trainings", trainingsPage.getContent());
+        model.addAttribute("trainingsPage", trainingsPage);
         // ScoutMeto kolo 6: skupinové textové tréninky (nabídky pro všechny)
-        model.addAttribute("textOffers", textPlanService.listGroupOffers());
+        var textOffersPage = textPlanService.listGroupOffersPaged(textPage, PAGE_SIZE);
+        model.addAttribute("textOffers", textOffersPage.getContent());
+        model.addAttribute("textOffersPage", textOffersPage);
         return "admin/group-trainings/list";
     }
 
@@ -82,10 +96,14 @@ public class AdminGroupTrainingController {
     public String createText(@AuthenticationPrincipal AccountEntity admin,
                              @org.springframework.web.bind.annotation.RequestParam("title") String title,
                              @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                             @org.springframework.web.bind.annotation.RequestParam(value = "action", defaultValue = "publish") String action,
                              RedirectAttributes flash) {
         try {
-            textPlanService.createGroupOffer(admin, title, body);
-            flash.addFlashAttribute("flashSuccess", "Skupinový textový trénink vytvořen — nabízí se všem uživatelům.");
+            boolean publish = !"draft".equals(action);
+            textPlanService.createGroupOffer(admin, title, body, publish);
+            flash.addFlashAttribute("flashSuccess", publish
+                    ? "Skupinový textový trénink vytvořen — nabízí se všem uživatelům."
+                    : "Skupinový textový trénink uložen jako nezveřejněný. Publikuj ho kliknutím na název v seznamu.");
         } catch (IllegalArgumentException ex) {
             flash.addFlashAttribute("flashError", ex.getMessage());
             return "redirect:/admin/group-trainings/text/new";
@@ -106,11 +124,68 @@ public class AdminGroupTrainingController {
     public String updateText(@PathVariable Long id,
                              @org.springframework.web.bind.annotation.RequestParam("title") String title,
                              @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                             @org.springframework.web.bind.annotation.RequestParam(value = "action", defaultValue = "publish") String action,
                              RedirectAttributes flash) {
         try {
-            textPlanService.updateGroupOffer(id, title, body);
-            flash.addFlashAttribute("flashSuccess", "Skupinový textový trénink upraven.");
+            boolean publish = !"draft".equals(action);
+            textPlanService.updateGroupOffer(id, title, body, publish);
+            flash.addFlashAttribute("flashSuccess", publish
+                    ? "Skupinový textový trénink upraven."
+                    : "Skupinový textový trénink uložen jako nezveřejněný.");
         } catch (IllegalArgumentException | NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    /** ScoutMeto kolo 7: publikace textové nabídky (datum publikace = dnes). */
+    @PostMapping("/text/{id}/publish")
+    public String publishText(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            textPlanService.publishGroupOffer(id);
+            flash.addFlashAttribute("flashSuccess", "Textový trénink publikován — uživatelé ho uvidí tento týden.");
+        } catch (NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    /** ScoutMeto kolo 7: přiřazení textového tréninku konkrétnímu uživateli (kopie do Můj plán). */
+    @GetMapping("/text/{id}/assign")
+    public String assignTextForm(@PathVariable Long id, Model model) {
+        model.addAttribute("offer", textPlanService.getGroupOffer(id));
+        model.addAttribute("clients", accountRepository
+                .findByRoleAndDeletedAtIsNullOrderByLastNameAscFirstNameAsc(
+                        com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.USER));
+        return "admin/group-trainings/text-assign";
+    }
+
+    @PostMapping("/text/{id}/assign")
+    public String assignText(@PathVariable Long id,
+                             @org.springframework.web.bind.annotation.RequestParam Long clientId,
+                             RedirectAttributes flash) {
+        try {
+            AccountEntity client = accountRepository.findById(clientId)
+                    .orElseThrow(() -> new NotFoundException("Klient (id=" + clientId + ") nenalezen."));
+            var copy = textPlanService.addGroupOfferToUser(id, client);
+            flash.addFlashAttribute("flashSuccess", copy != null
+                    ? "Textový trénink přiřazen klientovi " + client.getFirstName() + " " + client.getLastName()
+                            + " (kopie v Mém plánu)."
+                    : "Klient " + client.getFirstName() + " " + client.getLastName() + " už tento trénink má.");
+        } catch (NotFoundException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    /** ScoutMeto kolo 7: duplikace textového tréninku (kopie, publikace dneškem). */
+    @PostMapping("/text/{id}/duplicate")
+    public String duplicateText(@AuthenticationPrincipal AccountEntity admin,
+                                @PathVariable Long id, RedirectAttributes flash) {
+        try {
+            textPlanService.duplicateGroupOffer(id, admin);
+            flash.addFlashAttribute("flashSuccess", "Textový trénink zduplikován.");
+        } catch (NotFoundException ex) {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
         return "redirect:/admin/group-trainings";
@@ -152,6 +227,7 @@ public class AdminGroupTrainingController {
             @AuthenticationPrincipal AccountEntity admin,
             @Valid @ModelAttribute("form") TrainingInput form,
             BindingResult bindingResult,
+            @org.springframework.web.bind.annotation.RequestParam(value = "action", defaultValue = "publish") String action,
             Model model,
             RedirectAttributes flash) {
 
@@ -162,6 +238,13 @@ public class AdminGroupTrainingController {
 
         try {
             TrainingEntity created = trainingService.createGroup(admin, form);
+            // ScoutMeto kolo 7: „Uložit, zatím nezveřejňovat" → draft (klienti nevidí)
+            if ("draft".equals(action)) {
+                trainingService.setGroupPublished(created.getId(), false);
+                flash.addFlashAttribute("flashSuccess",
+                        "Skupinový trénink uložen jako nezveřejněný. Publikuj ho kliknutím na název v seznamu.");
+                return "redirect:/admin/group-trainings";
+            }
             flash.addFlashAttribute("flashSuccess", "Skupinový trénink vytvořen.");
             return "redirect:/diary/" + created.getId();  // detail je sdílený s běžným diary view
         } catch (IllegalArgumentException ex) {
@@ -190,6 +273,7 @@ public class AdminGroupTrainingController {
             @PathVariable Long id,
             @Valid @ModelAttribute("form") TrainingInput form,
             BindingResult bindingResult,
+            @org.springframework.web.bind.annotation.RequestParam(value = "action", defaultValue = "publish") String action,
             Model model,
             RedirectAttributes flash) {
 
@@ -201,6 +285,12 @@ public class AdminGroupTrainingController {
 
         try {
             trainingService.updateGroup(id, form);
+            // ScoutMeto kolo 7: draft flow i při editaci
+            trainingService.setGroupPublished(id, !"draft".equals(action));
+            if ("draft".equals(action)) {
+                flash.addFlashAttribute("flashSuccess", "Skupinový trénink uložen jako nezveřejněný.");
+                return "redirect:/admin/group-trainings";
+            }
             flash.addFlashAttribute("flashSuccess", "Skupinový trénink aktualizován.");
             return "redirect:/diary/" + id;
         } catch (IllegalArgumentException ex) {
@@ -212,6 +302,63 @@ public class AdminGroupTrainingController {
             flash.addFlashAttribute("flashError", ex.getMessage());
             return "redirect:/admin/group-trainings";
         }
+    }
+
+    // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 7: publikace / přiřazení / duplikace (klasické skupinové)
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/{id}/publish")
+    public String publish(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            trainingService.setGroupPublished(id, true);
+            flash.addFlashAttribute("flashSuccess", "Skupinový trénink publikován — klienti ho uvidí.");
+        } catch (NotFoundException | IllegalArgumentException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    @GetMapping("/{id}/assign")
+    public String assignForm(@PathVariable Long id, Model model) {
+        TrainingEntity training = trainingService.getAnyTraining(id);
+        model.addAttribute("training", training);
+        model.addAttribute("clients", accountRepository
+                .findByRoleAndDeletedAtIsNullOrderByLastNameAscFirstNameAsc(
+                        com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.USER));
+        model.addAttribute("defaultDate", java.time.LocalDate.now());
+        return "admin/group-trainings/assign";
+    }
+
+    @PostMapping("/{id}/assign")
+    public String assign(@PathVariable Long id,
+                         @org.springframework.web.bind.annotation.RequestParam Long clientId,
+                         @org.springframework.web.bind.annotation.RequestParam
+                         @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+                         java.time.LocalDate trainingDate,
+                         RedirectAttributes flash) {
+        try {
+            AccountEntity client = accountRepository.findById(clientId)
+                    .orElseThrow(() -> new NotFoundException("Klient (id=" + clientId + ") nenalezen."));
+            trainingService.assignGroupToClient(id, client, trainingDate, typeToInputMapper);
+            flash.addFlashAttribute("flashSuccess", "Trénink přiřazen klientovi "
+                    + client.getFirstName() + " " + client.getLastName() + " na " + trainingDate + ".");
+        } catch (NotFoundException | IllegalArgumentException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
+    }
+
+    @PostMapping("/{id}/duplicate")
+    public String duplicate(@AuthenticationPrincipal AccountEntity admin,
+                            @PathVariable Long id, RedirectAttributes flash) {
+        try {
+            trainingService.duplicateGroup(id, admin, typeToInputMapper);
+            flash.addFlashAttribute("flashSuccess", "Trénink zduplikován s dnešním datem.");
+        } catch (NotFoundException | IllegalArgumentException ex) {
+            flash.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/admin/group-trainings";
     }
 
     // -----------------------------------------------------------------------------

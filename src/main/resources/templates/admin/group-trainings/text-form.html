@@ -36,9 +36,14 @@
                           placeholder="Piš jako do poznámkového bloku…" th:text="${planBody}"></textarea>
             </div>
         </div></div>
-        <div style="display:flex; gap:8px; margin-top: var(--sp-4);">
-            <button type="submit" class="btn btn-accent btn-lg">Uložit</button>
-            <a th:href="@{/admin/group-trainings}" class="btn btn-outline btn-lg">Zrušit</a>
+        <div style="display:flex; gap:8px; margin-top: var(--sp-4); flex-wrap: wrap;">
+            <button type="submit" name="action" value="publish" class="btn btn-accent btn-lg">Uložit</button>
+            <!-- ScoutMeto kolo 7: draft — uživatelé nabídku neuvidí, dokud ji admin nepublikuje -->
+            <button type="submit" name="action" value="draft" class="btn btn-outline btn-lg"
+                    title="Trénink se uloží, ale uživatelům se nenabídne — publikuješ ho později ze seznamu.">
+                Uložit, zatím nezveřejňovat
+            </button>
+            <a th:href="@{/admin/group-trainings}" class="btn btn-ghost btn-lg">Zrušit</a>
         </div>
     </form>
 

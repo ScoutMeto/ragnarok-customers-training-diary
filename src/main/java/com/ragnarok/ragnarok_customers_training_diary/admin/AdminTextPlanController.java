@@ -31,10 +31,10 @@ public class AdminTextPlanController {
         this.accountRepository = accountRepository;
     }
 
+    /** ScoutMeto kolo 7: samostatný výpis zrušen — textové šablony jsou přímo na training-templates. */
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("templates", textPlanService.listTemplates());
-        return "admin/text-plans/list";
+    public String list() {
+        return "redirect:/admin/training-templates";
     }
 
     @GetMapping("/new")
@@ -81,7 +81,7 @@ public class AdminTextPlanController {
         } catch (IllegalArgumentException | NotFoundException ex) {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
-        return "redirect:/admin/text-plans";
+        return "redirect:/admin/training-templates";
     }
 
     @PostMapping("/{id}/delete")
@@ -92,7 +92,7 @@ public class AdminTextPlanController {
         } catch (NotFoundException ex) {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
-        return "redirect:/admin/text-plans";
+        return "redirect:/admin/training-templates";
     }
 
     @GetMapping("/{id}/assign")
@@ -110,6 +110,6 @@ public class AdminTextPlanController {
         textPlanService.assignToUser(id, client.getId());
         flash.addFlashAttribute("flashSuccess",
                 "Textový plán přiřazen klientovi " + client.getFirstName() + " " + client.getLastName() + ".");
-        return "redirect:/admin/text-plans";
+        return "redirect:/admin/training-templates";
     }
 }

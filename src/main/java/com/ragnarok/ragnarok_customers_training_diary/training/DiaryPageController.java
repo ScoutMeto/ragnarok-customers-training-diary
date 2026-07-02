@@ -110,9 +110,9 @@ public class DiaryPageController {
         model.addAttribute("todayGroupTrainings", readOnly
                 ? java.util.List.of()
                 : trainingService.listGroupTrainingsForDay(java.time.LocalDate.now()));
-        // ScoutMeto kolo 6: skupinové textové tréninky (nabídka) + které už uživatel přidal
+        // ScoutMeto kolo 6/7: skupinové textové tréninky — jen publikované v aktuálním týdnu
         var textOffers = readOnly ? java.util.List.<com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanEntity>of()
-                : textPlanService.listGroupOffers();
+                : textPlanService.listVisibleGroupOffers();
         model.addAttribute("textGroupOffers", textOffers);
         // Které nabídky už uživatel má (jeden dotaz, bez N+1)
         model.addAttribute("addedOfferIds", readOnly
@@ -172,6 +172,10 @@ public class DiaryPageController {
         TrainingEntity training = trainingService.getAnyTraining(trainingId);
 
         if (training.getVisibility() == TrainingVisibility.GROUP) {
+            // ScoutMeto kolo 7: nepublikovaný (draft) group trénink vidí jen admin
+            if (!training.isPublished() && user.getRole() != AccountRole.ADMIN) {
+                throw new NotFoundException("Trénink (id=" + trainingId + ") nenalezen.");
+            }
             return training; // viditelný všem
         }
         // PRIVATE

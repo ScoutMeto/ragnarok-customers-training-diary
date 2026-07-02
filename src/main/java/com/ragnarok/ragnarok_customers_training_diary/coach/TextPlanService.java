@@ -96,6 +96,59 @@ public class TextPlanService {
         return repository.findByGroupOfferTrueOrderByCreatedAtDesc();
     }
 
+    /** ScoutMeto kolo 7: stránkovaný admin výpis nabídek (naposled vytvořené). */
+    public org.springframework.data.domain.Page<TextPlanEntity> listGroupOffersPaged(int page, int size) {
+        return repository.findByGroupOfferTrue(
+                org.springframework.data.domain.PageRequest.of(Math.max(0, page), size,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")));
+    }
+
+    /** ScoutMeto kolo 7: stránkovaný admin výpis individuálních textových šablon. */
+    public org.springframework.data.domain.Page<TextPlanEntity> listTemplatesPaged(int page, int size) {
+        return repository.findByTemplateTrueAndGroupOfferFalse(
+                org.springframework.data.domain.PageRequest.of(Math.max(0, page), size,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")));
+    }
+
+    /**
+     * ScoutMeto kolo 7: nabídky viditelné uživatelům — jen publikované v aktuálním týdnu
+     * (pondělí–neděle dle data publikace). S novým pondělkem nabídka minulého týdne zmizí.
+     */
+    public List<TextPlanEntity> listVisibleGroupOffers() {
+        java.time.LocalDate monday = java.time.LocalDate.now()
+                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        return repository
+                .findByGroupOfferTrueAndPublishedTrueAndPublishedAtGreaterThanEqualOrderByPublishedAtDescIdDesc(monday);
+    }
+
+    /** ScoutMeto kolo 7: publikuje nabídku (datum publikace = dnes → spadne do aktuálního týdne). */
+    @Transactional
+    public void publishGroupOffer(Long id) {
+        TextPlanEntity p = getGroupOffer(id);
+        p.setPublished(true);
+        p.setPublishedAt(java.time.LocalDate.now());
+    }
+
+    /**
+     * ScoutMeto kolo 7: duplikát nabídky — přesná kopie, jen „datum" je aktuální
+     * (createdAt teď; při publikované předloze se kopie publikuje dneškem → aktuální týden).
+     */
+    @Transactional
+    public TextPlanEntity duplicateGroupOffer(Long id, AccountEntity admin) {
+        TextPlanEntity source = getGroupOffer(id);
+        TextPlanEntity copy = new TextPlanEntity();
+        copy.setTitle(source.getTitle());
+        copy.setBody(source.getBody());
+        copy.setTemplate(true);
+        copy.setGroupOffer(true);
+        copy.setCreatedBy(admin);
+        copy.setPublished(source.isPublished());
+        copy.setPublishedAt(source.isPublished() ? java.time.LocalDate.now() : null);
+        return repository.save(copy);
+    }
+
     public TextPlanEntity getGroupOffer(Long id) {
         TextPlanEntity p = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Skupinová nabídka (id=" + id + ") nenalezena."));
@@ -106,7 +159,7 @@ public class TextPlanService {
     }
 
     @Transactional
-    public TextPlanEntity createGroupOffer(AccountEntity admin, String title, String body) {
+    public TextPlanEntity createGroupOffer(AccountEntity admin, String title, String body, boolean publish) {
         validate(title, body);
         TextPlanEntity p = new TextPlanEntity();
         p.setTitle(title.trim());
@@ -114,15 +167,27 @@ public class TextPlanService {
         p.setTemplate(true);
         p.setGroupOffer(true);
         p.setCreatedBy(admin);
+        p.setPublished(publish);
+        p.setPublishedAt(publish ? java.time.LocalDate.now() : null);
         return repository.save(p);
     }
 
+    /**
+     * Update nabídky. {@code publish=true} nastaví publikaci (u draftu čerstvým dneškem);
+     * {@code publish=false} nabídku stáhne do draftu (uživatelům zmizí).
+     */
     @Transactional
-    public TextPlanEntity updateGroupOffer(Long id, String title, String body) {
+    public TextPlanEntity updateGroupOffer(Long id, String title, String body, boolean publish) {
         validate(title, body);
         TextPlanEntity p = getGroupOffer(id);
         p.setTitle(title.trim());
         p.setBody(body);
+        if (publish && !p.isPublished()) {
+            p.setPublished(true);
+            p.setPublishedAt(java.time.LocalDate.now());
+        } else if (!publish) {
+            p.setPublished(false);
+        }
         return p;
     }
 

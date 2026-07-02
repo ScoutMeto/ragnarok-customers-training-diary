@@ -101,6 +101,14 @@ public class TrainingEntity {
     @Column(name = "flagged", nullable = false)
     private boolean flagged = false;
 
+    /**
+     * ScoutMeto kolo 7: publikace. {@code false} = draft („Uložit, zatím nezveřejňovat") —
+     * GROUP trénink klienti nevidí, admin ho vidí zašedlý s akcí Publikovat.
+     * Pro PRIVATE/TEMPLATE je vždy {@code true} (bez významu).
+     */
+    @Column(name = "published", nullable = false)
+    private boolean published = true;
+
     // -------- ScoutMeto kolo 5: kondiční metriky (vše nullable, nepovinné) --------
     /** Aktuální tělesná hmotnost (kg). Předvyplní se z předchozího tréninku. */
     @Column(name = "bodyweight_kg", precision = 5, scale = 2)

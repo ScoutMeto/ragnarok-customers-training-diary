@@ -106,11 +106,16 @@
 
         <hr>
 
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-accent btn-lg">
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" name="action" value="publish" class="btn btn-accent btn-lg">
                 <span th:text="${editingId != null} ? 'Uložit změny' : 'Vytvořit skupinový trénink'">Vytvořit</span>
             </button>
-            <a th:href="@{/admin/group-trainings}" class="btn btn-outline btn-lg">Zrušit</a>
+            <!-- ScoutMeto kolo 7: draft — klienti trénink neuvidí, dokud ho admin nepublikuje -->
+            <button type="submit" name="action" value="draft" class="btn btn-outline btn-lg"
+                    title="Trénink se uloží, ale klientům se nezobrazí — publikuješ ho později ze seznamu.">
+                Uložit, zatím nezveřejňovat
+            </button>
+            <a th:href="@{/admin/group-trainings}" class="btn btn-ghost btn-lg">Zrušit</a>
         </div>
     </form>
 

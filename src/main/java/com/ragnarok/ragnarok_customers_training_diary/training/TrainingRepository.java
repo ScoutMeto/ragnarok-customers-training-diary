@@ -69,8 +69,16 @@ public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> 
     List<TrainingEntity> findByVisibilityAndTrainingDateOrderByStartTimeAsc(
             TrainingVisibility visibility, LocalDate date);
 
+    /** ScoutMeto kolo 7: klientský den — jen publikované skupinové tréninky. */
+    List<TrainingEntity> findByVisibilityAndTrainingDateAndPublishedTrueOrderByStartTimeAsc(
+            TrainingVisibility visibility, LocalDate date);
+
     /** Všechny skupinové tréninky pro admin sekci, nejnovější nahoře. */
     List<TrainingEntity> findByVisibilityOrderByTrainingDateDescIdDesc(TrainingVisibility visibility);
+
+    /** ScoutMeto kolo 7: stránkovaný admin výpis (řazení dodá Pageable — createdAt desc). */
+    org.springframework.data.domain.Page<TrainingEntity> findByVisibility(
+            TrainingVisibility visibility, org.springframework.data.domain.Pageable pageable);
 
     // -----------------------------------------------------------------------------
     // TEMPLATE — šablony v admin sekci (Phase 8)
