@@ -103,8 +103,8 @@ public class ReservationWaitlistService {
         log.info("[waitlist] account_id={} left waitlist for training={}", account.getId(), extTrainingId);
     }
 
-    /** Stejný cutoff jako 30min pravidlo pro zrušení rezervace. */
-    private static final java.time.Duration PROMOTION_CUTOFF = java.time.Duration.ofMinutes(30);
+    /** Stejný cutoff jako 30min pravidlo pro zrušení rezervace (package-private: sdílí ReservationService). */
+    static final java.time.Duration PROMOTION_CUTOFF = java.time.Duration.ofMinutes(30);
 
     /**
      * FIFO promoce náhradníků na dané lekci: dokud je volné místo a někdo čeká,
@@ -135,6 +135,18 @@ public class ReservationWaitlistService {
         for (ReservationWaitlistEntity entry : waiting) {
             if (free <= 0) break;
             AccountEntity acc = entry.getAccount();
+            // Review fix: kdo už na lekci rezervaci má (zapsal se mezitím ručně, nebo mu
+            // trenér právě zrušil jinou a on je náhodou první v pořadí po vlastním zrušení),
+            // toho nepromovat — smaž zbytkový WAITING záznam a pokračuj dalším.
+            boolean alreadyBooked = training.reservations() != null && training.reservations().stream()
+                    .anyMatch(r -> safeEquals(r.firstName(), acc.getFirstName())
+                            && safeEquals(r.secondName(), acc.getLastName()));
+            if (alreadyBooked) {
+                repository.delete(entry);
+                log.info("[waitlist] skipped account_id={} for training={} — already booked, entry removed",
+                        acc.getId(), extTrainingId);
+                continue;
+            }
             try {
                 client.createReservation(new CreateReservationRequest(
                         extTrainingId, acc.getFirstName(), acc.getLastName(),
@@ -195,12 +207,24 @@ public class ReservationWaitlistService {
     }
 
     /**
-     * Review fix: po zrušení rezervace smaže případný PROMOTED záznam uživatele pro lekci —
-     * uvolní UNIQUE constraint, aby se mohl znovu přihlásit jako náhradník.
+     * Review fix: po zrušení rezervace smaže waitlist záznam uživatele pro lekci
+     * (WAITING i PROMOTED). PROMOTED: uvolní UNIQUE constraint, aby se mohl znovu
+     * přihlásit jako náhradník. WAITING: kdo (si) rezervaci zrušil, nesmí být vzápětí
+     * automaticky promován zpátky — okamžitá promoce po zrušení by ho jinak znovu
+     * zapsala, protože jeho rezervace už ve fresh snapshotu lekce není.
      */
-    public void clearPromoted(Long accountId, Long extTrainingId) {
+    public void removeEntry(Long accountId, Long extTrainingId) {
         repository.findByAccount_IdAndExtTrainingId(accountId, extTrainingId)
-                .filter(e -> e.getStatus() == ReservationWaitlistEntity.Status.PROMOTED)
+                .ifPresent(repository::delete);
+    }
+
+    /**
+     * Tichý úklid WAITING záznamu po ručním zápisu na lekci (booked + WAITING nesmí
+     * koexistovat — promoce by vytvořila duplicitní rezervaci). PROMOTED nechává.
+     */
+    public void removeWaiting(Long accountId, Long extTrainingId) {
+        repository.findByAccount_IdAndExtTrainingId(accountId, extTrainingId)
+                .filter(e -> e.getStatus() == ReservationWaitlistEntity.Status.WAITING)
                 .ifPresent(repository::delete);
     }
 

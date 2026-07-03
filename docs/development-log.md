@@ -515,6 +515,39 @@ počet záznamů. 116 testů zelených.
 - Vědomě neřešeno: párování rezervací dle jména (limitace public API, dokumentováno od 7.2);
   exkluzivita vstupy/datum u členství (záměrně volné — admin může evidovat obojí).
 
+## ✅ Admin správa rezervací z deníku (DONE 2026-07-03)
+
+Trenér na `/reservations` u každé lekce vidí rozbalovací **„👥 Přihlášení (N)"** se jmény
+klientů a tlačítkem **Zrušit** — zruší rezervaci komukoli (klient volá „nedorazím").
+**Bez jakéhokoli zásahu do rezervačního systému** — využívá stávající klíčovaný endpoint
+z Fáze 7.2 (`DELETE /api/cancelReservationForClient/{id}`, X-Api-Key).
+
+- `ReservationService.cancelReservationAsAdmin`: jen ROLE_ADMIN (ForbiddenException),
+  **bez 30min pravidla** (na rozdíl od klientského zrušení) — jen kontrola, že lekce nezačala.
+  Klient s účtem (párování dle jména) dostane e-mail „Trenér zrušil tvou rezervaci";
+  jeho waitlist záznam se smaže; pak okamžitá promoce prvního náhradníka.
+- `POST /reservations/admin-cancel` — navíc URL pravidlo `hasRole("ADMIN")` v SecurityConfiguration
+  (endpoint není pod /admin/**, defense in depth k role checku v service).
+- Testy: 7 unit (role guard, e-mail+promoce, výpadek, proběhlá lekce, <30 min okno, úklid
+  waitlistu, skip zapsaného) + 2 MockMvc render (admin vidí / user nevidí). Celkem **127 zelených**.
+
+**Adversariální review (workflow, 3 dimenze → 6 potvrzených nálezů, vše opraveno):**
+- 🔴 **HIGH: jméno klienta v inline JS confirm** — jméno z externího (veřejně zapisovatelného!)
+  API šlo přes `th:attr` do onsubmit JS stringu; apostrof ve jméně = rozbitý confirm (zrušení
+  jedním klikem bez dialogu), řízený payload = JS injection do admin session. Fix: statický
+  confirm text (jméno je bezpečně vedle přes th:text). **Pozor do budoucna: externí/uživatelský
+  text NIKDY do inline JS — HTML escaping JS kontext nechrání.**
+- Výpadek rezervačního systému hlásil „rezervace nenalezena" (listTrainings tiše vrací prázdný
+  list) → nový `ReservationClient.listTrainingsStrict` propaguje výpadek jako „systém nedostupný".
+- Booked + WAITING koexistence: promoce přeskočí náhradníka, který už má rezervaci (smaže zbytkový
+  záznam); ruční zápis (`createReservationForClient`) uklidí WAITING; zrušení (klientské i admin)
+  maže WAITING i PROMOTED (`removeEntry`) — kdo (mu) rezervaci zrušil, nesmí být vzápětí
+  automaticky promován zpátky.
+- Flash po admin zrušení <30 min před startem neslibuje náhradníka (promoce má 30min cutoff);
+  jinak říká „místo dostane případný první náhradník".
+- ForbiddenException se v controlleru mapuje na flash (ne surový JSON z @RestControllerAdvice).
+- Plurál „5 místa" → „5 míst" (2–4/5+).
+
 ## ✅ ScoutMeto kolo 6 (DONE 2026-06-19)
 
 Migrace **V33** (`text_plan.group_offer`, `account.custom_max_hr`).

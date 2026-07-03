@@ -73,7 +73,37 @@ public class ReservationPageController {
             }
         }
         model.addAttribute("waitlistCounts", waitlistCounts);
+        // Admin správa rezervací: trenér vidí přihlášené klienty a může jim zrušit rezervaci
+        model.addAttribute("isAdmin", account != null
+                && account.getRole() == com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.ADMIN);
         return "reservations/list";
+    }
+
+    /** Admin zruší rezervaci libovolného klienta (role hlídá i service vrstva). */
+    @PostMapping("/reservations/admin-cancel")
+    public String adminCancelReservation(@AuthenticationPrincipal AccountEntity account,
+                                         @RequestParam("reservationId") Long reservationId,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            var cancelled = reservationService.cancelReservationAsAdmin(account, reservationId);
+            String client = (cancelled.clientFirstName() != null ? cancelled.clientFirstName() : "")
+                    + " " + (cancelled.clientLastName() != null ? cancelled.clientLastName() : "");
+            // Review fix: neslibovat promoci náhradníka, když už neproběhne (30min cutoff)
+            String waitlistNote = cancelled.promotionWindowOpen()
+                    ? " Uvolněné místo dostane případný první náhradník."
+                    : " Do startu zbývá méně než 30 minut — náhradník se už automaticky nepovolává.";
+            redirectAttributes.addFlashAttribute("flashSuccess",
+                    "Rezervace klienta " + client.trim() + " na lekci „"
+                            + (cancelled.title() != null ? cancelled.title() : "Lekce")
+                            + "\" byla zrušena. Pokud má účet v deníku, dostal e-mail." + waitlistNote);
+        } catch (ReservationException ex) {
+            log.warn("[reservation] admin cancel failed: {}", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashError", "Zrušení selhalo: " + ex.getMessage());
+        } catch (com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException ex) {
+            // Nemělo by nastat (URL pravidlo pouští jen ADMIN), ale konzistentní UX pro jistotu
+            redirectAttributes.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/reservations";
     }
 
     // -----------------------------------------------------------------------------

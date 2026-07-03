@@ -108,6 +108,36 @@
                         <span class="text-muted">(<span class="num" th:text="${booked}">2</span>/<span class="num" th:text="${capacity}">8</span>)</span>
                     </span>
                 </div>
+
+                <!-- Admin správa rezervací: seznam přihlášených + zrušení komukoli
+                     (bez 30min pravidla — jen dokud lekce nezačala) -->
+                <details th:if="${isAdmin and t.reservations() != null and !t.reservations().isEmpty()}"
+                         style="margin-top: var(--sp-2);">
+                    <summary style="cursor:pointer; font-size: var(--fs-sm); color: var(--rk-muted);">
+                        👥 Přihlášení (<span class="num" th:text="${t.reservations().size()}">2</span>)
+                    </summary>
+                    <div class="rk-stack-2" style="margin-top: var(--sp-2);">
+                        <div th:each="res : ${t.reservations()}"
+                             style="display:flex; justify-content:space-between; align-items:center; gap:12px;
+                                    border:1px solid var(--rk-border); border-radius: var(--rad-sm);
+                                    padding: var(--sp-2) var(--sp-3); font-size: var(--fs-sm);">
+                            <span>
+                                <strong th:text="${(res.firstName() ?: '') + ' ' + (res.secondName() ?: '')}">Klient</strong>
+                                <span th:if="${res.numberOfBookedEntries() > 1}" class="text-muted">
+                                    · <span class="num" th:text="${res.numberOfBookedEntries()}">2</span>
+                                    <span th:text="${res.numberOfBookedEntries() <= 4 ? 'místa' : 'míst'}">místa</span>
+                                </span>
+                            </span>
+                            <!-- Review fix: statický confirm — jméno klienta (externí vstup) nesmí
+                                 do inline JS stringu (rozbitý confirm u apostrofu / JS injection) -->
+                            <form th:if="${!started}" th:action="@{/reservations/admin-cancel}" method="post"
+                                  onsubmit="return confirm('Opravdu zrušit rezervaci tohoto klienta? Pokud má účet v deníku, dostane e-mail.');">
+                                <input type="hidden" name="reservationId" th:value="${res.reservationId()}">
+                                <button type="submit" class="btn btn-danger-outline btn-sm">Zrušit</button>
+                            </form>
+                        </div>
+                    </div>
+                </details>
             </div>
             <div class="rk-workout__aside" style="cursor: default;">
                 <span th:if="${isFull}" class="rk-badge rk-badge--danger">OBSAZENO</span>

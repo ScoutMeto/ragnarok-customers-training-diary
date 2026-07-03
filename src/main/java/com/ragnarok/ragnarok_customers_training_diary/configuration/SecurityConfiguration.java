@@ -42,6 +42,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/register").permitAll()
                         // Admin sekce
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+                        // Admin akce mimo /admin/** prefix (defense in depth k role checku v service)
+                        .requestMatchers("/reservations/admin-cancel").hasRole("ADMIN")
                         // Vše ostatní vyžaduje přihlášení
                         .anyRequest().authenticated()
                 )

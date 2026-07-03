@@ -68,6 +68,28 @@ public class ReservationClient {
             return Collections.emptyList();
         }
         try {
+            return doListTrainings(from, to);
+        } catch (ReservationException ex) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Jako {@link #listTrainings}, ale výpadek/vypnutí systému hlásí výjimkou místo
+     * prázdného listu. Pro operace, kde „nenalezeno" a „nedostupné" znamenají něco
+     * jiného (např. admin cancel — prázdný list by lhal „rezervace už neexistuje").
+     *
+     * @throws ReservationException při HTTP chybě, timeoutu nebo vypnutém systému
+     */
+    public List<TrainingResponse> listTrainingsStrict(LocalDateTime from, LocalDateTime to) {
+        if (!properties.isEnabled()) {
+            throw new ReservationException("Rezervační systém je dočasně vypnutý.");
+        }
+        return doListTrainings(from, to);
+    }
+
+    private List<TrainingResponse> doListTrainings(LocalDateTime from, LocalDateTime to) {
+        try {
             // Rezervační systém očekává ISO offset datetime (např. 2026-05-25T00:00:00+02:00).
             // Pošleme s UTC offsetem (Z).
             String startIso = from.atOffset(ZoneOffset.UTC).format(ISO_OFFSET);
@@ -86,13 +108,15 @@ public class ReservationClient {
         } catch (HttpStatusCodeException ex) {
             log.warn("[reservation] listTrainings HTTP {} from {} to {}: {}",
                     ex.getStatusCode(), from, to, ex.getResponseBodyAsString());
-            return Collections.emptyList();
+            throw new ReservationException("Rezervační systém vrátil chybu " + ex.getStatusCode());
         } catch (ResourceAccessException ex) {
             log.warn("[reservation] listTrainings network error: {}", ex.getMessage());
-            return Collections.emptyList();
+            throw new ReservationException("Rezervační systém je nedostupný. Zkus to za chvíli.");
+        } catch (ReservationException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("[reservation] listTrainings unexpected error", ex);
-            return Collections.emptyList();
+            throw new ReservationException("Něco se pokazilo při komunikaci s rezervačním systémem.");
         }
     }
 

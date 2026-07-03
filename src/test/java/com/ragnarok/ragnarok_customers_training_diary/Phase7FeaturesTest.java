@@ -34,13 +34,17 @@ class Phase7FeaturesTest {
     private ReservationClient client;
     private ReservationService service;
     private AccountEntity account;
+    private com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
+    private com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistService waitlistService;
+    private com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository accountRepository;
 
     @BeforeEach
     void setup() {
         client = Mockito.mock(ReservationClient.class);
-        service = new ReservationService(client,
-                Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.mail.EmailService.class),
-                Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistService.class));
+        emailService = Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.mail.EmailService.class);
+        waitlistService = Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistService.class);
+        accountRepository = Mockito.mock(com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository.class);
+        service = new ReservationService(client, emailService, waitlistService, accountRepository);
 
         account = new AccountEntity();
         account.setId(42L);
@@ -127,5 +131,184 @@ class Phase7FeaturesTest {
         assertThatThrownBy(() -> service.createReservationForClient(account, 1L, 1))
                 .isInstanceOf(ReservationException.class)
                 .hasMessageContaining("plně obsazeno");
+    }
+
+    // -----------------------------------------------------------------------------
+    // Admin zrušení rezervace libovolného klienta
+    // -----------------------------------------------------------------------------
+
+    private AccountEntity adminAccount() {
+        AccountEntity admin = new AccountEntity();
+        admin.setId(1L);
+        admin.setEmail("admin@admin.cz");
+        admin.setFirstName("Admin");
+        admin.setLastName("Trenér");
+        admin.setRole(AccountRole.ADMIN);
+        return admin;
+    }
+
+    private TrainingResponse trainingWithReservation(Long trainingId, Long reservationId,
+            String firstName, String lastName, LocalDateTime start) {
+        var reservation = new com.ragnarok.ragnarok_customers_training_diary.reservation.dto
+                .ReservationDtos.PartialReservation(reservationId, trainingId, firstName, lastName, false, 1);
+        return new TrainingResponse(trainingId, "KB strength", start, start.plusHours(1),
+                0, List.of(reservation), java.util.Map.of("numberOfFreeSlots", 8));
+    }
+
+    @Test
+    void adminCancel_byNonAdmin_forbidden() {
+        assertThatThrownBy(() -> service.cancelReservationAsAdmin(account, 500L))
+                .isInstanceOf(com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException.class);
+        verify(client, times(0)).cancelReservation(any());
+    }
+
+    @Test
+    void adminCancel_cancelsEmailsMatchedClientAndPromotesWaitlist() {
+        LocalDateTime start = LocalDateTime.now().plusHours(2);
+        when(client.listTrainingsStrict(any(), any()))
+                .thenReturn(List.of(trainingWithReservation(123L, 500L, "Alice", "Nová", start)));
+
+        AccountEntity alice = new AccountEntity();
+        alice.setId(77L);
+        alice.setEmail("alice@example.cz");
+        alice.setFirstName("Alice");
+        alice.setLastName("Nová");
+        alice.setRole(AccountRole.USER);
+        when(accountRepository.findByDeletedAtIsNullOrderByLastNameAscFirstNameAsc())
+                .thenReturn(List.of(alice));
+
+        var cancelled = service.cancelReservationAsAdmin(adminAccount(), 500L);
+
+        assertThat(cancelled.clientFirstName()).isEqualTo("Alice");
+        assertThat(cancelled.clientLastName()).isEqualTo("Nová");
+        assertThat(cancelled.trainingId()).isEqualTo(123L);
+        assertThat(cancelled.promotionWindowOpen()).isTrue(); // 2 h do startu > 30min cutoff
+        verify(client).cancelReservation(500L);
+        verify(emailService).sendReservationCancelledByAdminNotification(eq(alice), eq("KB strength"), eq(start));
+        verify(waitlistService).removeEntry(77L, 123L);
+        verify(waitlistService).promoteForTraining(123L);
+    }
+
+    @Test
+    void adminCancel_noMatchingAccount_stillCancelsAndPromotes() {
+        LocalDateTime start = LocalDateTime.now().plusHours(2);
+        when(client.listTrainingsStrict(any(), any()))
+                .thenReturn(List.of(trainingWithReservation(123L, 500L, "Externí", "Host", start)));
+        when(accountRepository.findByDeletedAtIsNullOrderByLastNameAscFirstNameAsc())
+                .thenReturn(List.of());
+
+        service.cancelReservationAsAdmin(adminAccount(), 500L);
+
+        verify(client).cancelReservation(500L);
+        verify(emailService, times(0)).sendReservationCancelledByAdminNotification(any(), any(), any());
+        verify(waitlistService).promoteForTraining(123L);
+    }
+
+    @Test
+    void adminCancel_startedLesson_rejected() {
+        when(client.listTrainingsStrict(any(), any())).thenReturn(List.of(
+                trainingWithReservation(123L, 500L, "Alice", "Nová", LocalDateTime.now().minusMinutes(10))));
+
+        assertThatThrownBy(() -> service.cancelReservationAsAdmin(adminAccount(), 500L))
+                .isInstanceOf(ReservationException.class)
+                .hasMessageContaining("proběhla");
+        verify(client, times(0)).cancelReservation(any());
+    }
+
+    @Test
+    void adminCancel_unknownReservation_rejected() {
+        when(client.listTrainingsStrict(any(), any())).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.cancelReservationAsAdmin(adminAccount(), 999L))
+                .isInstanceOf(ReservationException.class)
+                .hasMessageContaining("nenalezena");
+        verify(client, times(0)).cancelReservation(any());
+    }
+
+    @Test
+    void adminCancel_reservationSystemDown_reportsOutageNotMissing() {
+        // Review fix: výpadek systému nesmí skončit hláškou „rezervace nenalezena"
+        when(client.listTrainingsStrict(any(), any()))
+                .thenThrow(new ReservationException("Rezervační systém je nedostupný. Zkus to za chvíli."));
+
+        assertThatThrownBy(() -> service.cancelReservationAsAdmin(adminAccount(), 500L))
+                .isInstanceOf(ReservationException.class)
+                .hasMessageContaining("nedostupný");
+        verify(client, times(0)).cancelReservation(any());
+    }
+
+    @Test
+    void adminCancel_lessThan30MinBeforeStart_promotionWindowClosed() {
+        LocalDateTime start = LocalDateTime.now().plusMinutes(15);
+        when(client.listTrainingsStrict(any(), any()))
+                .thenReturn(List.of(trainingWithReservation(123L, 500L, "Alice", "Nová", start)));
+        when(accountRepository.findByDeletedAtIsNullOrderByLastNameAscFirstNameAsc())
+                .thenReturn(List.of());
+
+        var cancelled = service.cancelReservationAsAdmin(adminAccount(), 500L);
+
+        // admin zrušit smí (bez 30min pravidla), ale flash nesmí slibovat promoci
+        assertThat(cancelled.promotionWindowOpen()).isFalse();
+        verify(client).cancelReservation(500L);
+    }
+
+    @Test
+    void manualBooking_removesWaitingEntry() {
+        // Review fix: booked + WAITING nesmí koexistovat — po ručním zápisu úklid waitlistu
+        when(client.createReservation(any())).thenReturn(new CreateReservationResponse(
+                999L, 123L, "Marek", "Novák", "marek@example.cz", "+420777111222", 1));
+
+        service.createReservationForClient(account, 123L, 1);
+
+        verify(waitlistService).removeWaiting(42L, 123L);
+    }
+
+    @Test
+    void promotion_skipsCandidateWhoAlreadyBooked() {
+        // Review fix: náhradník, který se mezitím zapsal ručně, se nesmí promovat
+        // (duplicitní rezervace) — jeho WAITING záznam se smaže a promuje se další.
+        var repository = Mockito.mock(
+                com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistRepository.class);
+        var waitlist = new com.ragnarok.ragnarok_customers_training_diary.reservation
+                .ReservationWaitlistService(repository, client, emailService);
+
+        LocalDateTime start = LocalDateTime.now().plusHours(2);
+        // kapacita 2, Bob už má rezervaci → 1 volné místo
+        var bobReservation = new com.ragnarok.ragnarok_customers_training_diary.reservation.dto
+                .ReservationDtos.PartialReservation(600L, 123L, "Bob", "Zapsaný", false, 1);
+        TrainingResponse training = new TrainingResponse(123L, "KB strength", start, start.plusHours(1),
+                1, List.of(bobReservation), java.util.Map.of("numberOfFreeSlots", 2));
+        when(client.listTrainings(any(), any())).thenReturn(List.of(training));
+
+        var bobEntry = waitlistEntry(10L, "Bob", "Zapsaný", "bob@example.cz");
+        var cyrilEntry = waitlistEntry(11L, "Cyril", "Čekal", "cyril@example.cz");
+        when(repository.findByExtTrainingIdAndStatusOrderByCreatedAtAscIdAsc(
+                eq(123L), eq(com.ragnarok.ragnarok_customers_training_diary.reservation
+                        .ReservationWaitlistEntity.Status.WAITING)))
+                .thenReturn(List.of(bobEntry, cyrilEntry));
+        when(client.createReservation(any())).thenReturn(new CreateReservationResponse(
+                700L, 123L, "Cyril", "Čekal", "cyril@example.cz", null, 1));
+
+        waitlist.promoteForTraining(123L);
+
+        verify(repository).delete(bobEntry); // Bobův zbytkový WAITING pryč, bez promoce
+        ArgumentCaptor<CreateReservationRequest> captor =
+                ArgumentCaptor.forClass(CreateReservationRequest.class);
+        verify(client, times(1)).createReservation(captor.capture());
+        assertThat(captor.getValue().firstName()).isEqualTo("Cyril"); // promován až Cyril
+    }
+
+    private com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistEntity
+            waitlistEntry(Long accountId, String fn, String ln, String email) {
+        AccountEntity acc = new AccountEntity();
+        acc.setId(accountId);
+        acc.setFirstName(fn);
+        acc.setLastName(ln);
+        acc.setEmail(email);
+        acc.setRole(AccountRole.USER);
+        var entry = new com.ragnarok.ragnarok_customers_training_diary.reservation.ReservationWaitlistEntity();
+        entry.setAccount(acc);
+        entry.setExtTrainingId(123L);
+        return entry;
     }
 }

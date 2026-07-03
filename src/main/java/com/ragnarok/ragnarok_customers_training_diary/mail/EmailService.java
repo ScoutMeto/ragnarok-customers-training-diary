@@ -234,6 +234,26 @@ public class EmailService {
         send(account.getEmail(), subject, text.toString(), "reservation-cancelled");
     }
 
+    /** Rezervaci zrušil trenér (admin z deníku) — informuj klienta. */
+    @Async
+    public void sendReservationCancelledByAdminNotification(AccountEntity account, String lessonTitle,
+                                                            java.time.LocalDateTime lessonStart) {
+        String subject = "Trenér zrušil tvou rezervaci" + (lessonTitle != null ? ": " + lessonTitle : "");
+        StringBuilder text = new StringBuilder();
+        text.append("Ahoj ").append(account.getFirstName()).append(",\n\n");
+        text.append("trenér zrušil tvou rezervaci na lekci");
+        if (lessonTitle != null) text.append(" „").append(lessonTitle).append("\"");
+        if (lessonStart != null) {
+            text.append(" dne ").append(lessonStart.toLocalDate().format(DATE_FMT))
+                .append(" v ").append(lessonStart.toLocalTime().format(TIME_FMT));
+        }
+        text.append(".\n\n");
+        text.append("Pokud jde o omyl nebo máš otázky, ozvi se trenérovi. Znovu se můžeš\n");
+        text.append("zapsat v aplikaci: ").append(props.getBaseUrl()).append("/reservations\n\n");
+        text.append("—\nRagnarok Training Diary");
+        send(account.getEmail(), subject, text.toString(), "reservation-cancelled-by-admin");
+    }
+
     // ============================================================================
     // 9) Náhradník povýšen — místo se uvolnilo, rezervace vytvořena (ScoutMeto kolo 7)
     // ============================================================================
