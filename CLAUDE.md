@@ -211,6 +211,7 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | — | Design sjednocení s ragnarokostrava.cz — brick #9F371B, Montserrat, přepínač Light/Batman Mode | ✅ DONE | na `develop` (2026-06-11) |
 | — | ScoutMeto kolo 5 — pohlaví/cyklus, kondiční metriky, MTF zóny, cyklus-kalendář, admin notifikace, design fixy (Batman kontrast/oddělení formuláře/logout) | ✅ DONE | na `develop` (2026-06-13, V32) |
 | — | ScoutMeto kolo 6 — logo do lišty (Tréninkový deník/Přehled), skupinový textový trénink (nabídka→My-plan), impersonace exit fix, vlastní MTF, admin dashboard cleanup, přejmenování spánkového RPE | ✅ DONE | na `develop` (2026-06-19, V33) |
+| — | ScoutMeto kolo 7 — šablony merge, přiřadit/duplikovat, publikace draftů + týdenní nabídka, stránkování 20/20, zrušení rezervace u lekce (30min), náhradník/waitlist, počet záznamů, měsíční deník, mazání textových plánů, členství, sekce Výhody | ✅ DONE | na `develop` (2026-07-02, V36–V39) |
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
 | 7.2 | Rezervace: cancel + "moje rezervace" + historie (sdílený API klíč, cross-repo) | ✅ DONE | na `develop` (deploy: klíč v obou appkách!) |

@@ -445,6 +445,76 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ ScoutMeto kolo 7 (DONE 2026-07-02)
+
+Největší kolo dosud — 12 položek, migrace **V36–V39**, 5 feature commitů (P22–P26).
+
+**ADMIN (P22)**
+- `training-templates`: sekce **„Privátní textové tréninky"** přímo na stránce; tlačítko
+  „+ Nová šablona v textovém formátu" vede rovnou na formulář. `/admin/text-plans` (list)
+  → redirect na sloučenou stránku.
+- `group-trainings`: **Přiřadit** (klasický → PRIVATE kopie s předepsanými cviky + e-mail;
+  textový → kopie do Můj plán) a **Duplikovat** (přesná kopie; klasický datum=dnes,
+  textový publikace dneškem) pro oba typy.
+- **„Uložit, zatím nezveřejňovat"** na new i edit (oba typy): draft šedě v seznamu,
+  klik na název → Publikovat / Zavřít; klienti drafty nevidí (seznam, dnes v gymu,
+  detail i přímý POST). V36: `training.published`, `text_plan.published + published_at`.
+- **Týdenní nabídka**: textové tréninky vidí USER jen v týdnu publikace (pondělní reset);
+  admin Přiřadit funguje i mimo okno.
+- **Stránkování 20/20** (obě tabulky na group-trainings i training-templates, řazení dle
+  naposled vytvořených, šipky).
+
+**USER (P23–P24)**
+- Rezervace: **„Zrušit rezervaci" přímo u lekce** (jen kde mám rezervaci); kontroly
+  lekce neproběhla + >30 min do startu (server i UI); hláška se dnem/názvem + e-mail.
+  Backend = klíčovaný endpoint z Fáze 7.2, rezervační systém beze změn.
+- **Náhradník** (V37 `reservation_waitlist`, celé v diary): přihlášení na plnou lekci
+  (max náhradníků = kapacita), odhlášení, FIFO; promoce okamžitě po diary-cancel
+  + `WaitlistPromotionJob` à 2 min (zachytí uvolnění adminem v rez. systému);
+  auto-rezervace přes veřejné API + e-mail „na lekci je volno, máš rezervaci".
+  ⚠️ Plný E2E waitlistu vyžaduje plnou lekci v rez. systému — otestován signup/guardy,
+  promoce jednotkově (logika FIFO + guardy), Scout otestuje na reálné lekci.
+- Analysis: sekce **„Počet záznamů v deníku"** (před korunkou).
+- Diary: **posun po měsících** (šipky + MM/RRRR), MOJE TRÉNINKY jen zvolený měsíc,
+  prázdný měsíc s nápovědou; filtry zachovány.
+- My-plan: **mazání** vlastních textových kopií.
+
+**OBECNÉ (P25–P26)**
+- **Členství** (V38): vstupy NEBO datum konce; admin edituje na detailu účtu, sloupec
+  v accounts ('-' pro adminy); červené při 0/minusu nebo prošlém datu (admin i dashboard).
+- **Výhody** (V39 `benefit_item` + `account.benefits_visible`): společná tabulka
+  (název/popis/nápověda TEXT-nebo-TLAČÍTKO), admin editor v `/admin/overview`.
+  Tlačítko → volitelný vzkaz → e-mail v pořadí: předmět → text uživatele → skrytý
+  přednastavený text (ověření z aplikace) → jméno/e-mail/telefon. Per-user skrytí
+  (toggle na detailu účtu); skrytou tabulku USER nevidí, **impersonující admin** ji
+  vidí šedě + tlačítko „zobrazit zpět" (guard `ROLE_PREVIOUS_ADMINISTRATOR`).
+
+Ověřeno E2E proti PostgreSQL (throwaway klient): draft→šedě→publikovat→viditelné,
+týdenní okno (−8 dní → skryto), assign/duplicate obou typů (DB kopie vč. cviků),
+benefit e-mail přesně dle pořadí ze zadání (FAKE-SEND log), membership 0 → červeně
+u admina i klienta, skrytí→impersonace→šedá+restore→viditelné, měsíční navigace,
+počet záznamů. 116 testů zelených.
+
+**Adversariální review (workflow, 5 dimenzí vč. souladu se zadáním) → opraveno:**
+- 🔴 **HIGH: únik draftu přes POST /diary/{id}/copy** — copyGroupToPrivate nekontroloval
+  `published`; USER si enumerací ID mohl zkopírovat adminův draft vč. obsahu. Fix: NotFound
+  guard v service (+ stejný guard na komentáře k draftům). Ověřeno E2E: copy → flash error,
+  detail 404, žádná kopie v DB.
+- Náhradník: (a) kdo už má rezervaci, nemůže se přihlásit jako náhradník (server name-match
+  + UI); (b) promoce se zastaví <30 min před startem (promovaný by už nemohl zrušit);
+  (c) `join`/`promoteForTraining` synchronized — souběh okamžité promoce a jobu nemůže
+  vytvořit dvojitou rezervaci (single-instance; pro škálování nahradit DB zámkem);
+  (d) po zrušení rezervace se PROMOTED záznam smaže → lze se znovu hlásit jako náhradník.
+- Draft klasického group tréninku se ukládá s publish flagem v JEDNÉ transakci
+  (dřív okno viditelnosti mezi create a setPublished + riziko trvalé publikace při pádu).
+- Prošlá textová nabídka (published, ale mimo týdenní okno): v admin seznamu badge
+  „UŽ SE NENABÍZÍ" + tlačítko „Publikovat znovu"; „Uložit" v editaci obnoví publikaci dneškem.
+- Měsíční filtr deníku přes DB dotaz (BETWEEN) místo načítání celé historie do paměti.
+- Stránkovací parametry se parsují bezpečně (?page=abc → stránka 0, ne HTTP 400).
+- Smazána mrtvá šablona admin/text-plans/list.html (po P22 merge).
+- Vědomě neřešeno: párování rezervací dle jména (limitace public API, dokumentováno od 7.2);
+  exkluzivita vstupy/datum u členství (záměrně volné — admin může evidovat obojí).
+
 ## ✅ ScoutMeto kolo 6 (DONE 2026-06-19)
 
 Migrace **V33** (`text_plan.group_offer`, `account.custom_max_hr`).

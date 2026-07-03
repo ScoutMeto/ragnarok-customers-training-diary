@@ -45,8 +45,12 @@ public class ReservationWaitlistService {
         this.emailService = emailService;
     }
 
-    /** Přihlásí uživatele jako náhradníka na plnou lekci. */
-    public void join(AccountEntity account, Long extTrainingId) {
+    /**
+     * Přihlásí uživatele jako náhradníka na plnou lekci.
+     * {@code synchronized}: single-instance deployment — serializuje souběžné joiny,
+     * aby dva klienti naráz nepřekročili limit náhradníků (count → save není atomické).
+     */
+    public synchronized void join(AccountEntity account, Long extTrainingId) {
         TrainingResponse training = findTraining(extTrainingId)
                 .orElseThrow(() -> new ReservationException("Lekce nenalezena."));
         if (training.start() != null && training.start().isBefore(LocalDateTime.now())) {
@@ -54,6 +58,15 @@ public class ReservationWaitlistService {
         }
         if (training.freeSlots() > 0) {
             throw new ReservationException("Na lekci je volno — zapiš se normálně.");
+        }
+        // Review fix: kdo už na lekci rezervaci má, náhradníka nepotřebuje (jinak by mu
+        // promoce po vlastním zrušení vytvořila rezervaci znovu). Párování dle jména —
+        // stejně jako „moje rezervace" (public API nevrací email).
+        boolean alreadyBooked = training.reservations() != null && training.reservations().stream()
+                .anyMatch(r -> safeEquals(r.firstName(), account.getFirstName())
+                        && safeEquals(r.secondName(), account.getLastName()));
+        if (alreadyBooked) {
+            throw new ReservationException("Na tuto lekci už máš rezervaci — náhradníka nepotřebuješ.");
         }
         long waiting = repository.countByExtTrainingIdAndStatus(
                 extTrainingId, ReservationWaitlistEntity.Status.WAITING);
@@ -90,18 +103,27 @@ public class ReservationWaitlistService {
         log.info("[waitlist] account_id={} left waitlist for training={}", account.getId(), extTrainingId);
     }
 
+    /** Stejný cutoff jako 30min pravidlo pro zrušení rezervace. */
+    private static final java.time.Duration PROMOTION_CUTOFF = java.time.Duration.ofMinutes(30);
+
     /**
      * FIFO promoce náhradníků na dané lekci: dokud je volné místo a někdo čeká,
      * vytvoří rezervaci + pošle e-mail. Bezpečné volat opakovaně (idempotentní).
+     * {@code synchronized}: promoci volá souběžně request thread (okamžitě po zrušení)
+     * i periodický job — serializace brání dvojité rezervaci téhož náhradníka
+     * (single-instance deployment; při škálování nahradit DB zámkem/podmíněným UPDATE).
      */
-    public void promoteForTraining(Long extTrainingId) {
+    public synchronized void promoteForTraining(Long extTrainingId) {
         Optional<TrainingResponse> trainingOpt = findTraining(extTrainingId);
         if (trainingOpt.isEmpty()) {
             return; // lekce už není v okně / smazána
         }
         TrainingResponse training = trainingOpt.get();
-        if (training.start() != null && training.start().isBefore(LocalDateTime.now())) {
-            return; // už začala — nepromujeme
+        // Review fix: nepromovat < 30 min před startem — promovaný by rezervaci už
+        // nemohl zrušit (30min pravidlo), auto-rezervace bez možnosti couvnout je past.
+        if (training.start() != null
+                && LocalDateTime.now().plus(PROMOTION_CUTOFF).isAfter(training.start())) {
+            return;
         }
         int free = training.freeSlots();
         if (free <= 0) {
@@ -172,6 +194,16 @@ public class ReservationWaitlistService {
         return null;
     }
 
+    /**
+     * Review fix: po zrušení rezervace smaže případný PROMOTED záznam uživatele pro lekci —
+     * uvolní UNIQUE constraint, aby se mohl znovu přihlásit jako náhradník.
+     */
+    public void clearPromoted(Long accountId, Long extTrainingId) {
+        repository.findByAccount_IdAndExtTrainingId(accountId, extTrainingId)
+                .filter(e -> e.getStatus() == ReservationWaitlistEntity.Status.PROMOTED)
+                .ifPresent(repository::delete);
+    }
+
     /** Najde lekci v rezervačním systému podle ID (okno dnes → +60 dní). */
     private Optional<TrainingResponse> findTraining(Long extTrainingId) {
         LocalDateTime from = LocalDate.now().atStartOfDay();
@@ -179,5 +211,9 @@ public class ReservationWaitlistService {
         return client.listTrainings(from, to).stream()
                 .filter(t -> extTrainingId.equals(t.trainingId()))
                 .findFirst();
+    }
+
+    private static boolean safeEquals(String a, String b) {
+        return a != null && b != null && a.trim().equalsIgnoreCase(b.trim());
     }
 }

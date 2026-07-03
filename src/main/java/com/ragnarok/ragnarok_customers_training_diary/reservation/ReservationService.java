@@ -167,6 +167,12 @@ public class ReservationService {
                 account.getId(), reservationId);
         emailService.sendReservationCancelledNotification(account,
                 reservation.title(), reservation.start());
+        // Review fix: úklid PROMOTED záznamu — po zrušení se může znovu hlásit jako náhradník
+        try {
+            waitlistService.clearPromoted(account.getId(), reservation.trainingId());
+        } catch (RuntimeException ex) {
+            log.warn("[waitlist] clearPromoted failed: {}", ex.getMessage());
+        }
         // ScoutMeto kolo 7: uvolnilo se místo → okamžitá promoce prvního náhradníka
         try {
             waitlistService.promoteForTraining(reservation.trainingId());

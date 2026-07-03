@@ -65,10 +65,21 @@ public class AdminGroupTrainingController {
     /** Velikost stránky admin výpisů (ScoutMeto kolo 7: „20 a 20"). */
     private static final int PAGE_SIZE = 20;
 
+    /** Bezpečné parsování stránkovacího parametru (ruční ?page=abc nesmí skončit 400). */
+    static int parsePage(String raw) {
+        try {
+            return Math.max(0, Integer.parseInt(raw));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
     @GetMapping
-    public String list(@RequestParam(value = "page", defaultValue = "0") int page,
-                       @RequestParam(value = "textPage", defaultValue = "0") int textPage,
+    public String list(@RequestParam(value = "page", defaultValue = "0") String pageParam,
+                       @RequestParam(value = "textPage", defaultValue = "0") String textPageParam,
                        Model model) {
+        int page = parsePage(pageParam);
+        int textPage = parsePage(textPageParam);
         // ScoutMeto kolo 7: stránkované výpisy — 20 naposled vytvořených, šipky vpřed/vzad
         var trainingsPage = trainingService.listGroupTrainingsPaged(page, PAGE_SIZE);
         model.addAttribute("trainings", trainingsPage.getContent());
@@ -77,6 +88,9 @@ public class AdminGroupTrainingController {
         var textOffersPage = textPlanService.listGroupOffersPaged(textPage, PAGE_SIZE);
         model.addAttribute("textOffers", textOffersPage.getContent());
         model.addAttribute("textOffersPage", textOffersPage);
+        // review fix: hranice týdenního okna — nabídky publikované dřív jsou „mimo týden"
+        model.addAttribute("weekMonday",
+                com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService.currentWeekMonday());
         return "admin/group-trainings/list";
     }
 
@@ -237,10 +251,11 @@ public class AdminGroupTrainingController {
         }
 
         try {
-            TrainingEntity created = trainingService.createGroup(admin, form);
-            // ScoutMeto kolo 7: „Uložit, zatím nezveřejňovat" → draft (klienti nevidí)
-            if ("draft".equals(action)) {
-                trainingService.setGroupPublished(created.getId(), false);
+            // ScoutMeto kolo 7: „Uložit, zatím nezveřejňovat" → draft (klienti nevidí).
+            // Publish flag jde do service v jedné transakci (review fix: žádné okno viditelnosti).
+            boolean publish = !"draft".equals(action);
+            TrainingEntity created = trainingService.createGroup(admin, form, publish);
+            if (!publish) {
                 flash.addFlashAttribute("flashSuccess",
                         "Skupinový trénink uložen jako nezveřejněný. Publikuj ho kliknutím na název v seznamu.");
                 return "redirect:/admin/group-trainings";
@@ -284,10 +299,10 @@ public class AdminGroupTrainingController {
         }
 
         try {
-            trainingService.updateGroup(id, form);
-            // ScoutMeto kolo 7: draft flow i při editaci
-            trainingService.setGroupPublished(id, !"draft".equals(action));
-            if ("draft".equals(action)) {
+            // ScoutMeto kolo 7: draft flow i při editaci — publish flag v jedné transakci
+            boolean publish = !"draft".equals(action);
+            trainingService.updateGroup(id, form, publish);
+            if (!publish) {
                 flash.addFlashAttribute("flashSuccess", "Skupinový trénink uložen jako nezveřejněný.");
                 return "redirect:/admin/group-trainings";
             }

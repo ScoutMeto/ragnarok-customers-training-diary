@@ -73,9 +73,12 @@ public class AdminTrainingTemplateController {
     }
 
     @GetMapping
-    public String list(@RequestParam(value = "page", defaultValue = "0") int page,
-                       @RequestParam(value = "textPage", defaultValue = "0") int textPage,
+    public String list(@RequestParam(value = "page", defaultValue = "0") String pageParam,
+                       @RequestParam(value = "textPage", defaultValue = "0") String textPageParam,
                        Model model) {
+        // review fix: bezpečné parsování (?page=abc nesmí skončit 400)
+        int page = AdminGroupTrainingController.parsePage(pageParam);
+        int textPage = AdminGroupTrainingController.parsePage(textPageParam);
         // ScoutMeto kolo 7: stránkované výpisy (20 naposled vytvořených) + textové šablony inline
         var templatesPage = trainingService.listTemplatesPaged(page, PAGE_SIZE);
         model.addAttribute("templates", templatesPage.getContent());

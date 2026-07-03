@@ -112,15 +112,20 @@ public class TextPlanService {
                                 org.springframework.data.domain.Sort.Direction.DESC, "createdAt", "id")));
     }
 
+    /** Pondělí aktuálního týdne — hranice týdenního okna nabídek. */
+    public static java.time.LocalDate currentWeekMonday() {
+        return java.time.LocalDate.now()
+                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+    }
+
     /**
      * ScoutMeto kolo 7: nabídky viditelné uživatelům — jen publikované v aktuálním týdnu
      * (pondělí–neděle dle data publikace). S novým pondělkem nabídka minulého týdne zmizí.
      */
     public List<TextPlanEntity> listVisibleGroupOffers() {
-        java.time.LocalDate monday = java.time.LocalDate.now()
-                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
         return repository
-                .findByGroupOfferTrueAndPublishedTrueAndPublishedAtGreaterThanEqualOrderByPublishedAtDescIdDesc(monday);
+                .findByGroupOfferTrueAndPublishedTrueAndPublishedAtGreaterThanEqualOrderByPublishedAtDescIdDesc(
+                        currentWeekMonday());
     }
 
     /** ScoutMeto kolo 7: publikuje nabídku (datum publikace = dnes → spadne do aktuálního týdne). */
@@ -182,10 +187,15 @@ public class TextPlanService {
         TextPlanEntity p = getGroupOffer(id);
         p.setTitle(title.trim());
         p.setBody(body);
-        if (publish && !p.isPublished()) {
-            p.setPublished(true);
-            p.setPublishedAt(java.time.LocalDate.now());
-        } else if (!publish) {
+        if (publish) {
+            // Review fix: „Uložit" obnoví publikaci dneškem i u nabídky mimo týdenní okno
+            // (dřív se prošlá nabídka nedala vrátit do aktuálního týdne bez duplikace).
+            if (!p.isPublished() || p.getPublishedAt() == null
+                    || p.getPublishedAt().isBefore(currentWeekMonday())) {
+                p.setPublished(true);
+                p.setPublishedAt(java.time.LocalDate.now());
+            }
+        } else {
             p.setPublished(false);
         }
         return p;

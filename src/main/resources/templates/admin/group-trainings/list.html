@@ -156,6 +156,13 @@
                 </details>
                 <span th:if="${o.published and o.publishedAt != null}" class="text-muted" style="font-size: var(--fs-xs); margin-left:6px;"
                       th:text="'publikováno ' + ${#temporals.format(o.publishedAt, 'dd.MM.yyyy')}">publikováno</span>
+                <!-- review fix: publikovaná, ale mimo aktuální týden — uživatelé ji už nevidí -->
+                <th:block th:if="${o.published and o.publishedAt != null and weekMonday != null and o.publishedAt.isBefore(weekMonday)}">
+                    <span class="rk-badge rk-badge--warning" style="margin-left:6px;">UŽ SE NENABÍZÍ (minulý týden)</span>
+                    <form th:action="@{/admin/group-trainings/text/{id}/publish(id=${o.id})}" method="post" class="d-inline" style="margin-left:6px;">
+                        <button type="submit" class="btn btn-outline btn-sm">Publikovat znovu</button>
+                    </form>
+                </th:block>
             </td>
             <td class="num text-muted" th:text="${#temporals.format(o.createdAt, 'dd.MM.yyyy')}">23.05.2026</td>
             <td class="text-muted" th:text="${o.createdBy != null ? o.createdBy.firstName + ' ' + o.createdBy.lastName : '—'}">Trenér</td>

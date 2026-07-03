@@ -59,6 +59,10 @@ public interface TrainingRepository extends JpaRepository<TrainingEntity, Long> 
     /** Tréninky klienta v daném datovém rozsahu (pro statistiky a dashboard). */
     List<TrainingEntity> findByOwner_IdAndTrainingDateBetween(Long ownerId, LocalDate from, LocalDate to);
 
+    /** ScoutMeto kolo 7: měsíční výpis deníku — filtr přímo v DB (ne in-memory). */
+    List<TrainingEntity> findByOwner_IdAndVisibilityAndTrainingDateBetweenOrderByTrainingDateDescIdDesc(
+            Long ownerId, TrainingVisibility visibility, LocalDate from, LocalDate to);
+
     long countByOwner_Id(Long ownerId);
 
     // -----------------------------------------------------------------------------

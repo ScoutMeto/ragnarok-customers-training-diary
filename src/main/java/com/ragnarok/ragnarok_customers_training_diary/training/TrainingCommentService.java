@@ -57,6 +57,10 @@ public class TrainingCommentService {
         if (!isGroup && !isOwner && !isAdmin) {
             throw new ForbiddenException("Komentovat trénink může jen jeho majitel nebo admin.");
         }
+        // ScoutMeto kolo 7 (review fix): nepublikovaný (draft) GROUP trénink komentuje jen admin
+        if (isGroup && !training.isPublished() && !isAdmin) {
+            throw new NotFoundException("Trénink (id=" + trainingId + ") nenalezen.");
+        }
 
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("Text komentáře nesmí být prázdný.");

@@ -204,6 +204,13 @@ public class TrainingService {
         return trainingRepository.countByOwner_Id(owner.getId());
     }
 
+    /** ScoutMeto kolo 7 (review fix): tréninky uživatele jen za daný měsíc — filtr v DB. */
+    @Transactional(readOnly = true)
+    public List<TrainingEntity> listMyTrainingsForMonth(AccountEntity owner, java.time.YearMonth month) {
+        return trainingRepository.findByOwner_IdAndVisibilityAndTrainingDateBetweenOrderByTrainingDateDescIdDesc(
+                owner.getId(), TrainingVisibility.PRIVATE, month.atDay(1), month.atEndOfMonth());
+    }
+
     public TrainingEntity create(AccountEntity owner, TrainingInput input) {
         validateExerciseNaming(input);
 
@@ -293,12 +300,21 @@ public class TrainingService {
      * v controlleru/security.
      */
     public TrainingEntity createGroup(AccountEntity creator, TrainingInput input) {
+        return createGroup(creator, input, true);
+    }
+
+    /**
+     * Vytvoří skupinový trénink. {@code publish=false} = draft (ScoutMeto kolo 7) —
+     * flag se nastavuje v TÉŽE transakci jako save (review fix: žádné okno viditelnosti).
+     */
+    public TrainingEntity createGroup(AccountEntity creator, TrainingInput input, boolean publish) {
         validateExerciseNaming(input);
 
         TrainingEntity training = new TrainingEntity();
         training.setVisibility(TrainingVisibility.GROUP);
         training.setOwner(null);
         training.setCreatedBy(creator);
+        training.setPublished(publish);
         applyTrainingFields(training, input);
         applyExercises(training, input.getExercises());
         // Pro group tréninky používáme stejné tagy — viditelné napříč uživateli
@@ -309,6 +325,11 @@ public class TrainingService {
     }
 
     public TrainingEntity updateGroup(Long trainingId, TrainingInput input) {
+        return updateGroup(trainingId, input, true);
+    }
+
+    /** Update skupinového tréninku vč. publish flagu v jedné transakci (review fix). */
+    public TrainingEntity updateGroup(Long trainingId, TrainingInput input, boolean publish) {
         validateExerciseNaming(input);
 
         TrainingEntity training = trainingRepository.findById(trainingId)
@@ -321,6 +342,7 @@ public class TrainingService {
         training.getExercises().clear();
         applyExercises(training, input.getExercises());
         applyTagsForGroup(training, input.getTagIds());
+        training.setPublished(publish);
 
         return trainingRepository.save(training);
     }
@@ -480,6 +502,12 @@ public class TrainingService {
                 .orElseThrow(() -> new NotFoundException("Trénink (id=" + groupTrainingId + ") nenalezen."));
         if (source.getVisibility() != TrainingVisibility.GROUP) {
             throw new IllegalArgumentException("Lze zkopírovat jen skupinový trénink.");
+        }
+        // ScoutMeto kolo 7 (review fix): draft nesmí uniknout přes přímý POST /diary/{id}/copy.
+        // NotFound (ne Forbidden), ať nepotvrzujeme existenci draftu — stejně jako detail view.
+        if (!source.isPublished()
+                && owner.getRole() != com.ragnarok.ragnarok_customers_training_diary.account.AccountRole.ADMIN) {
+            throw new NotFoundException("Trénink (id=" + groupTrainingId + ") nenalezen.");
         }
 
         TrainingInput input = new TrainingInput();

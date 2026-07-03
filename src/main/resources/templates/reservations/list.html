@@ -115,6 +115,7 @@
                 <!-- ScoutMeto kolo 7: náhradník na plnou lekci -->
                 <th:block th:if="${isFull and !started}"
                           th:with="myWait=${myWaitlist != null ? myWaitlist.get(t.trainingId()) : null},
+                                   haveBooking=${myByTraining != null and myByTraining.get(t.trainingId()) != null},
                                    waitCount=${waitlistCounts != null and waitlistCounts.get(t.trainingId()) != null ? waitlistCounts.get(t.trainingId()) : 0}">
                     <span th:if="${myWait != null}" class="rk-badge rk-badge--info">
                         NÁHRADNÍK — pořadí <span class="num"
@@ -125,13 +126,14 @@
                         <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
                         <button type="submit" class="btn btn-ghost btn-sm">Odhlásit se z náhradníků</button>
                     </form>
-                    <form th:if="${myWait == null and (capacity == 0 or waitCount < capacity)}"
+                    <!-- review fix: kdo už má rezervaci, náhradníka nepotřebuje (server to hlídá taky) -->
+                    <form th:if="${myWait == null and !haveBooking and (capacity == 0 or waitCount < capacity)}"
                           th:action="@{/reservations/waitlist}" method="post"
                           onsubmit="return confirm('Přihlásit se jako náhradník? Když se uvolní místo, vytvoříme ti rezervaci automaticky.');">
                         <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
                         <button type="submit" class="btn btn-outline btn-sm">🙋 Přihlásit se jako náhradník</button>
                     </form>
-                    <span th:if="${myWait == null and capacity > 0 and waitCount >= capacity}"
+                    <span th:if="${myWait == null and !haveBooking and capacity > 0 and waitCount >= capacity}"
                           class="text-muted" style="font-size: var(--fs-xs);">Náhradníci plní</span>
                     <span th:if="${waitCount > 0}" class="text-muted" style="font-size: var(--fs-xs);">
                         náhradníků: <span class="num" th:text="${waitCount}">0</span>

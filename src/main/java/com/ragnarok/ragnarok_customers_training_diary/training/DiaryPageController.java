@@ -92,10 +92,6 @@ public class DiaryPageController {
                 || (exercise != null && !exercise.isBlank())
                 || flagged;
 
-        List<TrainingEntity> trainings = filterActive
-                ? trainingService.listMyTrainingsFiltered(user, tagId, exercise, flagged)
-                : trainingService.listMyTrainings(user);
-
         // ScoutMeto kolo 7: posun po měsících — MOJE TRÉNINKY zobrazují jen zvolený měsíc
         java.time.YearMonth currentMonth;
         try {
@@ -104,11 +100,19 @@ public class DiaryPageController {
             currentMonth = java.time.YearMonth.now();
         }
         final java.time.YearMonth ym = currentMonth;
-        model.addAttribute("hasAnyTrainings", !trainings.isEmpty());
-        trainings = trainings.stream()
-                .filter(t -> t.getTrainingDate() != null
-                        && java.time.YearMonth.from(t.getTrainingDate()).equals(ym))
-                .toList();
+        model.addAttribute("hasAnyTrainings", trainingService.countMyTrainings(user) > 0);
+
+        List<TrainingEntity> trainings;
+        if (filterActive) {
+            // filtrovaná větev: výsledky bývají malé → měsíc dofiltrujeme v paměti
+            trainings = trainingService.listMyTrainingsFiltered(user, tagId, exercise, flagged).stream()
+                    .filter(t -> t.getTrainingDate() != null
+                            && java.time.YearMonth.from(t.getTrainingDate()).equals(ym))
+                    .toList();
+        } else {
+            // review fix: měsíc filtruje přímo DB (žádné načítání celé historie do paměti)
+            trainings = trainingService.listMyTrainingsForMonth(user, ym);
+        }
         model.addAttribute("currentMonth", currentMonth);
         model.addAttribute("prevMonth", currentMonth.minusMonths(1).toString());
         model.addAttribute("nextMonth", currentMonth.plusMonths(1).toString());
