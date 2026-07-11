@@ -23,6 +23,10 @@ public class SetInput {
     @Min(0)
     private Integer reps;
 
+    /** ScoutMeto kolo 8: odpočinek po sérii (s). */
+    @Min(0)
+    private Integer restSeconds;
+
     @Min(1)
     @Max(10)
     private Short rpe;

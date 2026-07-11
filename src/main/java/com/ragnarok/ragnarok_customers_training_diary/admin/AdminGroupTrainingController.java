@@ -423,11 +423,19 @@ public class AdminGroupTrainingController {
             ei.setCustomName(ex.getCustomName());
             ei.setRpe(ex.getRpe());
             ei.setNotes(ex.getNotes());
+            // kolo 8: dřív se při editaci group tréninku ztrácely tagy + náčiní cviku
+            ei.setTagIds(ex.getTags().stream().map(t -> t.getId()).collect(java.util.stream.Collectors.toSet()));
+            ei.setEquipmentName(ex.getEquipmentName());
+            ei.setEquipmentWeightKg(ex.getEquipmentWeightKg());
+            ei.setEquipmentCount(ex.getEquipmentCount());
+            ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
+            ei.setSetUnit(ex.getSetUnit());
             List<SetInput> setInputs = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 si.setRpe(s.getRpe());
                 si.setNote(s.getNote());
                 return si;

@@ -48,4 +48,25 @@ public class CircuitStepEntity {
 
     @Column(length = 255)
     private String note;
+
+    // ScoutMeto kolo 8: náčiní se zadává u každého cviku kruhového tréninku zvlášť
+    @Column(name = "equipment_name", length = 64)
+    private String equipmentName;
+
+    @Column(name = "equipment_weight_kg", precision = 7, scale = 2)
+    private BigDecimal equipmentWeightKg;
+
+    @Column(name = "equipment_count", nullable = false)
+    private int equipmentCount = 1;
+
+    @Column(name = "equipment_second_weight_kg", precision = 7, scale = 2)
+    private BigDecimal equipmentSecondWeightKg;
+
+    /** ScoutMeto kolo 8: zaměření (tagy) per cvik kruhového tréninku. */
+    @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.JoinTable(name = "circuit_step_tag_link",
+            joinColumns = @JoinColumn(name = "circuit_step_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private java.util.Set<com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity> tags
+            = new java.util.HashSet<>();
 }

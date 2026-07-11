@@ -36,6 +36,12 @@ public class CircuitConfigInput {
         private BigDecimal weightKg;
         private Integer restSeconds;
         private String note;
+        // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
+        private String equipmentName;
+        private BigDecimal equipmentWeightKg;
+        private Integer equipmentCount;
+        private BigDecimal equipmentSecondWeightKg;
+        private java.util.Set<Long> tagIds = new java.util.HashSet<>();
     }
 
     @Getter

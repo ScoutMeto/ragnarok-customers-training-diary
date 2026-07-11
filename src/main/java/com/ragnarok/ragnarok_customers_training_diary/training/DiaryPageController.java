@@ -518,11 +518,13 @@ public class DiaryPageController {
             ei.setEquipmentWeightKg(ex.getEquipmentWeightKg());
             ei.setEquipmentCount(ex.getEquipmentCount());
             ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
+            ei.setSetUnit(ex.getSetUnit());
             List<SetInput> setInputs = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 si.setRpe(s.getRpe());
                 si.setNote(s.getNote());
                 return si;

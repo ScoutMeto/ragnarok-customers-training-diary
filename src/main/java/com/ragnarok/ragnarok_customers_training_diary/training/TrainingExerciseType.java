@@ -36,8 +36,7 @@ public enum TrainingExerciseType {
     KB_SPORT_TIME,
 
     /** Kardio cvik (běh, veslo, kolo…) — Phase 11 (A1). Zatím bez speciálního configu. */
-    CARDIO,
+    CARDIO
 
-    /** Cvik na střed těla / core — Phase 11 (A1). Zatím bez speciálního configu. */
-    CORE
+    // CORE zrušen (ScoutMeto kolo 8) — V40 převedla existující záznamy na FREEFORM
 }

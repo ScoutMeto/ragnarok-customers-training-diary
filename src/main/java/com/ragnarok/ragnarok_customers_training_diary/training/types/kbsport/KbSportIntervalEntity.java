@@ -34,6 +34,10 @@ public class KbSportIntervalEntity {
 
     private Integer reps;
 
+    /** ScoutMeto kolo 8: trvání části v sekundách (podrobný záznam po částech). */
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
+
     /** Strana u unilaterálního cviku: "L" / "P" / null. */
     @Column(length = 1)
     private String side;

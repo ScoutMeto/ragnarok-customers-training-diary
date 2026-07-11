@@ -25,4 +25,18 @@ public class NumericSeriesConfigInput {
     private Integer restSecondsBetween;
 
     private String notes;
+
+    /** ScoutMeto kolo 8: vygenerovaná/editovaná tabulka řádků série. */
+    private java.util.List<RowInput> rows = new java.util.ArrayList<>();
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class RowInput {
+        private Integer rowIndex;
+        /** Číslo série/stupně (label „N. série"). */
+        private Integer rung;
+        private Integer reps;
+        private BigDecimal weightKg;
+    }
 }

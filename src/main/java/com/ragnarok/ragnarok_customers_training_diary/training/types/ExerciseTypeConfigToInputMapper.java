@@ -84,11 +84,17 @@ public class ExerciseTypeConfigToInputMapper {
             in.setSplitIntervalSeconds(e.getSplitIntervalSeconds());
             in.setWeightKg(e.getWeightKg());
             in.setUnilateral(e.isUnilateral());
+            // ScoutMeto kolo 8: bilaterální podrobný záznam = části bez unilaterálu
+            in.setBilateralDetail(!e.isUnilateral() && !e.getIntervals().isEmpty());
             in.setNotes(e.getNotes());
             for (var iv : e.getIntervals()) {
                 var ii = new com.ragnarok.ragnarok_customers_training_diary.training.dto.KbSportConfigInput.IntervalInput();
                 ii.setIntervalIndex(iv.getIntervalIndex());
                 ii.setReps(iv.getReps());
+                if (iv.getDurationSeconds() != null) {
+                    ii.setDurationMinutes(iv.getDurationSeconds() / 60);
+                    ii.setDurationSeconds(iv.getDurationSeconds() % 60);
+                }
                 ii.setSide(iv.getSide());
                 ii.setNote(iv.getNote());
                 in.getIntervals().add(ii);
@@ -135,6 +141,14 @@ public class ExerciseTypeConfigToInputMapper {
         in.setWeightKg(e.getWeightKg());
         in.setRestSecondsBetween(e.getRestSecondsBetween());
         in.setNotes(e.getNotes());
+        for (var r : e.getRows()) {
+            var ri = new NumericSeriesConfigInput.RowInput();
+            ri.setRowIndex(r.getRowIndex());
+            ri.setRung(r.getRung());
+            ri.setReps(r.getReps());
+            ri.setWeightKg(r.getWeightKg());
+            in.getRows().add(ri);
+        }
         return in;
     }
 
@@ -152,6 +166,14 @@ public class ExerciseTypeConfigToInputMapper {
             si.setWeightKg(s.getWeightKg());
             si.setRestSeconds(s.getRestSeconds());
             si.setNote(s.getNote());
+            // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
+            si.setEquipmentName(s.getEquipmentName());
+            si.setEquipmentWeightKg(s.getEquipmentWeightKg());
+            si.setEquipmentCount(s.getEquipmentCount());
+            si.setEquipmentSecondWeightKg(s.getEquipmentSecondWeightKg());
+            for (var tag : s.getTags()) {
+                si.getTagIds().add(tag.getId());
+            }
             in.getSteps().add(si);
         }
         for (CircuitRoundRestEntity r : e.getRoundRests()) {

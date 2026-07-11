@@ -34,6 +34,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExerciseTypeConfigMapper {
 
+    private final com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository tagRepository;
+
+    public ExerciseTypeConfigMapper(
+            com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository tagRepository) {
+        this.tagRepository = tagRepository;
+    }
+
     /**
      * Aplikuje per-type config dle hodnoty {@code input.type}.
      * Stará config (pokud byla) se zruší (orphanRemoval), nová se připojí.
@@ -65,7 +72,7 @@ public class ExerciseTypeConfigMapper {
             case INTERVAL -> applyInterval(exercise, input.getInterval());
             case STRONGFIRST_LADDER -> applyStrongFirstLadder(exercise, input.getStrongFirstLadder());
             case KB_SPORT_TIME -> applyKbSport(exercise, input.getKbSport());
-            case FREEFORM, CARDIO, CORE -> { /* žádný extra config — jen set tabulka */ }
+            case FREEFORM, CARDIO -> { /* žádný extra config — jen set tabulka */ }
         }
     }
 
@@ -90,7 +97,15 @@ public class ExerciseTypeConfigMapper {
         if (in.getIntervals() != null) {
             int idx = 0;
             for (var ii : in.getIntervals()) {
+                // ScoutMeto kolo 8: část má i trvání (min+s → sekundy)
+                Integer duration = null;
+                if (ii.getDurationMinutes() != null || ii.getDurationSeconds() != null) {
+                    int dm = ii.getDurationMinutes() != null ? ii.getDurationMinutes() : 0;
+                    int ds = ii.getDurationSeconds() != null ? ii.getDurationSeconds() : 0;
+                    duration = dm * 60 + ds > 0 ? dm * 60 + ds : null;
+                }
                 boolean empty = ii.getReps() == null
+                        && duration == null
                         && (ii.getNote() == null || ii.getNote().isBlank())
                         && (ii.getSide() == null || ii.getSide().isBlank());
                 if (empty) continue;
@@ -98,6 +113,7 @@ public class ExerciseTypeConfigMapper {
                 interval.setKbSportConfig(cfg);
                 interval.setIntervalIndex(ii.getIntervalIndex() != null ? ii.getIntervalIndex() : idx);
                 interval.setReps(ii.getReps());
+                interval.setDurationSeconds(duration);
                 interval.setSide(normalizeSide(ii.getSide()));
                 interval.setNote(ii.getNote());
                 cfg.getIntervals().add(interval);
@@ -267,6 +283,18 @@ public class ExerciseTypeConfigMapper {
                 step.setWeightKg(s.getWeightKg());
                 step.setRestSeconds(s.getRestSeconds());
                 step.setNote(s.getNote());
+                // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
+                step.setEquipmentName(s.getEquipmentName() != null && !s.getEquipmentName().isBlank()
+                        ? s.getEquipmentName().trim() : null);
+                step.setEquipmentWeightKg(s.getEquipmentWeightKg());
+                step.setEquipmentCount(s.getEquipmentCount() != null && s.getEquipmentCount() == 2 ? 2 : 1);
+                step.setEquipmentSecondWeightKg(
+                        step.getEquipmentCount() == 2 ? s.getEquipmentSecondWeightKg() : null);
+                if (s.getTagIds() != null) {
+                    for (Long tagId : s.getTagIds()) {
+                        tagRepository.findById(tagId).ifPresent(step.getTags()::add);
+                    }
+                }
                 cfg.getSteps().add(step);
             }
         }
@@ -334,6 +362,23 @@ public class ExerciseTypeConfigMapper {
         cfg.setWeightKg(in.getWeightKg());
         cfg.setRestSecondsBetween(in.getRestSecondsBetween());
         cfg.setNotes(in.getNotes());
+
+        // ScoutMeto kolo 8: vygenerovaná/editovaná tabulka řádků série
+        if (in.getRows() != null) {
+            int idx = 0;
+            for (NumericSeriesConfigInput.RowInput r : in.getRows()) {
+                if (r.getReps() == null && r.getWeightKg() == null) continue;
+                var row = new com.ragnarok.ragnarok_customers_training_diary.training.types.series
+                        .NumericSeriesRowEntity();
+                row.setConfig(cfg);
+                row.setRowIndex(r.getRowIndex() != null ? r.getRowIndex() : idx);
+                row.setRung(r.getRung());
+                row.setReps(r.getReps());
+                row.setWeightKg(r.getWeightKg());
+                cfg.getRows().add(row);
+                idx++;
+            }
+        }
 
         exercise.setNumericSeriesConfig(cfg);
     }

@@ -449,11 +449,13 @@ public class TrainingService {
             exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
             exInput.setEquipmentCount(sourceEx.getEquipmentCount());
             exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
+            exInput.setSetUnit(sourceEx.getSetUnit());
             // RPE klient vyplní sám
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 // RPE necháme prázdné — klient si je vyplní
                 exInput.getSets().add(si);
             }
@@ -541,11 +543,13 @@ public class TrainingService {
             exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
             exInput.setEquipmentCount(sourceEx.getEquipmentCount());
             exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
+            exInput.setSetUnit(sourceEx.getSetUnit());
             // Sety (přenes prázdné jako šablona - klient si je doplní)
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 si.setRpe(s.getRpe());
                 si.setNote(s.getNote());
                 exInput.getSets().add(si);
@@ -648,10 +652,12 @@ public class TrainingService {
             exInput.setEquipmentWeightKg(sourceEx.getEquipmentWeightKg());
             exInput.setEquipmentCount(sourceEx.getEquipmentCount());
             exInput.setEquipmentSecondWeightKg(sourceEx.getEquipmentSecondWeightKg());
+            exInput.setSetUnit(sourceEx.getSetUnit());
             for (var s : sourceEx.getSets()) {
                 SetInput si = new SetInput();
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 si.setRpe(s.getRpe());
                 si.setNote(s.getNote());
                 exInput.getSets().add(si);
@@ -717,10 +723,14 @@ public class TrainingService {
                 set.setSetIndex(setIdx++);
                 set.setWeightKg(setInput.getWeightKg());
                 set.setReps(setInput.getReps());
+                set.setRestSeconds(setInput.getRestSeconds());
                 set.setRpe(setInput.getRpe());
                 set.setNote(setInput.getNote());
                 exercise.addSet(set);
             }
+            // ScoutMeto kolo 8: jednotka tabulky sérií (Carry → metry/sekundy)
+            exercise.setSetUnit(exInput.getSetUnit() != null && !exInput.getSetUnit().isBlank()
+                    && !"REPS".equals(exInput.getSetUnit()) ? exInput.getSetUnit() : null);
 
             // Per-type config (EMOM, Tabata, AMRAP, Circuit, ...). Bezpečné NO-OP pro FREEFORM.
             typeConfigMapper.apply(exercise, exInput);
@@ -795,6 +805,7 @@ public class TrainingService {
     private boolean isSetEmpty(SetInput s) {
         return s.getWeightKg() == null
                 && s.getReps() == null
+                && s.getRestSeconds() == null
                 && s.getRpe() == null
                 && (s.getNote() == null || s.getNote().isBlank());
     }

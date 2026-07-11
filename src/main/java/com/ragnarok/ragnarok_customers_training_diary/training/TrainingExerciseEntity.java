@@ -98,6 +98,13 @@ public class TrainingExerciseEntity {
     @Column(name = "equipment_second_weight_kg", precision = 7, scale = 2)
     private java.math.BigDecimal equipmentSecondWeightKg;
 
+    /**
+     * ScoutMeto kolo 8: jednotka záznamu v tabulce sérií — NULL/"REPS" = opakování,
+     * "METERS"/"SECONDS" pro cviky s tagem Carry (nosí se na vzdálenost/čas).
+     */
+    @Column(name = "set_unit", length = 10)
+    private String setUnit;
+
     /** Phase 11 (A2): per-exercise tagy zaměření (sdílený pool s tréninkovými tagy). */
     @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
     @jakarta.persistence.JoinTable(

@@ -47,6 +47,10 @@ public class TrainingExerciseInput {
     private Integer equipmentCount;
     private java.math.BigDecimal equipmentSecondWeightKg;
 
+    /** ScoutMeto kolo 8: jednotka tabulky sérií — null/REPS = opakování, METERS/SECONDS pro Carry. */
+    @jakarta.validation.constraints.Pattern(regexp = "REPS|METERS|SECONDS")
+    private String setUnit;
+
     @Valid
     private List<SetInput> sets = new ArrayList<>();
 

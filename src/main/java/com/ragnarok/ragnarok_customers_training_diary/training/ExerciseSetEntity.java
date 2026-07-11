@@ -41,6 +41,10 @@ public class ExerciseSetEntity {
 
     private Integer reps;
 
+    /** ScoutMeto kolo 8: odpočinek po sérii (s). */
+    @Column(name = "rest_seconds")
+    private Integer restSeconds;
+
     private Short rpe;
 
     @Column(length = 255)

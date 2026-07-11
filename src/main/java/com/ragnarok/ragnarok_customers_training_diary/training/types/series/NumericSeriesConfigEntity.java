@@ -59,4 +59,10 @@ public class NumericSeriesConfigEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** ScoutMeto kolo 8: vygenerovaná/editovaná tabulka řádků série. */
+    @jakarta.persistence.OneToMany(mappedBy = "config", cascade = jakarta.persistence.CascadeType.ALL,
+            orphanRemoval = true)
+    @jakarta.persistence.OrderBy("rowIndex ASC")
+    private java.util.List<NumericSeriesRowEntity> rows = new java.util.ArrayList<>();
 }
