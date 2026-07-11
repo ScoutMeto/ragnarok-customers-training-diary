@@ -445,6 +445,84 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ ScoutMeto kolo 8 (DONE 2026-07-11)
+
+Přepracování formulářů typů cviků + rezervace. Migrace **V40**, 3 feature commity
+(070ba14 rezervace, a94cfd0 backend, 1b46a9c formuláře+JS+detail).
+
+**DIARY (sdílený fragment exercise-editor.html + diary-form.js — pozor, každý blok
+existuje 2× : server-rendered s th:name a <template> s data-name!)**
+- **„Náplň tréninku" / „N. Část"** místo „Cviky" / „N. Cvik" (komplexy ap. v jedné části).
+- **KB sport time:** checkboxy „unilaterální (L/P) handswitch - podrobný záznam"
+  (aktivní jen: 1 zátěž + vyplněná váha) a „bilaterální podrobný záznam" (2 zátěže
+  s váhami; bez sloupce strany), vzájemně výlučné. „Rozdělit na x částí" (aktivní až
+  po checkboxu) → dynamická tabulka částí (opakování, trvání min+s, strana L/P).
+  Červená kontrola součtů (reps i čas) NEBRÁNÍ uložení, přetrvává i v detailu.
+  Váha v setu a „Rozdělit po (s)" odstraněny (váha z Náčiní). `kb_sport_interval.duration_seconds`.
+  `bilateralDetail` se NEukládá — odvozuje se (intervals bez unilateral).
+- **EMOM:** bez Default kg a Interval (s) (entity sloupce legacy, mapper default 60).
+  Checkbox „Editovat jednotlivé sety" → tabulka minut, prefill reps z Default reps
+  a kg z Náčiní (2 zátěže = součet). Odškrtnutí smaže overrides.
+- **Tabata:** „Předdefinovaný počet opakování" → předvyplněná editovatelná tabulka kol
+  (změna předpisu přepíše všechna kola — únava → klesající opakování).
+- **Circuit:** kroky jako div bloky; **náčiní (name/kg/počet/2. zátěž) + zaměření (tagy)
+  per cvik kroku** (V40: sloupce + `circuit_step_tag_link`). Sloupce Opakování /
+  Odpočinek (s); Kg pryč z UI.
+- **Ladder/Stepladder/Pyramid:** bez Váhy a CSV v UI; ze Start/Peak/Krok se generuje
+  editovatelná tabulka (`numeric_series_row`): Ladder = N. série s N řádky reps=N;
+  Stepladder + sestupná polovina; Pyramid 1 řádek na stupeň (krok platí nahoru i dolů).
+  Validace: (peak−start) % krok == 0, jinak červená výstraha a tabulka se nevykreslí.
+  Váha řádků prefill z Náčiní. Změna Start/Peak/Krok tabulku přegeneruje (zahodí edity — záměr).
+- **Freeform:** sloupec **Odpočinek (s)** před RPE (`exercise_set.rest_seconds`);
+  tagy + náčiní přesunuty NAD tabulku sérií (pod Poznámku ke cviku).
+- **Carry (nový systémový tag):** s tagem Carry se u sérií objeví volba jednotky
+  Opakování/Metry/Sekundy (`training_exercise.set_unit`, REPS → NULL); hlavička
+  sloupce se mění ve formuláři i detailu.
+- **Katalog → prefill Náčiní:** výběr cviku propíše jeho náčiní (mapa KETTLEBELL→kettlebell,
+  BARBELL→osa, BODYWEIGHT/NONE→bez pomůcek, ...); ruční volba uživatele je nadřazená
+  (dataset.autofilled).
+- **CORE typ odstraněn** (V40 převedla záznamy na FREEFORM).
+
+**RESERVATIONS**
+- **Max 1 rezervace na lekci** — server check dle jména proti datům rezervačního
+  systému; UI skryje „Zapsat se" a ukáže badge „MÁM REZERVACI". Náhradnictví už bylo
+  unikátní (V37 UNIQUE).
+
+**Vědomá zjednodušení:** CSV sekvence a Váha série odstraněny z UI (legacy data se při
+editaci ztratí — nové zadání je nepotřebuje); AdminGroupTrainingController.toInput
+opraven (dřív ztrácel tagy+náčiní cviků při editaci group tréninku).
+
+Ověřeno E2E proti PostgreSQL (V40 zmigrována, testovací trénink smazán): KB handswitch
+2 části + živá validace součtů + binding `exercises[0].kbSport.intervals[0].reps`,
+Ladder 1→3 (výstraha při kroku 2 / peak 6 → oprava → 6 řádků ve 3 sériích, váha 12
+prefill), Tabata 8 kol prefill ×8, Carry → hlavička Metry, odpočinek 90 s, prefill
+náčiní z katalogu (osa), edit roundtrip (checkboxy, řádky, METERS selected). **134 testů.**
+
+**Adversariální review (workflow, 4 dimenze → 13 reálných nálezů, vše opraveno):**
+- Destruktivní resize tabulek (KB části / EMOM minuty / Tabata kola / série) běžel na
+  každý stisk klávesy → přepis čísla mazal vyplněné řádky. Fix: resize až na `change`
+  (blur/šipky), na `input` jen nevynucující validace; přechodně prázdné pole řádky nemaže.
+- Edit šablony (admin) ztrácel setUnit (Carry) a restSeconds — chybělo v
+  AdminTrainingTemplateController.toInput (group i diary controller je měly).
+- SpEL dělení BigDecimal ZAOKROUHLUJE (#aggregates.sum → BigDecimal; 100/60 → 2!) —
+  výstraha KB času v detailu ukazovala nesmyslné minuty. Fix: (x − x%60)/60.
+  **Gotcha do budoucna: na výsledku #aggregates.sum nikdy nedělit přímo.**
+- Server-rendered per-type pole (amrap/straight/interval/strongfirst/composite/circuit
+  hlavičky) neměla data-name → po smazání Části se nepřečíslovala (pre-existující bug,
+  kolo 8 ho zdědilo pro nové typy) → doplněno 48 polím. Pozn.: pozor na vícera řádkové
+  tagy — „Attribute appears more than once" shodí celý render fragmentu.
+- Přepnutí Ladder↔Stepladder↔Pyramid přegeneruje tabulku (jiná sémantika řádků).
+- EMOM kg prefill nezávislý na pořadí vyplnění (váha doplněná později vyplní prázdné buňky).
+- Legacy řídké EMOM/Tabata overrides se při resize sekvenčně přečíslují (žádné duplicity).
+- Spring autoGrowCollectionLimit 256 → 2048 (@ControllerAdvice) — série s peak 23+ má
+  víc než 256 řádků a shodila by binding formuláře.
+- @Valid na vnořených listech (kbSport.intervals, numericSeries.rows) — @Min/@Max jinak mrtvé.
+- Tagy circuit kroku řazené (@OrderBy name), 0 kg je platná váha (isNaN místo ||),
+  katalog OTHER se nepropisuje jako anglické „other", tlačítko „+ Přidat část",
+  synchronizace nápovědy série v template kopii.
+- Vědomě neřešeno: rozdíl prefillu vah (série = 1. zátěž dle příkladu Scouta,
+  EMOM = součet dle explicitního zadání).
+
 ## ✅ ScoutMeto kolo 7 (DONE 2026-07-02)
 
 Největší kolo dosud — 12 položek, migrace **V36–V39**, 5 feature commitů (P22–P26).

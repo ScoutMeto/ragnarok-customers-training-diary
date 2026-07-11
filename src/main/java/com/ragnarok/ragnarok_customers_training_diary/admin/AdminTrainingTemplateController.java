@@ -235,11 +235,14 @@ public class AdminTrainingTemplateController {
             ei.setEquipmentWeightKg(ex.getEquipmentWeightKg());
             ei.setEquipmentCount(ex.getEquipmentCount());
             ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
+            // review fix (kolo 8): bez toho by edit šablony ztratil jednotku Carry a odpočinky setů
+            ei.setSetUnit(ex.getSetUnit());
             List<SetInput> sets = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());
                 si.setWeightKg(s.getWeightKg());
                 si.setReps(s.getReps());
+                si.setRestSeconds(s.getRestSeconds());
                 si.setRpe(s.getRpe());
                 si.setNote(s.getNote());
                 return si;

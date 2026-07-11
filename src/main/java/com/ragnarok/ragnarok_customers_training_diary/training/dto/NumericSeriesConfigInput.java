@@ -27,6 +27,7 @@ public class NumericSeriesConfigInput {
     private String notes;
 
     /** ScoutMeto kolo 8: vygenerovaná/editovaná tabulka řádků série. */
+    @jakarta.validation.Valid
     private java.util.List<RowInput> rows = new java.util.ArrayList<>();
 
     @Getter

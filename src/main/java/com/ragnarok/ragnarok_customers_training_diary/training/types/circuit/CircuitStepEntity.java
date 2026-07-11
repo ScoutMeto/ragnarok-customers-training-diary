@@ -64,6 +64,7 @@ public class CircuitStepEntity {
 
     /** ScoutMeto kolo 8: zaměření (tagy) per cvik kruhového tréninku. */
     @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.OrderBy("name ASC")
     @jakarta.persistence.JoinTable(name = "circuit_step_tag_link",
             joinColumns = @JoinColumn(name = "circuit_step_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))

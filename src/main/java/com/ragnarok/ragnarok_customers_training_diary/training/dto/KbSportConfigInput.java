@@ -35,6 +35,7 @@ public class KbSportConfigInput {
 
     private String notes;
 
+    @jakarta.validation.Valid
     private List<IntervalInput> intervals = new ArrayList<>();
 
     @Getter

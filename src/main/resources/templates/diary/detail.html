@@ -260,8 +260,10 @@
                     ⚠ Rozpis částí neodpovídá souhrnu setu
                     <span th:if="${ex.kbSportConfig.totalReps != null and kbSumReps > 0 and kbSumReps != ex.kbSportConfig.totalReps}">
                         (opakování: <span class="num" th:text="${kbSumReps}">0</span> / <span class="num" th:text="${ex.kbSportConfig.totalReps}">0</span>)</span>
+                    <!-- review fix: #aggregates.sum vrací BigDecimal a SpEL dělení BigDecimal ZAOKROUHLUJE
+                         (100/60 → 2), proto (x - x%60)/60 = přesné celočíselné minuty -->
                     <span th:if="${kbSumDur > 0 and kbSumDur != ex.kbSportConfig.totalSeconds}">
-                        (čas: <span class="num" th:text="${kbSumDur / 60} + ':' + ${#strings.replace(#numbers.formatInteger(kbSumDur % 60, 2), ' ', '0')}">0:00</span>
+                        (čas: <span class="num" th:text="${(kbSumDur - (kbSumDur % 60)) / 60} + ':' + ${#strings.replace(#numbers.formatInteger(kbSumDur % 60, 2), ' ', '0')}">0:00</span>
                         / <span class="num" th:text="${ex.kbSportConfig.totalSeconds / 60} + ':' + ${#strings.replace(#numbers.formatInteger(ex.kbSportConfig.totalSeconds % 60, 2), ' ', '0')}">0:00</span>)</span>
                     — uprav v editaci tréninku.
                 </div>

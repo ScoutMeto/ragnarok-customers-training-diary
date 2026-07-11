@@ -29,7 +29,8 @@
     // kolo 8 (P37): mapování katalogového náčiní (systémové EN hodnoty) na názvy v "Moje náčiní"
     const EQUIPMENT_LABELS = {
         KETTLEBELL: 'kettlebell', BARBELL: 'osa', BODYWEIGHT: 'bez pomůcek', NONE: 'bez pomůcek',
-        DUMBBELL: 'jednoručka', BAND: 'guma', MACHINE: 'stroj', CABLE: 'kladka'
+        DUMBBELL: 'jednoručka', BAND: 'guma', MACHINE: 'stroj', CABLE: 'kladka',
+        OTHER: null  // review fix: anglické "other" do pole Náčiní nepatří — prefill přeskočit
     };
 
     function populateCatalogSelect(selectEl) {
@@ -216,11 +217,13 @@
     // kolo 8 — helpery
     // =========================================================================
 
-    /** Váhy náčiní na kartě cviku: {count, w1, w2, sum}. */
+    /** Váhy náčiní na kartě cviku: {count, w1, w2, sum}. (review fix: 0 kg je platná váha) */
     function equipmentWeights(card) {
         const count = (card.querySelector('.equipment-count') || {}).value || '1';
-        const w1 = parseFloat((card.querySelector('[data-name="equipmentWeightKg"]') || {}).value) || null;
-        const w2 = parseFloat((card.querySelector('[data-name="equipmentSecondWeightKg"]') || {}).value) || null;
+        const p1 = parseFloat((card.querySelector('[data-name="equipmentWeightKg"]') || {}).value);
+        const p2 = parseFloat((card.querySelector('[data-name="equipmentSecondWeightKg"]') || {}).value);
+        const w1 = isNaN(p1) ? null : p1;
+        const w2 = isNaN(p2) ? null : p2;
         let sum = null;
         if (count === '2' && w1 != null && w2 != null) sum = w1 + w2;
         else if (w1 != null) sum = w1;
@@ -331,6 +334,7 @@
         const split = block.querySelector('.kb-split-parts');
         const tbody = block.querySelector('.kb-parts-tbody');
         if (!split || !tbody) return;
+        // review fix: přechodně prázdné/nulové pole nesmí zahodit vyplněné řádky
         const want = Math.min(parseInt(split.value, 10) || 0, 120);
         const rows = tbody.querySelectorAll('.kb-part-row');
         if (want <= 0) { updateKbState(card); return; }
@@ -419,6 +423,8 @@
         }
         setsBlock.style.display = '';
         const want = Math.min(parseInt((block.querySelector('.emom-total-minutes') || {}).value, 10) || 0, 120);
+        // review fix: přechodně prázdné pole Celkem minut nesmí zahodit vyplněné řádky
+        if (want <= 0) return;
         const defReps = (block.querySelector('.emom-default-reps') || {}).value || '';
         const eq = equipmentWeights(card);
         const defKg = eq.sum != null ? eq.sum : '';
@@ -432,7 +438,30 @@
                 if (inputs[1]) inputs[1].value = defKg;
             });
         }
+        // review fix: sekvenční přečíslování (legacy řídké overrides by jinak nechaly
+        // duplicitní/přeházené minuteIndex)
+        tbody.querySelectorAll('.emom-set-row').forEach((row, i) => {
+            const num = row.querySelector('.emom-set-num');
+            if (num) num.textContent = i + 1;
+            const hid = row.querySelector('.emom-set-index');
+            if (hid) hid.value = i + 1;
+            row.querySelectorAll('[data-name]').forEach(el => reindexDataName(el, i));
+        });
         renumberExercises();
+    }
+
+    /** review fix: doplnění váhy Náčiní až PO zaškrtnutí editace setů — vyplní prázdné kg buňky. */
+    function emomFillEmptyKg(card) {
+        const block = card.querySelector('.type-config.type-emom');
+        if (!block) return;
+        const chk = block.querySelector('.emom-edit-sets');
+        if (!chk || !chk.checked) return;
+        const eq = equipmentWeights(card);
+        if (eq.sum == null) return;
+        block.querySelectorAll('.emom-set-row').forEach(row => {
+            const kgInput = row.querySelectorAll('input[type="number"]')[1];
+            if (kgInput && kgInput.value === '') kgInput.value = eq.sum;
+        });
     }
 
     // ----- TABATA (P34) -----
@@ -465,11 +494,11 @@
         if (!tbody || !wrap) return;
         const want = Math.min(parseInt((block.querySelector('.tabata-rounds') || {}).value, 10) || 0, 30);
         const defReps = (block.querySelector('.tabata-default-reps') || {}).value || '';
-        // Tabulka vzniká až vyplněním předpisu (Scout: „Vyplněním tohoto pole vznikne předpis")
-        if (want <= 0 || (defReps === '' && tbody.querySelectorAll('.tabata-round-row').length === 0)) {
+        // Tabulka vzniká až vyplněním předpisu (Scout: „Vyplněním tohoto pole vznikne předpis").
+        // review fix: přechodně prázdné pole NEmaže existující řádky (jen skryje/nechá být)
+        if (want <= 0) return;
+        if (defReps === '' && tbody.querySelectorAll('.tabata-round-row').length === 0) {
             wrap.style.display = 'none';
-            tbody.innerHTML = '';
-            renumberExercises();
             return;
         }
         wrap.style.display = '';
@@ -479,6 +508,14 @@
         if (prefillAll) {
             tbody.querySelectorAll('.tabata-round-row input[type="number"]').forEach(inp => { inp.value = defReps; });
         }
+        // review fix: sekvenční přečíslování (legacy řídké overrides)
+        tbody.querySelectorAll('.tabata-round-row').forEach((row, i) => {
+            const num = row.querySelector('.tabata-round-num');
+            if (num) num.textContent = i + 1;
+            const hid = row.querySelector('.tabata-round-index');
+            if (hid) hid.value = i + 1;
+            row.querySelectorAll('[data-name]').forEach(el => reindexDataName(el, i));
+        });
         renumberExercises();
     }
 
@@ -601,6 +638,7 @@
         if (!ci || !ci.equipment) return;
         const label = EQUIPMENT_LABELS[ci.equipment] !== undefined
                 ? EQUIPMENT_LABELS[ci.equipment] : ci.equipment.toLowerCase();
+        if (!label) return; // OTHER apod. — nemá smysluplný český název
         eqInput.value = label;
         eqInput.dataset.autofilled = '1';
         updateKbState(card);
@@ -662,10 +700,15 @@
             prefillEquipmentFromCatalog(card, t.value);
         } else if (t.classList.contains('type-select')) {
             updateTypeConfigVisibility(card);
+            // review fix: přepnutí Ladder↔Stepladder↔Pyramid má jinou sémantiku tabulky →
+            // přegenerovat (jinak by se uložily řádky podle staré logiky)
+            if (['LADDER', 'STEPLADDER', 'PYRAMID'].includes(t.value)) {
+                seriesRegenerate(card);
+            }
         } else if (t.classList.contains('equipment-count')) {
             updateEquipmentSecondVisibility(card);
             updateKbState(card);
-            if (card.querySelector('.type-select').value === 'EMOM') emomSync(card, false);
+            emomFillEmptyKg(card);
         } else if (t.classList.contains('step-equipment-count')) {
             // kolo 8: druhá zátěž per circuit krok
             const stepRow = t.closest('.circuit-step-row');
@@ -691,6 +734,24 @@
             updateCarryUnit(card);
         } else if (t.closest('.exercise-tags')) {
             updateCarryUnit(card);
+        } else if (t.classList.contains('kb-split-parts')) {
+            // review fix: resize tabulek až na change (blur/šipky) — resize na každý
+            // stisk klávesy mazal vyplněné řádky během přepisování čísla
+            kbResizeParts(card);
+        } else if (t.classList.contains('emom-total-minutes') || t.classList.contains('emom-default-reps')) {
+            emomSync(card, false);
+        } else if (t.classList.contains('tabata-rounds')) {
+            tabataSync(card, false);
+        } else if (t.classList.contains('tabata-default-reps')) {
+            tabataSync(card, true); // předpis: přepíše všechna kola
+        } else if (t.classList.contains('series-start') || t.classList.contains('series-peak')
+                || t.classList.contains('series-step')) {
+            seriesRegenerate(card);
+        } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
+                || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
+            // review fix: váha doplněná až po zaškrtnutí „Editovat jednotlivé sety"
+            // vyplní prázdné kg buňky EMOM tabulky
+            emomFillEmptyKg(card);
         }
     });
 
@@ -716,25 +777,19 @@
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
             updateKbState(card);
-        } else if (t.classList.contains('kb-split-parts')) {
-            kbResizeParts(card);
         } else if (t.classList.contains('kb-total-min') || t.classList.contains('kb-total-sec')
                 || t.classList.contains('kb-total-reps')
                 || t.classList.contains('kb-part-reps')
                 || t.classList.contains('kb-part-dur-min') || t.classList.contains('kb-part-dur-sec')) {
+            // živá (nevynucující) kontrola součtů — nic nemaže, může běžet na každý stisk
             kbValidate(card);
-        } else if (t.classList.contains('emom-total-minutes')) {
-            emomSync(card, false);
-        } else if (t.classList.contains('emom-default-reps')) {
-            emomSync(card, false);
-        } else if (t.classList.contains('tabata-rounds')) {
-            tabataSync(card, false);
-        } else if (t.classList.contains('tabata-default-reps')) {
-            tabataSync(card, true); // předpis: přepíše všechna kola
         } else if (t.classList.contains('series-start') || t.classList.contains('series-peak')
                 || t.classList.contains('series-step')) {
-            seriesRegenerate(card);
+            // živá validace parametrů; přegenerování tabulky až na change (viz výše)
+            seriesValidate(card);
         }
+        // review fix: destruktivní resize tabulek (KB části / EMOM minuty / Tabata kola /
+        // série) se spouští až na 'change', ne na každý stisk klávesy
     });
 
     // Při načtení existujících (server-rendered) cviků nastavíme viditelnost
