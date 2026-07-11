@@ -250,18 +250,37 @@
                 <span th:if="${ex.kbSportConfig.unilateral}">· unilaterální (L/P)</span>
                 <span th:if="${ex.kbSportConfig.splitIntervalSeconds != null}">· rozděleno po <span class="num" th:text="${ex.kbSportConfig.splitIntervalSeconds}">60</span>&nbsp;s</span>
             </div>
-            <table class="rk-series" th:if="${ex.kbSportConfig != null and !ex.kbSportConfig.intervals.isEmpty()}"
-                   style="margin: 0 var(--sp-5) var(--sp-4);">
-                <thead><tr><th>Interval</th><th>Opakování</th><th>Strana</th><th>Pozn.</th></tr></thead>
-                <tbody>
-                <tr th:each="iv : ${ex.kbSportConfig.intervals}">
-                    <td th:text="${iv.intervalIndex + 1}">1</td>
-                    <td th:text="${iv.reps} ?: '—'">20</td>
-                    <td th:text="${iv.side} ?: '—'">L</td>
-                    <td th:text="${iv.note} ?: ''"></td>
-                </tr>
-                </tbody>
-            </table>
+            <!-- kolo 8: podrobný záznam po částech + nevynucující kontrola součtů -->
+            <th:block th:if="${ex.kbSportConfig != null and !ex.kbSportConfig.intervals.isEmpty()}"
+                      th:with="kbSumReps=${#aggregates.sum(ex.kbSportConfig.intervals.![reps == null ? 0 : reps])},
+                               kbSumDur=${#aggregates.sum(ex.kbSportConfig.intervals.![durationSeconds == null ? 0 : durationSeconds])}">
+                <div th:if="${(ex.kbSportConfig.totalReps != null and kbSumReps > 0 and kbSumReps != ex.kbSportConfig.totalReps)
+                              or (kbSumDur > 0 and kbSumDur != ex.kbSportConfig.totalSeconds)}"
+                     style="margin: 0 var(--sp-5) var(--sp-2); color: var(--rk-danger, #dc3545); font-weight: 600; font-size: var(--fs-sm);">
+                    ⚠ Rozpis částí neodpovídá souhrnu setu
+                    <span th:if="${ex.kbSportConfig.totalReps != null and kbSumReps > 0 and kbSumReps != ex.kbSportConfig.totalReps}">
+                        (opakování: <span class="num" th:text="${kbSumReps}">0</span> / <span class="num" th:text="${ex.kbSportConfig.totalReps}">0</span>)</span>
+                    <span th:if="${kbSumDur > 0 and kbSumDur != ex.kbSportConfig.totalSeconds}">
+                        (čas: <span class="num" th:text="${kbSumDur / 60} + ':' + ${#strings.replace(#numbers.formatInteger(kbSumDur % 60, 2), ' ', '0')}">0:00</span>
+                        / <span class="num" th:text="${ex.kbSportConfig.totalSeconds / 60} + ':' + ${#strings.replace(#numbers.formatInteger(ex.kbSportConfig.totalSeconds % 60, 2), ' ', '0')}">0:00</span>)</span>
+                    — uprav v editaci tréninku.
+                </div>
+                <table class="rk-series" style="margin: 0 var(--sp-5) var(--sp-4);">
+                    <thead><tr><th>Část</th><th>Opakování</th><th>Trvání</th>
+                        <th th:if="${ex.kbSportConfig.unilateral}">Strana</th><th>Pozn.</th></tr></thead>
+                    <tbody>
+                    <tr th:each="iv : ${ex.kbSportConfig.intervals}">
+                        <td th:text="${iv.intervalIndex + 1}">1</td>
+                        <td th:text="${iv.reps} ?: '—'">20</td>
+                        <td><span th:if="${iv.durationSeconds != null}"
+                                  th:text="${iv.durationSeconds / 60} + ':' + ${#strings.replace(#numbers.formatInteger(iv.durationSeconds % 60, 2), ' ', '0')}">1:00</span>
+                            <span th:if="${iv.durationSeconds == null}">—</span></td>
+                        <td th:if="${ex.kbSportConfig.unilateral}" th:text="${iv.side} ?: '—'">L</td>
+                        <td th:text="${iv.note} ?: ''"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </th:block>
 
             <!-- Composite (Superset / Complex) -->
             <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
@@ -296,6 +315,18 @@
                     · sekvence <code th:text="${ex.numericSeriesConfig.repSequenceCsv}">1,2,3,5,8</code>
                 </span>
             </div>
+            <!-- kolo 8: vygenerovaná/editovaná tabulka série -->
+            <table class="rk-series" th:if="${ex.numericSeriesConfig != null and !ex.numericSeriesConfig.rows.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Série</th><th>Opakování</th><th>Váha (kg)</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${ex.numericSeriesConfig.rows}">
+                    <td th:text="${r.rung != null ? r.rung + '. série' : '—'}">1. série</td>
+                    <td th:text="${r.reps} ?: '—'">1</td>
+                    <td th:text="${r.weightKg} ?: '—'">12</td>
+                </tr>
+                </tbody>
+            </table>
 
             <!-- Circuit -->
             <div th:if="${ex.circuitConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
@@ -303,17 +334,31 @@
                 <span class="num" th:text="${ex.circuitConfig.rounds}">3</span> kol
                 <span th:if="${ex.circuitConfig.restBetweenRoundsS != null}">· pauza mezi koly <span class="num" th:text="${ex.circuitConfig.restBetweenRoundsS}">60</span>&nbsp;s</span>
             </div>
+            <!-- kolo 8: Opakování/Odpočinek, Kg pryč (váha je u náčiní), náčiní + zaměření per cvik -->
             <table class="rk-series" th:if="${ex.circuitConfig != null and !ex.circuitConfig.steps.isEmpty()}"
                    style="margin: 0 var(--sp-5) var(--sp-4);">
-                <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Sek</th><th>Kg</th><th>Rest</th></tr></thead>
+                <thead><tr><th>#</th><th>Cvik</th><th>Opakování</th><th>Sek</th><th>Odpočinek (s)</th><th>Náčiní</th><th>Zaměření</th></tr></thead>
                 <tbody>
                 <tr th:each="s, st : ${ex.circuitConfig.steps}">
                     <td th:text="${st.count}">1</td>
                     <td th:text="${s.name}">Swing</td>
                     <td th:text="${s.reps} ?: '—'">10</td>
                     <td th:text="${s.durationSeconds} ?: '—'">30</td>
-                    <td th:text="${s.weightKg} ?: '—'">24</td>
                     <td th:text="${s.restSeconds} ?: '—'">15</td>
+                    <td>
+                        <span th:if="${s.equipmentName != null}" th:text="${s.equipmentName}">kettlebell</span><span
+                            th:if="${s.equipmentName != null and s.equipmentWeightKg != null}"> </span><span
+                            th:if="${s.equipmentWeightKg != null}"
+                            th:text="${s.equipmentCount == 2 and s.equipmentSecondWeightKg != null
+                                       ? s.equipmentWeightKg + ' + ' + s.equipmentSecondWeightKg + ' kg'
+                                       : s.equipmentWeightKg + ' kg'}">24 kg</span>
+                        <span th:if="${s.equipmentName == null and s.equipmentWeightKg == null}">—</span>
+                    </td>
+                    <td>
+                        <span th:each="tag, tagSt : ${s.tags}"
+                              th:text="${tag.name} + (${tagSt.last} ? '' : ', ')">Tag</span>
+                        <span th:if="${s.tags.isEmpty()}">—</span>
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -389,7 +434,9 @@
                 <tr>
                     <th class="row-num">#</th>
                     <th>Váha (kg)</th>
-                    <th>Opakování</th>
+                    <!-- kolo 8 (Carry): jednotka dle setUnit -->
+                    <th th:text="${ex.setUnit == 'METERS' ? 'Metry' : (ex.setUnit == 'SECONDS' ? 'Sekundy' : 'Opakování')}">Opakování</th>
+                    <th>Odpočinek (s)</th>
                     <th>RPE</th>
                     <th>Poznámka</th>
                 </tr>
@@ -399,6 +446,7 @@
                     <td class="row-num" th:text="${sStat.count}">1</td>
                     <td th:text="${s.weightKg} ?: '—'">20</td>
                     <td th:text="${s.reps} ?: '—'">10</td>
+                    <td th:text="${s.restSeconds} ?: '—'">60</td>
                     <td th:text="${s.rpe} ?: '—'">7</td>
                     <td th:text="${s.note} ?: ''">poznámka</td>
                 </tr>

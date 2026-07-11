@@ -5,7 +5,7 @@
 <th:block th:fragment="editor">
         <h3 class="mb-3" style="text-transform:uppercase; letter-spacing:0.03em; font-family:var(--rk-font-display);
                                 border-top: 2px solid var(--rk-border-strong); padding-top: var(--sp-4);">
-            🏋️ Cviky
+            🏋️ Náplň tréninku
         </h3>
 
         <div id="exercisesContainer">
@@ -16,10 +16,10 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h5 class="mb-0">
                             <span class="text-muted me-2 exercise-number" th:text="${exStat.count} + '.'">1.</span>
-                            Cvik
+                            Část
                         </h5>
                         <button type="button" class="btn btn-sm btn-outline-danger remove-exercise"
-                                title="Odstranit cvik">×</button>
+                                title="Odstranit část">×</button>
                     </div>
 
                     <!-- Typ cviku — FREEFORM, EMOM, TABATA, AMRAP, ... -->
@@ -73,58 +73,8 @@
                         </div>
                     </div>
 
-                    <div class="freeform-sets">
-                    <h6 class="mb-2">Série</h6>
-                    <table class="table table-sm sets-table">
-                        <thead>
-                        <tr>
-                            <th style="width: 50px;">#</th>
-                            <th>Váha (kg)</th>
-                            <th>Opakování</th>
-                            <th>RPE</th>
-                            <th>Poznámka</th>
-                            <th style="width: 40px;"></th>
-                        </tr>
-                        </thead>
-                        <tbody class="sets-tbody">
-                        <tr th:each="s, sStat : ${ex.sets}" class="set-row">
-                            <td class="set-number" th:text="${sStat.count}">1</td>
-                            <td>
-                                <input type="number" step="0.25"
-                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].weightKg|"
-                                       th:value="${s.weightKg}"
-                                       class="form-control form-control-sm">
-                            </td>
-                            <td>
-                                <input type="number"
-                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].reps|"
-                                       th:value="${s.reps}"
-                                       class="form-control form-control-sm">
-                            </td>
-                            <td>
-                                <input type="number" min="1" max="10"
-                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].rpe|"
-                                       th:value="${s.rpe}"
-                                       class="form-control form-control-sm">
-                            </td>
-                            <td>
-                                <input type="text"
-                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].note|"
-                                       th:value="${s.note}"
-                                       class="form-control form-control-sm">
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-set"
-                                        title="Odstranit set">×</button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
-                    </div>
-
-                    <!-- Phase 11 (A2): per-exercise tagy zaměření -->
-                    <div class="mt-3" th:if="${!tags.isEmpty()}">
+                    <!-- Phase 11 (A2): per-exercise tagy zaměření (kolo 8: přesunuto NAD tabulku sérií) -->
+                    <div class="mt-1 mb-3" th:if="${!tags.isEmpty()}">
                         <label class="form-label form-label-sm" style="font-weight:600;">Zaměření cviku</label>
                         <div class="d-flex flex-wrap gap-2 exercise-tags">
                             <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
@@ -140,8 +90,8 @@
                         </div>
                     </div>
 
-                    <!-- Phase 11 (A14): náčiní/nářadí -->
-                    <div class="row g-2 mt-3 align-items-end equipment-block">
+                    <!-- Phase 11 (A14): náčiní/nářadí (kolo 8: přesunuto NAD tabulku sérií) -->
+                    <div class="row g-2 mb-3 align-items-end equipment-block">
                         <div class="col-md-4">
                             <label class="form-label form-label-sm" style="font-weight:600;">Náčiní</label>
                             <input type="text" list="equipmentOptionsList" data-name="equipmentName"
@@ -170,47 +120,130 @@
                         </div>
                     </div>
 
-                    <!-- =============== EMOM config (zobrazí se jen pro type=EMOM) =============== -->
+                    <div class="freeform-sets">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <h6 class="mb-0">Série</h6>
+                        <!-- kolo 8 (Carry): jednotka záznamu — zobrazí se jen s tagem Carry -->
+                        <div class="set-unit-wrap" style="display:none">
+                            <select data-name="setUnit" th:name="|exercises[${exStat.index}].setUnit|"
+                                    class="form-select form-select-sm set-unit-select" style="width:auto;">
+                                <option value="REPS" th:selected="${ex.setUnit == null or ex.setUnit == 'REPS'}">Opakování</option>
+                                <option value="METERS" th:selected="${ex.setUnit == 'METERS'}">Metry</option>
+                                <option value="SECONDS" th:selected="${ex.setUnit == 'SECONDS'}">Sekundy</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="table table-sm sets-table">
+                        <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Váha (kg)</th>
+                            <th class="sets-reps-header">Opakování</th>
+                            <th>Odpočinek (s)</th>
+                            <th>RPE</th>
+                            <th>Poznámka</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                        </thead>
+                        <tbody class="sets-tbody">
+                        <tr th:each="s, sStat : ${ex.sets}" class="set-row">
+                            <td class="set-number" th:text="${sStat.count}">1</td>
+                            <td>
+                                <input type="number" step="0.25"
+                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].weightKg|"
+                                       th:value="${s.weightKg}"
+                                       class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="number"
+                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].reps|"
+                                       th:value="${s.reps}"
+                                       class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="number" min="0"
+                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].restSeconds|"
+                                       th:value="${s.restSeconds}"
+                                       class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="number" min="1" max="10"
+                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].rpe|"
+                                       th:value="${s.rpe}"
+                                       class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="text"
+                                       th:name="|exercises[${exStat.index}].sets[${sStat.index}].note|"
+                                       th:value="${s.note}"
+                                       class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-set"
+                                        title="Odstranit set">×</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
+                    </div>
+
+                    <!-- =============== EMOM config (zobrazí se jen pro type=EMOM; kolo 8: bez Default kg
+                         a Interval(s), inline editace jednotlivých setů) =============== -->
                     <div class="type-config type-emom mt-4" style="display:none">
                         <h6 class="mb-2">EMOM schéma</h6>
                         <div class="row g-2">
                             <div class="col-md-3">
                                 <label class="form-label form-label-sm">Celkem minut *</label>
                                 <input type="number" min="1" max="120"
+                                       data-name="emom.totalMinutes"
                                        th:name="|exercises[${exStat.index}].emom.totalMinutes|"
                                        th:value="${ex.emom?.totalMinutes}"
-                                       class="form-control form-control-sm">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Interval (s)</label>
-                                <input type="number" min="1" max="600"
-                                       th:name="|exercises[${exStat.index}].emom.intervalSeconds|"
-                                       th:value="${ex.emom?.intervalSeconds} ?: 60"
-                                       class="form-control form-control-sm">
+                                       class="form-control form-control-sm emom-total-minutes">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label form-label-sm">Default reps</label>
                                 <input type="number"
+                                       data-name="emom.defaultReps"
                                        th:name="|exercises[${exStat.index}].emom.defaultReps|"
                                        th:value="${ex.emom?.defaultReps}"
-                                       class="form-control form-control-sm">
+                                       class="form-control form-control-sm emom-default-reps">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Default kg</label>
-                                <input type="number" step="0.25"
-                                       th:name="|exercises[${exStat.index}].emom.defaultWeightKg|"
-                                       th:value="${ex.emom?.defaultWeightKg}"
-                                       class="form-control form-control-sm">
-                            </div>
+                        </div>
+                        <!-- kolo 8: per-minute editace přímo ve formuláři (kg se předvyplní z Náčiní) -->
+                        <div class="mt-2">
+                            <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+                                <input type="checkbox" class="form-check-input emom-edit-sets"
+                                       th:checked="${ex.emom != null and !ex.emom.minuteOverrides.isEmpty()}">
+                                <span class="small">Editovat jednotlivé sety</span>
+                            </label>
+                        </div>
+                        <div class="emom-sets-block mt-2"
+                             th:style="${ex.emom != null and !ex.emom.minuteOverrides.isEmpty()} ? '' : 'display:none'">
+                            <table class="table table-sm emom-sets-table">
+                                <thead><tr><th style="width:80px">Minuta</th><th>Reps</th><th>Kg</th></tr></thead>
+                                <tbody class="emom-sets-tbody">
+                                <tr th:each="o, oStat : ${ex.emom?.minuteOverrides}" class="emom-set-row">
+                                    <td class="num emom-set-num" th:text="${o.minuteIndex}">1</td>
+                                    <td><input type="number" min="0" th:attr="data-name=|emom.minuteOverrides[${oStat.index}].reps|" th:value="${o.reps}" class="form-control form-control-sm"></td>
+                                    <td>
+                                        <input type="number" step="0.25" th:attr="data-name=|emom.minuteOverrides[${oStat.index}].weightKg|" th:value="${o.weightKg}" class="form-control form-control-sm">
+                                        <input type="hidden" th:attr="data-name=|emom.minuteOverrides[${oStat.index}].minuteIndex|" th:value="${o.minuteIndex}" class="emom-set-index">
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row g-2">
                             <div class="col-12">
                                 <label class="form-label form-label-sm">Poznámky k EMOM</label>
                                 <input type="text"
+                                       data-name="emom.notes"
                                        th:name="|exercises[${exStat.index}].emom.notes|"
                                        th:value="${ex.emom?.notes}"
                                        class="form-control form-control-sm">
                             </div>
                         </div>
-                        <div class="form-text">Per-minute overrides můžeš nastavit v editaci po prvním uložení.</div>
                     </div>
 
                     <!-- =============== TABATA config =============== -->
@@ -220,9 +253,10 @@
                             <div class="col-md-3">
                                 <label class="form-label form-label-sm">Kola *</label>
                                 <input type="number" min="1" max="30"
+                                       data-name="tabata.rounds"
                                        th:name="|exercises[${exStat.index}].tabata.rounds|"
                                        th:value="${ex.tabata?.rounds} ?: 8"
-                                       class="form-control form-control-sm">
+                                       class="form-control form-control-sm tabata-rounds">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label form-label-sm">Práce (s)</label>
@@ -239,22 +273,36 @@
                                        class="form-control form-control-sm">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label form-label-sm">Default reps</label>
+                                <label class="form-label form-label-sm">Předdefinovaný počet opakování</label>
                                 <input type="number"
+                                       data-name="tabata.defaultReps"
                                        th:name="|exercises[${exStat.index}].tabata.defaultReps|"
                                        th:value="${ex.tabata?.defaultReps}"
-                                       class="form-control form-control-sm">
+                                       class="form-control form-control-sm tabata-default-reps">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Default kg</label>
-                                <input type="number" step="0.25"
-                                       th:name="|exercises[${exStat.index}].tabata.defaultWeightKg|"
-                                       th:value="${ex.tabata?.defaultWeightKg}"
-                                       class="form-control form-control-sm">
-                            </div>
+                        </div>
+                        <!-- kolo 8: tabulka kol — předvyplněná dle „Předdefinovaný počet opakování",
+                             editovatelná (vlivem únavy může počet opakování v každém kole klesat) -->
+                        <div class="tabata-rounds-block mt-2"
+                             th:style="${ex.tabata != null and !ex.tabata.roundOverrides.isEmpty()} ? '' : 'display:none'">
+                            <table class="table table-sm tabata-rounds-table">
+                                <thead><tr><th style="width:80px">Kolo</th><th>Opakování</th></tr></thead>
+                                <tbody class="tabata-rounds-tbody">
+                                <tr th:each="o, oStat : ${ex.tabata?.roundOverrides}" class="tabata-round-row">
+                                    <td class="num tabata-round-num" th:text="${o.roundIndex}">1</td>
+                                    <td>
+                                        <input type="number" min="0" th:attr="data-name=|tabata.roundOverrides[${oStat.index}].reps|" th:value="${o.reps}" class="form-control form-control-sm">
+                                        <input type="hidden" th:attr="data-name=|tabata.roundOverrides[${oStat.index}].roundIndex|" th:value="${o.roundIndex}" class="tabata-round-index">
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row g-2">
                             <div class="col-md-9">
                                 <label class="form-label form-label-sm">Poznámky k Tabatě</label>
                                 <input type="text"
+                                       data-name="tabata.notes"
                                        th:name="|exercises[${exStat.index}].tabata.notes|"
                                        th:value="${ex.tabata?.notes}"
                                        class="form-control form-control-sm">
@@ -262,22 +310,42 @@
                         </div>
                     </div>
 
-                    <!-- =============== NUMERIC SERIES (Ladder/Stepladder/Pyramid) =============== -->
+                    <!-- =============== NUMERIC SERIES (Ladder/Stepladder/Pyramid; kolo 8: dynamická
+                         tabulka z Start/Peak/Krok, váha se bere z Náčiní) =============== -->
                     <div class="type-config type-ladder type-stepladder type-pyramid mt-4" style="display:none">
                         <h6 class="mb-2">Schéma série</h6>
                         <p class="form-text mb-2">
-                            <strong>Ladder:</strong> 1→peak (např. 1,2,3,4,5). ·
-                            <strong>Pyramid:</strong> 1→peak→1 (1,2,3,2,1). ·
-                            <strong>Stepladder:</strong> volnější rozestupy, použij CSV.
+                            <strong>Ladder:</strong> stoupá k vrcholu. ·
+                            <strong>Stepladder:</strong> stoupá k vrcholu a zase sestupuje. ·
+                            <strong>Pyramid:</strong> nahoru a dolů, 1 řádek na stupeň.
                         </p>
                         <div class="row g-2">
-                            <div class="col-md-3"><label class="form-label form-label-sm">Start</label><input type="number" th:name="|exercises[${exStat.index}].numericSeries.startValue|" th:value="${ex.numericSeries?.startValue} ?: 1" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Peak (vrchol)</label><input type="number" th:name="|exercises[${exStat.index}].numericSeries.peakValue|" th:value="${ex.numericSeries?.peakValue}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Krok</label><input type="number" min="1" th:name="|exercises[${exStat.index}].numericSeries.stepSize|" th:value="${ex.numericSeries?.stepSize} ?: 1" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" th:name="|exercises[${exStat.index}].numericSeries.weightKg|" th:value="${ex.numericSeries?.weightKg}" class="form-control form-control-sm"></div>
-                            <div class="col-md-9"><label class="form-label form-label-sm">Custom sequence (CSV — má přednost před výpočtem)</label><input type="text" th:name="|exercises[${exStat.index}].numericSeries.repSequenceCsv|" th:value="${ex.numericSeries?.repSequenceCsv}" placeholder="např. 1,2,3,5,8" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi (s)</label><input type="number" th:name="|exercises[${exStat.index}].numericSeries.restSecondsBetween|" th:value="${ex.numericSeries?.restSecondsBetween}" class="form-control form-control-sm"></div>
-                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].numericSeries.notes|" th:value="${ex.numericSeries?.notes}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Start</label><input type="number" data-name="numericSeries.startValue" th:name="|exercises[${exStat.index}].numericSeries.startValue|" th:value="${ex.numericSeries?.startValue} ?: 1" class="form-control form-control-sm series-start"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Peak (vrchol)</label><input type="number" data-name="numericSeries.peakValue" th:name="|exercises[${exStat.index}].numericSeries.peakValue|" th:value="${ex.numericSeries?.peakValue}" class="form-control form-control-sm series-peak"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Krok</label><input type="number" min="1" data-name="numericSeries.stepSize" th:name="|exercises[${exStat.index}].numericSeries.stepSize|" th:value="${ex.numericSeries?.stepSize} ?: 1" class="form-control form-control-sm series-step"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi (s)</label><input type="number" data-name="numericSeries.restSecondsBetween" th:name="|exercises[${exStat.index}].numericSeries.restSecondsBetween|" th:value="${ex.numericSeries?.restSecondsBetween}" class="form-control form-control-sm"></div>
+                        </div>
+                        <!-- kolo 8: validace souladu start/peak/krok + vygenerovaná editovatelná tabulka -->
+                        <div class="series-warning small fw-bold mt-2" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                        <div class="series-preview mt-2"
+                             th:style="${ex.numericSeries != null and !ex.numericSeries.rows.isEmpty()} ? '' : 'display:none'">
+                            <table class="table table-sm series-rows-table">
+                                <thead><tr><th style="width:110px">Série</th><th>Počet opakování</th><th>Váha (kg)</th></tr></thead>
+                                <tbody class="series-rows-tbody">
+                                <tr th:each="r, rStat : ${ex.numericSeries?.rows}" class="series-row">
+                                    <td class="series-row-label" th:text="${r.rung} + '. série'">1. série</td>
+                                    <td>
+                                        <input type="number" min="0" th:attr="data-name=|numericSeries.rows[${rStat.index}].reps|" th:value="${r.reps}" class="form-control form-control-sm">
+                                        <input type="hidden" th:attr="data-name=|numericSeries.rows[${rStat.index}].rung|" th:value="${r.rung}" class="series-row-rung">
+                                        <input type="hidden" th:attr="data-name=|numericSeries.rows[${rStat.index}].rowIndex|" th:value="${rStat.index}" class="series-row-index">
+                                    </td>
+                                    <td><input type="number" step="0.25" th:attr="data-name=|numericSeries.rows[${rStat.index}].weightKg|" th:value="${r.weightKg}" class="form-control form-control-sm"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="numericSeries.notes" th:name="|exercises[${exStat.index}].numericSeries.notes|" th:value="${ex.numericSeries?.notes}" class="form-control form-control-sm"></div>
                         </div>
                     </div>
 
@@ -307,36 +375,56 @@
                                        class="form-control form-control-sm">
                             </div>
                         </div>
-                        <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ):</div>
-                        <table class="table table-sm">
-                            <thead>
-                            <tr>
-                                <th style="width:40px">#</th>
-                                <th>Cvik *</th>
-                                <th style="width:80px">Reps</th>
-                                <th style="width:80px">Sekundy</th>
-                                <th style="width:80px">Kg</th>
-                                <th style="width:80px">Rest (s)</th>
-                                <th>Pozn.</th>
-                                <th style="width:40px"></th>
-                            </tr>
-                            </thead>
-                            <tbody class="circuit-steps-tbody">
-                            <tr th:each="s, sStat : ${ex.circuit?.steps}" class="circuit-step-row">
-                                <td class="step-num" th:text="${sStat.count}">1</td>
-                                <td>
-                                    <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
-                                    <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
-                                </td>
-                                <td><input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm"></td>
-                                <td><input type="number" data-step-field="durationSeconds" th:value="${s.durationSeconds}" class="form-control form-control-sm"></td>
-                                <td><input type="number" step="0.25" data-step-field="weightKg" th:value="${s.weightKg}" class="form-control form-control-sm"></td>
-                                <td><input type="number" data-step-field="restSeconds" th:value="${s.restSeconds}" class="form-control form-control-sm"></td>
-                                <td><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></td>
-                                <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
-                            </tr>
-                            </tbody>
-                        </table>
+                        <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
+                        <div class="circuit-steps-tbody">
+                            <div th:each="s, sStat : ${ex.circuit?.steps}" class="circuit-step-row border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small"><span class="step-num" th:text="${sStat.count}">1</span>. cvik</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="form-label form-label-sm">Cvik *</label>
+                                        <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
+                                        <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+                                    </div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" th:value="${s.durationSeconds}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" th:value="${s.restSeconds}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></div>
+                                </div>
+                                <!-- kolo 8: náčiní per cvik kruhového tréninku -->
+                                <div class="row g-2 mt-1 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label form-label-sm">Náčiní</label>
+                                        <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" th:value="${s.equipmentName}" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
+                                    </div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" th:value="${s.equipmentWeightKg}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-3">
+                                        <label class="form-label form-label-sm">Počet zátěží</label>
+                                        <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
+                                            <option value="1" th:selected="${s.equipmentCount == null or s.equipmentCount != 2}">1 zátěž</option>
+                                            <option value="2" th:selected="${s.equipmentCount == 2}">2 zátěže současně</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 step-equipment-second" th:style="${s.equipmentCount == 2} ? '' : 'display:none'">
+                                        <label class="form-label form-label-sm">2. zátěž (kg)</label>
+                                        <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                                <!-- kolo 8: zaměření (tagy) per cvik kruhového tréninku -->
+                                <div class="mt-2" th:if="${!tags.isEmpty()}">
+                                    <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds" th:value="${tag.id}"
+                                                   th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
+                                            <span th:text="${tag.name}">Tag</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary add-circuit-step">+ Přidat cvik</button>
                     </div>
 
@@ -385,24 +473,60 @@
                         <p class="form-text mb-0">Příklad: vrchol 5 = série 1,2,3,4,5 opakování (krátká pauza mezi nimi se nezapisuje), pak pauza a další cyklus.</p>
                     </div>
 
-                    <!-- =============== KB SPORT TIME (Phase 13 A12) =============== -->
+                    <!-- =============== KB SPORT TIME (Phase 13 A12, přepracováno kolo 8) =============== -->
                     <div class="type-config type-kb_sport_time mt-4" style="display:none">
                         <h6 class="mb-2">KB sport time (opakování za čas)</h6>
                         <div class="row g-2">
-                            <div class="col-md-2"><label class="form-label form-label-sm">Čas: minuty *</label><input type="number" min="0" max="600" th:name="|exercises[${exStat.index}].kbSport.totalMinutes|" th:value="${ex.kbSport?.totalMinutes}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">+ sekundy</label><input type="number" min="0" max="59" th:name="|exercises[${exStat.index}].kbSport.totalSeconds|" th:value="${ex.kbSport?.totalSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Celkem opakování</label><input type="number" th:name="|exercises[${exStat.index}].kbSport.totalReps|" th:value="${ex.kbSport?.totalReps}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Rozdělit po (s)</label><input type="number" th:name="|exercises[${exStat.index}].kbSport.splitIntervalSeconds|" th:value="${ex.kbSport?.splitIntervalSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" th:name="|exercises[${exStat.index}].kbSport.weightKg|" th:value="${ex.kbSport?.weightKg}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3 d-flex align-items-end">
+                            <div class="col-md-2"><label class="form-label form-label-sm">Čas: minuty *</label><input type="number" min="0" max="600" data-name="kbSport.totalMinutes" th:name="|exercises[${exStat.index}].kbSport.totalMinutes|" th:value="${ex.kbSport?.totalMinutes}" class="form-control form-control-sm kb-total-min"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">+ sekundy</label><input type="number" min="0" max="59" data-name="kbSport.totalSeconds" th:name="|exercises[${exStat.index}].kbSport.totalSeconds|" th:value="${ex.kbSport?.totalSeconds}" class="form-control form-control-sm kb-total-sec"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Celkem opakování</label><input type="number" data-name="kbSport.totalReps" th:name="|exercises[${exStat.index}].kbSport.totalReps|" th:value="${ex.kbSport?.totalReps}" class="form-control form-control-sm kb-total-reps"></div>
+                        </div>
+                        <!-- kolo 8: podrobný záznam po částech — unilaterální (1 zátěž) / bilaterální (2 zátěže) -->
+                        <div class="row g-2 mt-1 align-items-end">
+                            <div class="col-md-5">
                                 <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
-                                    <input type="checkbox" class="form-check-input" th:name="|exercises[${exStat.index}].kbSport.unilateral|" value="true" th:checked="${ex.kbSport?.unilateral}">
-                                    <span class="small">unilaterální (L/P)</span>
+                                    <input type="checkbox" class="form-check-input kb-detail-unilateral" data-name="kbSport.unilateral" th:name="|exercises[${exStat.index}].kbSport.unilateral|" value="true" th:checked="${ex.kbSport?.unilateral}">
+                                    <span class="small">unilaterální (L/P) handswitch - podrobný záznam</span>
                                 </label>
                             </div>
-                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" th:name="|exercises[${exStat.index}].kbSport.notes|" th:value="${ex.kbSport?.notes}" class="form-control form-control-sm"></div>
+                            <div class="col-md-4">
+                                <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+                                    <input type="checkbox" class="form-check-input kb-detail-bilateral" data-name="kbSport.bilateralDetail" th:name="|exercises[${exStat.index}].kbSport.bilateralDetail|" value="true" th:checked="${ex.kbSport?.bilateralDetail}">
+                                    <span class="small">bilaterální podrobný záznam</span>
+                                </label>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label form-label-sm">Rozdělit na x částí</label>
+                                <input type="number" min="1" max="120" class="form-control form-control-sm kb-split-parts" disabled
+                                       th:value="${ex.kbSport != null and !ex.kbSport.intervals.isEmpty() ? ex.kbSport.intervals.size() : ''}">
+                            </div>
                         </div>
-                        <p class="form-text mb-0">Např. 10 min / 80 opakování. „Rozdělit po" připraví podrobný záznam po intervalech (doplníš v detailu).</p>
+                        <div class="kb-parts-block mt-2">
+                            <div class="kb-parts-warning small fw-bold" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                            <table class="table table-sm kb-parts-table"
+                                   th:style="${ex.kbSport != null and !ex.kbSport.intervals.isEmpty()} ? '' : 'display:none'">
+                                <thead><tr><th style="width:36px">#</th><th>Počet opakování</th><th>Trvání minuty</th><th>Trvání sekundy</th><th class="kb-side-col">Strana</th></tr></thead>
+                                <tbody class="kb-parts-tbody">
+                                <tr th:each="iv, ivStat : ${ex.kbSport?.intervals}" class="kb-part-row">
+                                    <td class="kb-part-num" th:text="${ivStat.count}">1</td>
+                                    <td><input type="number" min="0" th:attr="data-name=|kbSport.intervals[${ivStat.index}].reps|" th:value="${iv.reps}" class="form-control form-control-sm kb-part-reps"></td>
+                                    <td><input type="number" min="0" max="600" th:attr="data-name=|kbSport.intervals[${ivStat.index}].durationMinutes|" th:value="${iv.durationMinutes}" class="form-control form-control-sm kb-part-dur-min"></td>
+                                    <td><input type="number" min="0" max="59" th:attr="data-name=|kbSport.intervals[${ivStat.index}].durationSeconds|" th:value="${iv.durationSeconds}" class="form-control form-control-sm kb-part-dur-sec"></td>
+                                    <td class="kb-side-col">
+                                        <select th:attr="data-name=|kbSport.intervals[${ivStat.index}].side|" class="form-select form-select-sm kb-part-side">
+                                            <option value="">—</option>
+                                            <option value="L" th:selected="${iv.side == 'L'}">L</option>
+                                            <option value="P" th:selected="${iv.side == 'P'}">P</option>
+                                        </select>
+                                        <input type="hidden" th:attr="data-name=|kbSport.intervals[${ivStat.index}].intervalIndex|" th:value="${ivStat.index}" class="kb-part-index">
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="kbSport.notes" th:name="|exercises[${exStat.index}].kbSport.notes|" th:value="${ex.kbSport?.notes}" class="form-control form-control-sm"></div>
+                        </div>
                     </div>
 
                     <!-- =============== COMPOSITE (Superset/Complex) =============== -->
@@ -503,7 +627,7 @@
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h5 class="mb-0">
                     <span class="text-muted me-2 exercise-number">N.</span>
-                    Cvik
+                    Část
                 </h5>
                 <button type="button" class="btn btn-sm btn-outline-danger remove-exercise">×</button>
             </div>
@@ -533,26 +657,8 @@
                 </div>
             </div>
 
-            <div class="freeform-sets">
-            <h6 class="mb-2">Série</h6>
-            <table class="table table-sm sets-table">
-                <thead>
-                <tr>
-                    <th style="width: 50px;">#</th>
-                    <th>Váha (kg)</th>
-                    <th>Opakování</th>
-                    <th>RPE</th>
-                    <th>Poznámka</th>
-                    <th style="width: 40px;"></th>
-                </tr>
-                </thead>
-                <tbody class="sets-tbody"></tbody>
-            </table>
-            <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
-            </div>
-
-            <!-- Phase 11 (A2): per-exercise tagy zaměření (v template — JS doplní name index) -->
-            <div class="mt-3" th:if="${!tags.isEmpty()}">
+            <!-- Phase 11 (A2): per-exercise tagy zaměření (kolo 8: NAD tabulkou sérií) -->
+            <div class="mt-1 mb-3" th:if="${!tags.isEmpty()}">
                 <label class="form-label form-label-sm" style="font-weight:600;">Zaměření cviku</label>
                 <div class="d-flex flex-wrap gap-2 exercise-tags">
                     <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
@@ -563,8 +669,8 @@
                 </div>
             </div>
 
-            <!-- Phase 11 (A14): náčiní (v template — JS doplní name index) -->
-            <div class="row g-2 mt-3 align-items-end equipment-block">
+            <!-- Phase 11 (A14): náčiní (kolo 8: NAD tabulkou sérií; JS doplní name index) -->
+            <div class="row g-2 mb-3 align-items-end equipment-block">
                 <div class="col-md-4">
                     <label class="form-label form-label-sm" style="font-weight:600;">Náčiní</label>
                     <input type="text" list="equipmentOptionsList" data-name="equipmentName"
@@ -587,25 +693,72 @@
                 </div>
             </div>
 
+            <div class="freeform-sets">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <h6 class="mb-0">Série</h6>
+                <div class="set-unit-wrap" style="display:none">
+                    <select data-name="setUnit" class="form-select form-select-sm set-unit-select" style="width:auto;">
+                        <option value="REPS">Opakování</option>
+                        <option value="METERS">Metry</option>
+                        <option value="SECONDS">Sekundy</option>
+                    </select>
+                </div>
+            </div>
+            <table class="table table-sm sets-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Váha (kg)</th>
+                    <th class="sets-reps-header">Opakování</th>
+                    <th>Odpočinek (s)</th>
+                    <th>RPE</th>
+                    <th>Poznámka</th>
+                    <th style="width: 40px;"></th>
+                </tr>
+                </thead>
+                <tbody class="sets-tbody"></tbody>
+            </table>
+            <button type="button" class="btn btn-sm btn-outline-secondary add-set">+ Přidat set</button>
+            </div>
+
             <!-- Type config sekce — JS přepne viditelnost podle vybraného typu -->
             <div class="type-config type-emom mt-4" style="display:none">
                 <h6 class="mb-2">EMOM schéma</h6>
                 <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Celkem minut *</label><input type="number" min="1" max="120" data-name="emom.totalMinutes" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Interval (s)</label><input type="number" min="1" max="600" data-name="emom.intervalSeconds" value="60" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Default reps</label><input type="number" data-name="emom.defaultReps" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Default kg</label><input type="number" step="0.25" data-name="emom.defaultWeightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Celkem minut *</label><input type="number" min="1" max="120" data-name="emom.totalMinutes" class="form-control form-control-sm emom-total-minutes"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Default reps</label><input type="number" data-name="emom.defaultReps" class="form-control form-control-sm emom-default-reps"></div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+                        <input type="checkbox" class="form-check-input emom-edit-sets">
+                        <span class="small">Editovat jednotlivé sety</span>
+                    </label>
+                </div>
+                <div class="emom-sets-block mt-2" style="display:none">
+                    <table class="table table-sm emom-sets-table">
+                        <thead><tr><th style="width:80px">Minuta</th><th>Reps</th><th>Kg</th></tr></thead>
+                        <tbody class="emom-sets-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="row g-2">
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="emom.notes" class="form-control form-control-sm"></div>
                 </div>
             </div>
             <div class="type-config type-tabata mt-4" style="display:none">
                 <h6 class="mb-2">Tabata schéma</h6>
                 <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="tabata.rounds" value="8" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="tabata.rounds" value="8" class="form-control form-control-sm tabata-rounds"></div>
                     <div class="col-md-3"><label class="form-label form-label-sm">Práce (s)</label><input type="number" min="5" max="300" data-name="tabata.workSeconds" value="20" class="form-control form-control-sm"></div>
                     <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" min="0" max="300" data-name="tabata.restSeconds" value="10" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Default reps</label><input type="number" data-name="tabata.defaultReps" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Default kg</label><input type="number" step="0.25" data-name="tabata.defaultWeightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Předdefinovaný počet opakování</label><input type="number" data-name="tabata.defaultReps" class="form-control form-control-sm tabata-default-reps"></div>
+                </div>
+                <div class="tabata-rounds-block mt-2" style="display:none">
+                    <table class="table table-sm tabata-rounds-table">
+                        <thead><tr><th style="width:80px">Kolo</th><th>Opakování</th></tr></thead>
+                        <tbody class="tabata-rounds-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="row g-2">
                     <div class="col-md-9"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="tabata.notes" class="form-control form-control-sm"></div>
                 </div>
             </div>
@@ -613,12 +766,19 @@
                 <h6 class="mb-2">Schéma série</h6>
                 <p class="form-text mb-2">Ladder: 1→peak. Pyramid: 1→peak→1. Stepladder: použij CSV.</p>
                 <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Start</label><input type="number" data-name="numericSeries.startValue" value="1" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Peak</label><input type="number" data-name="numericSeries.peakValue" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Krok</label><input type="number" min="1" data-name="numericSeries.stepSize" value="1" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="numericSeries.weightKg" class="form-control form-control-sm"></div>
-                    <div class="col-md-9"><label class="form-label form-label-sm">CSV (přednost)</label><input type="text" data-name="numericSeries.repSequenceCsv" placeholder="1,2,3,5,8" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Start</label><input type="number" data-name="numericSeries.startValue" value="1" class="form-control form-control-sm series-start"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Peak (vrchol)</label><input type="number" data-name="numericSeries.peakValue" class="form-control form-control-sm series-peak"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Krok</label><input type="number" min="1" data-name="numericSeries.stepSize" value="1" class="form-control form-control-sm series-step"></div>
                     <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi (s)</label><input type="number" data-name="numericSeries.restSecondsBetween" class="form-control form-control-sm"></div>
+                </div>
+                <div class="series-warning small fw-bold mt-2" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                <div class="series-preview mt-2" style="display:none">
+                    <table class="table table-sm series-rows-table">
+                        <thead><tr><th style="width:110px">Série</th><th>Počet opakování</th><th>Váha (kg)</th></tr></thead>
+                        <tbody class="series-rows-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="row g-2">
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="numericSeries.notes" class="form-control form-control-sm"></div>
                 </div>
             </div>
@@ -629,11 +789,8 @@
                     <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" min="0" data-name="circuit.restBetweenRoundsS" class="form-control form-control-sm"></div>
                     <div class="col-md-6"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="circuit.notes" class="form-control form-control-sm"></div>
                 </div>
-                <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ):</div>
-                <table class="table table-sm">
-                    <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Sekundy</th><th style="width:80px">Kg</th><th style="width:80px">Rest (s)</th><th>Pozn.</th><th style="width:40px"></th></tr></thead>
-                    <tbody class="circuit-steps-tbody"></tbody>
-                </table>
+                <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
+                <div class="circuit-steps-tbody"></div>
                 <button type="button" class="btn btn-sm btn-outline-secondary add-circuit-step">+ Přidat cvik</button>
             </div>
             <div class="type-config type-straight_sets mt-4" style="display:none">
@@ -678,20 +835,38 @@
             <div class="type-config type-kb_sport_time mt-4" style="display:none">
                 <h6 class="mb-2">KB sport time (opakování za čas)</h6>
                 <div class="row g-2">
-                    <div class="col-md-2"><label class="form-label form-label-sm">Čas: minuty *</label><input type="number" min="0" max="600" data-name="kbSport.totalMinutes" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">+ sekundy</label><input type="number" min="0" max="59" data-name="kbSport.totalSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Celkem opakování</label><input type="number" data-name="kbSport.totalReps" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Rozdělit po (s)</label><input type="number" data-name="kbSport.splitIntervalSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="kbSport.weightKg" class="form-control form-control-sm"></div>
-                    <div class="col-md-3 d-flex align-items-end">
+                    <div class="col-md-2"><label class="form-label form-label-sm">Čas: minuty *</label><input type="number" min="0" max="600" data-name="kbSport.totalMinutes" class="form-control form-control-sm kb-total-min"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">+ sekundy</label><input type="number" min="0" max="59" data-name="kbSport.totalSeconds" class="form-control form-control-sm kb-total-sec"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Celkem opakování</label><input type="number" data-name="kbSport.totalReps" class="form-control form-control-sm kb-total-reps"></div>
+                </div>
+                <div class="row g-2 mt-1 align-items-end">
+                    <div class="col-md-5">
                         <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
-                            <input type="checkbox" class="form-check-input" data-name="kbSport.unilateral" value="true">
-                            <span class="small">unilaterální (L/P)</span>
+                            <input type="checkbox" class="form-check-input kb-detail-unilateral" data-name="kbSport.unilateral" value="true">
+                            <span class="small">unilaterální (L/P) handswitch - podrobný záznam</span>
                         </label>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+                            <input type="checkbox" class="form-check-input kb-detail-bilateral" data-name="kbSport.bilateralDetail" value="true">
+                            <span class="small">bilaterální podrobný záznam</span>
+                        </label>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm">Rozdělit na x částí</label>
+                        <input type="number" min="1" max="120" class="form-control form-control-sm kb-split-parts" disabled>
+                    </div>
+                </div>
+                <div class="kb-parts-block mt-2">
+                    <div class="kb-parts-warning small fw-bold" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                    <table class="table table-sm kb-parts-table" style="display:none">
+                        <thead><tr><th style="width:36px">#</th><th>Počet opakování</th><th>Trvání minuty</th><th>Trvání sekundy</th><th class="kb-side-col">Strana</th></tr></thead>
+                        <tbody class="kb-parts-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="row g-2">
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="kbSport.notes" class="form-control form-control-sm"></div>
                 </div>
-                <p class="form-text mb-0">Např. 10 min / 80 opakování.</p>
             </div>
             <div class="type-config type-superset type-complex mt-4" style="display:none">
                 <h6 class="mb-2">Schéma (kompozitní)</h6>
@@ -727,6 +902,7 @@
         <td class="set-number">N</td>
         <td><input type="number" step="0.25" data-name="weightKg" class="form-control form-control-sm"></td>
         <td><input type="number" data-name="reps" class="form-control form-control-sm"></td>
+        <td><input type="number" min="0" data-name="restSeconds" class="form-control form-control-sm"></td>
         <td><input type="number" min="1" max="10" data-name="rpe" class="form-control form-control-sm"></td>
         <td><input type="text" data-name="note" class="form-control form-control-sm"></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger remove-set">×</button></td>
@@ -749,19 +925,50 @@
 </template>
 
 <template id="circuitStepTemplate">
-    <tr class="circuit-step-row">
-        <td class="step-num">N</td>
-        <td>
-            <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
-            <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
-        </td>
-        <td><input type="number" data-step-field="reps" class="form-control form-control-sm"></td>
-        <td><input type="number" data-step-field="durationSeconds" class="form-control form-control-sm"></td>
-        <td><input type="number" step="0.25" data-step-field="weightKg" class="form-control form-control-sm"></td>
-        <td><input type="number" data-step-field="restSeconds" class="form-control form-control-sm"></td>
-        <td><input type="text" data-step-field="note" class="form-control form-control-sm"></td>
-        <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
-    </tr>
+    <div class="circuit-step-row border rounded p-2 mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <strong class="small"><span class="step-num">N</span>. cvik</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-5">
+                <label class="form-label form-label-sm">Cvik *</label>
+                <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
+                <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+            </div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" data-step-field="reps" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" class="form-control form-control-sm"></div>
+            <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" class="form-control form-control-sm"></div>
+        </div>
+        <div class="row g-2 mt-1 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Náčiní</label>
+                <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
+            </div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" class="form-control form-control-sm"></div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Počet zátěží</label>
+                <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
+                    <option value="1">1 zátěž</option>
+                    <option value="2">2 zátěže současně</option>
+                </select>
+            </div>
+            <div class="col-md-3 step-equipment-second" style="display:none">
+                <label class="form-label form-label-sm">2. zátěž (kg)</label>
+                <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm">
+            </div>
+        </div>
+        <div class="mt-2" th:if="${tags != null and !tags.isEmpty()}">
+            <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
+            <div class="d-flex flex-wrap gap-2">
+                <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                    <input type="checkbox" class="form-check-input" data-step-field="tagIds" th:value="${tag.id}">
+                    <span th:text="${tag.name}">Tag</span>
+                </label>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script th:src="@{/js/diary-form.js}"></script>
