@@ -174,7 +174,8 @@
                 </span>
                 <span th:if="${started and !isFull}" class="rk-badge">PROBÍHÁ</span>
 
-                <form th:if="${!isFull and !started}"
+                <!-- ScoutMeto kolo 8: max jedna rezervace na lekci — kdo už ji má, Zapsat se nevidí -->
+                <form th:if="${!isFull and !started and (myByTraining == null or myByTraining.get(t.trainingId()) == null)}"
                       th:action="@{/reservations/book}" method="post"
                       onsubmit="return confirm('Zapsat se na tuto lekci? Tvoje údaje budou poslány do rezervačního systému.');">
                     <input type="hidden" name="trainingId" th:value="${t.trainingId()}">
@@ -184,6 +185,10 @@
                         Zapsat se
                     </button>
                 </form>
+                <span th:if="${!started and myByTraining != null and myByTraining.get(t.trainingId()) != null}"
+                      class="rk-badge rk-badge--success" style="background: var(--rk-success-soft); color: var(--rk-success);">
+                    MÁM REZERVACI
+                </span>
 
                 <!-- ScoutMeto kolo 7: zrušení přímo u lekce — jen kde mám rezervaci,
                      lekce neproběhla a do startu zbývá víc než 30 minut -->

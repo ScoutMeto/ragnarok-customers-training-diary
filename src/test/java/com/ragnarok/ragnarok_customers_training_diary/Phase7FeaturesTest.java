@@ -124,6 +124,18 @@ class Phase7FeaturesTest {
     }
 
     @Test
+    void createReservation_secondBookingOfSameLesson_rejected() {
+        // ScoutMeto kolo 8: max jedna rezervace na lekci
+        when(client.listTrainings(any(), any())).thenReturn(List.of(
+                trainingWithReservation(123L, 500L, "Marek", "Novák", LocalDateTime.now().plusDays(1))));
+
+        assertThatThrownBy(() -> service.createReservationForClient(account, 123L, 1))
+                .isInstanceOf(ReservationException.class)
+                .hasMessageContaining("už máš rezervaci");
+        verify(client, times(0)).createReservation(any());
+    }
+
+    @Test
     void createReservation_propagatesClientException() {
         when(client.createReservation(any())).thenThrow(
                 new ReservationException("Rezervace odmítnuta: plně obsazeno"));

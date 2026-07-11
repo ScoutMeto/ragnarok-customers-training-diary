@@ -75,6 +75,18 @@ public class ReservationService {
         if (trainingId == null) {
             throw new ReservationException("Chybí ID lekce.");
         }
+        // ScoutMeto kolo 8: max jedna rezervace na lekci — kontrola proti aktuálním datům
+        // rezervačního systému (párování dle jména, public API nevrací email).
+        LocalDate today = LocalDate.now();
+        boolean alreadyBooked = client.listTrainings(today.atStartOfDay(), today.plusDays(60).atTime(23, 59)).stream()
+                .filter(t -> trainingId.equals(t.trainingId()))
+                .filter(t -> t.reservations() != null)
+                .flatMap(t -> t.reservations().stream())
+                .anyMatch(r -> safe(account.getFirstName()).equalsIgnoreCase(safe(r.firstName()))
+                        && safe(account.getLastName()).equalsIgnoreCase(safe(r.secondName())));
+        if (alreadyBooked) {
+            throw new ReservationException("Na tuto lekci už máš rezervaci — druhá není možná.");
+        }
         int validSlots = Math.max(1, Math.min(slots, 10));
 
         CreateReservationRequest req = new CreateReservationRequest(
