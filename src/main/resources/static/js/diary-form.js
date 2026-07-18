@@ -450,18 +450,59 @@
         renumberExercises();
     }
 
-    /** review fix: doplnění váhy Náčiní až PO zaškrtnutí editace setů — vyplní prázdné kg buňky. */
-    function emomFillEmptyKg(card) {
+    /**
+     * kolo 9: změna náčiní (váha / počet zátěží) se OKAMŽITĚ propíše do celé EMOM
+     * tabulky (2 zátěže = součet). Konkrétní řádek si pak uživatel upraví sám.
+     */
+    function emomApplyKg(card) {
         const block = card.querySelector('.type-config.type-emom');
         if (!block) return;
         const chk = block.querySelector('.emom-edit-sets');
         if (!chk || !chk.checked) return;
         const eq = equipmentWeights(card);
-        if (eq.sum == null) return;
         block.querySelectorAll('.emom-set-row').forEach(row => {
             const kgInput = row.querySelectorAll('input[type="number"]')[1];
-            if (kgInput && kgInput.value === '') kgInput.value = eq.sum;
+            if (kgInput) kgInput.value = eq.sum != null ? eq.sum : '';
         });
+    }
+
+    /** kolo 9: „Přednastavený počet opakování" okamžitě přepíše všechny řádky EMOM tabulky. */
+    function emomApplyReps(card) {
+        const block = card.querySelector('.type-config.type-emom');
+        if (!block) return;
+        const chk = block.querySelector('.emom-edit-sets');
+        if (!chk || !chk.checked) return;
+        const defReps = (block.querySelector('.emom-default-reps') || {}).value || '';
+        block.querySelectorAll('.emom-set-row').forEach(row => {
+            const repsInput = row.querySelectorAll('input[type="number"]')[0];
+            if (repsInput) repsInput.value = defReps;
+        });
+    }
+
+    /** kolo 9: změna náčiní okamžitě aktualizuje váhu ve všech řádcích tabulky série. */
+    function seriesApplyWeight(card) {
+        const eq = equipmentWeights(card);
+        card.querySelectorAll('.series-row-weight').forEach(inp => {
+            inp.value = eq.sum != null ? eq.sum : '';
+        });
+    }
+
+    /** kolo 9: po smazání řádku série přepočítá labely („N. série") a indexy. */
+    function seriesReindex(card) {
+        const tbody = card.querySelector('.series-rows-tbody');
+        if (!tbody) return;
+        let prevRung = null;
+        tbody.querySelectorAll('.series-row').forEach((row, i) => {
+            row.querySelectorAll('[data-name]').forEach(el => reindexDataName(el, i));
+            const idxHid = row.querySelector('.series-row-index');
+            if (idxHid) idxHid.value = i;
+            const rungHid = row.querySelector('.series-row-rung');
+            const label = row.querySelector('.series-row-label');
+            const rung = rungHid ? rungHid.value : null;
+            if (label) label.textContent = (rung && rung !== prevRung) ? rung + '. série' : '';
+            prevRung = rung;
+        });
+        renumberExercises();
     }
 
     // ----- TABATA (P34) -----
@@ -565,7 +606,8 @@
         const valid = seriesValidate(card);
         if (!valid) { wrap.style.display = 'none'; tbody.innerHTML = ''; renumberExercises(); return; }
         const eq = equipmentWeights(card);
-        const weight = eq.w1 != null ? eq.w1 : '';
+        // kolo 9: 2 zátěže = součet (dle Scouta pro Pyramid/Stepladder i ostatní)
+        const weight = eq.sum != null ? eq.sum : '';
         tbody.innerHTML = '';
         let rowIdx = 0;
         valid.seq.forEach((value, si) => {
@@ -594,8 +636,19 @@
                 repsTd.appendChild(hidIdx);
                 tr.appendChild(repsTd);
                 const wTd = document.createElement('td');
-                wTd.appendChild(makeNumberInput('numericSeries.rows[' + rowIdx + '].weightKg', weight, null, null, '0.25'));
+                const wInp = makeNumberInput('numericSeries.rows[' + rowIdx + '].weightKg', weight, null, null, '0.25');
+                wInp.classList.add('series-row-weight');
+                wTd.appendChild(wInp);
                 tr.appendChild(wTd);
+                // kolo 9: řádek série lze smazat
+                const rmTd = document.createElement('td');
+                const rmBtn = document.createElement('button');
+                rmBtn.type = 'button';
+                rmBtn.className = 'btn btn-sm btn-outline-danger remove-series-row';
+                rmBtn.title = 'Smazat řádek';
+                rmBtn.textContent = '×';
+                rmTd.appendChild(rmBtn);
+                tr.appendChild(rmTd);
                 tbody.appendChild(tr);
                 rowIdx++;
             }
@@ -604,26 +657,99 @@
         renumberExercises();
     }
 
-    // ----- Carry jednotka (P38) -----
+    // ----- Jednotky Carry / Isometrie (P38 + kolo 9) -----
 
-    function updateCarryUnit(card) {
-        const wrap = card.querySelector('.set-unit-wrap');
+    function unitLabel(v) {
+        return v === 'METERS' ? 'Metry' : v === 'SECONDS' ? 'Sekundy' : 'Opakování';
+    }
+
+    /** Zjistí zaškrtnuté spouštěcí tagy v kontejneru checkboxů (label Carry / Isometrie). */
+    function triggerTags(container, labelSelector) {
+        const res = { carry: false, iso: false };
+        if (!container) return res;
+        container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+            const wrap = chk.closest('label') || chk.parentElement;
+            const label = labelSelector ? wrap.querySelector(labelSelector) : wrap;
+            const text = (label ? label.textContent : '').trim();
+            if (chk.checked && text === 'Carry') res.carry = true;
+            if (chk.checked && text === 'Isometrie') res.iso = true;
+        });
+        return res;
+    }
+
+    /**
+     * Jednotka záznamu cviku (Carry: opakování/sekundy/metry; Isometrie: opakování/sekundy
+     * — statická výdrž, metry se nepřekonávají). Platí pro freeform sety i tabulku série.
+     */
+    function updateExerciseUnits(card) {
         const select = card.querySelector('.set-unit-select');
-        if (!wrap || !select) return;
-        // Carry tag = checkbox v „Zaměření cviku", jehož label je „Carry"
-        let carryChecked = false;
+        if (!select) return;
+        let carry = false, iso = false;
         card.querySelectorAll('.exercise-tags .form-check-inline').forEach(div => {
             const label = div.querySelector('label');
             const chk = div.querySelector('input[type="checkbox"]');
-            if (label && chk && label.textContent.trim() === 'Carry' && chk.checked) carryChecked = true;
+            if (!label || !chk || !chk.checked) return;
+            const t = label.textContent.trim();
+            if (t === 'Carry') carry = true;
+            if (t === 'Isometrie') iso = true;
         });
-        wrap.style.display = carryChecked ? '' : 'none';
-        if (!carryChecked) select.value = 'REPS';
+        const active = carry || iso;
+        const wrap = card.querySelector('.set-unit-wrap');
+        const seriesWrap = card.querySelector('.series-unit-wrap');
+        if (wrap) wrap.style.display = active ? '' : 'none';
+        if (seriesWrap) seriesWrap.style.display = active ? '' : 'none';
+        // Isometrie bez Carry → Metry nejsou k dispozici
+        const allowMeters = carry;
+        card.querySelectorAll('.set-unit-select option[value="METERS"], .series-unit-meters').forEach(opt => {
+            opt.hidden = !allowMeters;
+        });
+        if (!active) select.value = 'REPS';
+        if (!allowMeters && select.value === 'METERS') select.value = 'REPS';
+        // synchronizace viditelného série-selectu s kanonickým setUnit selectem
+        const seriesSel = card.querySelector('.series-unit-select');
+        if (seriesSel) seriesSel.value = select.value;
         const header = card.querySelector('.sets-reps-header');
-        if (header) {
-            header.textContent = select.value === 'METERS' ? 'Metry'
-                    : select.value === 'SECONDS' ? 'Sekundy' : 'Opakování';
-        }
+        if (header) header.textContent = unitLabel(select.value);
+        const seriesHeader = card.querySelector('.series-reps-header');
+        if (seriesHeader) seriesHeader.textContent = unitLabel(select.value);
+    }
+
+    /**
+     * kolo 9: jednotky + XOR na úrovni circuit kroku. Carry tag kroku → volba
+     * Sekundy/Metry místo opakování a pevné pole Sekundy mizí; Isometrie → jen Sekundy.
+     */
+    function updateStepUnits(stepRow) {
+        const sel = stepRow.querySelector('.step-unit-select');
+        if (!sel) return;
+        const tags = triggerTags(stepRow, 'span');
+        const active = tags.carry || tags.iso;
+        sel.style.display = active ? '' : 'none';
+        const repsLabel = stepRow.querySelector('.step-reps-label');
+        if (repsLabel) repsLabel.style.display = active ? 'none' : '';
+        const metersOpt = sel.querySelector('option[value="METERS"]');
+        if (metersOpt) metersOpt.hidden = !tags.carry;
+        if (!active) sel.value = 'REPS';
+        if (!tags.carry && sel.value === 'METERS') sel.value = 'REPS';
+        // pevné pole Sekundy mizí, když je aktivní volba jednotky
+        const secondsCol = stepRow.querySelector('.step-seconds-col');
+        const secondsInput = stepRow.querySelector('.step-seconds-input');
+        if (secondsCol) secondsCol.style.display = active ? 'none' : '';
+        if (active && secondsInput) secondsInput.value = '';
+        updateStepXor(stepRow);
+    }
+
+    /** kolo 9: u kroku lze vyplnit jen Opakování NEBO Sekundy (vzájemně se blokují). */
+    function updateStepXor(stepRow) {
+        const reps = stepRow.querySelector('.step-reps-input');
+        const secs = stepRow.querySelector('.step-seconds-input');
+        if (!reps || !secs) return;
+        const secondsVisible = !stepRow.querySelector('.step-seconds-col')
+                || stepRow.querySelector('.step-seconds-col').style.display !== 'none';
+        if (!secondsVisible) { reps.disabled = false; secs.disabled = false; return; }
+        // legacy data s oběma hodnotami nesmí zablokovat obě pole (disabled se neodešle)
+        if (reps.value !== '' && secs.value !== '') { reps.disabled = false; secs.disabled = false; return; }
+        secs.disabled = reps.value !== '';
+        reps.disabled = secs.value !== '';
     }
 
     // ----- Prefill náčiní z katalogu (P37) -----
@@ -684,6 +810,12 @@
             const row = target.closest('.circuit-step-row, .composite-step-row');
             if (row) row.remove();
             renumberExercises();
+        } else if (target.classList.contains('remove-series-row')) {
+            // kolo 9: smazání řádku série (např. nedokončená pyramida)
+            const card = target.closest('.exercise-card');
+            const row = target.closest('.series-row');
+            if (row) row.remove();
+            if (card) seriesReindex(card);
         }
     });
 
@@ -708,7 +840,9 @@
         } else if (t.classList.contains('equipment-count')) {
             updateEquipmentSecondVisibility(card);
             updateKbState(card);
-            emomFillEmptyKg(card);
+            // kolo 9: změna počtu zátěží se okamžitě propíše do všech tabulek
+            emomApplyKg(card);
+            seriesApplyWeight(card);
         } else if (t.classList.contains('step-equipment-count')) {
             // kolo 8: druhá zátěž per circuit krok
             const stepRow = t.closest('.circuit-step-row');
@@ -731,15 +865,28 @@
         } else if (t.classList.contains('emom-edit-sets')) {
             emomSync(card, t.checked); // při zapnutí předvyplnit
         } else if (t.classList.contains('set-unit-select')) {
-            updateCarryUnit(card);
+            updateExerciseUnits(card);
+        } else if (t.classList.contains('series-unit-select')) {
+            // viditelný select u série je jen zrcadlo kanonického setUnit selectu
+            const canonical = card.querySelector('.set-unit-select');
+            if (canonical) canonical.value = t.value;
+            updateExerciseUnits(card);
+        } else if (t.getAttribute('data-step-field') === 'tagIds') {
+            // kolo 9: Carry/Isometrie tag na kroku circuitu → jednotky + skrytí Sekund
+            const stepRow = t.closest('.circuit-step-row');
+            if (stepRow) updateStepUnits(stepRow);
         } else if (t.closest('.exercise-tags')) {
-            updateCarryUnit(card);
+            updateExerciseUnits(card);
         } else if (t.classList.contains('kb-split-parts')) {
             // review fix: resize tabulek až na change (blur/šipky) — resize na každý
             // stisk klávesy mazal vyplněné řádky během přepisování čísla
             kbResizeParts(card);
-        } else if (t.classList.contains('emom-total-minutes') || t.classList.contains('emom-default-reps')) {
+        } else if (t.classList.contains('emom-total-minutes')) {
             emomSync(card, false);
+        } else if (t.classList.contains('emom-default-reps')) {
+            // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
+            emomSync(card, false);
+            emomApplyReps(card);
         } else if (t.classList.contains('tabata-rounds')) {
             tabataSync(card, false);
         } else if (t.classList.contains('tabata-default-reps')) {
@@ -749,9 +896,9 @@
             seriesRegenerate(card);
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
-            // review fix: váha doplněná až po zaškrtnutí „Editovat jednotlivé sety"
-            // vyplní prázdné kg buňky EMOM tabulky
-            emomFillEmptyKg(card);
+            // kolo 9: změna váhy náčiní se okamžitě propíše do celé tabulky
+            emomApplyKg(card);
+            seriesApplyWeight(card);
         }
     });
 
@@ -777,6 +924,20 @@
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
             updateKbState(card);
+            // kolo 9: „bezprostředně" — už během psaní váhy se tabulky aktualizují
+            emomApplyKg(card);
+            seriesApplyWeight(card);
+        } else if (t.classList.contains('step-reps-input') || t.classList.contains('step-seconds-input')) {
+            // kolo 9: Opakování XOR Sekundy u kroku circuitu
+            const stepRow = t.closest('.circuit-step-row');
+            if (stepRow) updateStepXor(stepRow);
+        } else if (t.classList.contains('emom-default-reps')) {
+            // kolo 9: „okamžitě" — přepis všech řádků už během psaní (nedestruktivní)
+            emomApplyReps(card);
+        } else if (t.classList.contains('tabata-default-reps')) {
+            const tblock = card.querySelector('.type-config.type-tabata');
+            if (tblock) tblock.querySelectorAll('.tabata-round-row input[type="number"]')
+                    .forEach(inp => { inp.value = t.value; });
         } else if (t.classList.contains('kb-total-min') || t.classList.contains('kb-total-sec')
                 || t.classList.contains('kb-total-reps')
                 || t.classList.contains('kb-part-reps')
@@ -798,7 +959,9 @@
     container.querySelectorAll('.exercise-card').forEach(card => {
         updateTypeConfigVisibility(card);
         updateEquipmentSecondVisibility(card);
-        updateCarryUnit(card);
+        updateExerciseUnits(card);
+        // kolo 9: jednotky + XOR u circuit kroků (server-rendered)
+        card.querySelectorAll('.circuit-step-row').forEach(updateStepUnits);
         // kolo 8: druhá zátěž u circuit kroků (server-rendered)
         card.querySelectorAll('.circuit-step-row').forEach(stepRow => {
             const sel = stepRow.querySelector('.step-equipment-count');

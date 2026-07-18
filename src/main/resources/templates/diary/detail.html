@@ -320,7 +320,9 @@
             <!-- kolo 8: vygenerovaná/editovaná tabulka série -->
             <table class="rk-series" th:if="${ex.numericSeriesConfig != null and !ex.numericSeriesConfig.rows.isEmpty()}"
                    style="margin: 0 var(--sp-5) var(--sp-4);">
-                <thead><tr><th>Série</th><th>Opakování</th><th>Váha (kg)</th></tr></thead>
+                <thead><tr><th>Série</th>
+                    <th th:text="${ex.setUnit == 'METERS' ? 'Metry' : (ex.setUnit == 'SECONDS' ? 'Sekundy' : 'Opakování')}">Opakování</th>
+                    <th>Váha (kg)</th></tr></thead>
                 <tbody>
                 <tr th:each="r : ${ex.numericSeriesConfig.rows}">
                     <td th:text="${r.rung != null ? r.rung + '. série' : '—'}">1. série</td>
@@ -344,7 +346,10 @@
                 <tr th:each="s, st : ${ex.circuitConfig.steps}">
                     <td th:text="${st.count}">1</td>
                     <td th:text="${s.name}">Swing</td>
-                    <td th:text="${s.reps} ?: '—'">10</td>
+                    <!-- kolo 9: jednotka kroku (Carry: m/s, Isometrie: s) -->
+                    <td th:text="${s.reps != null
+                                   ? s.reps + (s.repUnit == 'METERS' ? ' m' : (s.repUnit == 'SECONDS' ? ' s' : ''))
+                                   : '—'}">10</td>
                     <td th:text="${s.durationSeconds} ?: '—'">30</td>
                     <td th:text="${s.restSeconds} ?: '—'">15</td>
                     <td>

@@ -51,6 +51,7 @@ public class DiaryPageController {
     private final com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper;
     private final com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService;
     private final com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService;
+    private final DiaryExportService diaryExportService;
 
     public DiaryPageController(
             TrainingService trainingService,
@@ -61,7 +62,8 @@ public class DiaryPageController {
             com.ragnarok.ragnarok_customers_training_diary.equipment.EquipmentOptionService equipmentService,
             com.ragnarok.ragnarok_customers_training_diary.training.types.ExerciseTypeConfigToInputMapper typeToInputMapper,
             com.ragnarok.ragnarok_customers_training_diary.mail.EmailService emailService,
-            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService) {
+            com.ragnarok.ragnarok_customers_training_diary.coach.TextPlanService textPlanService,
+            DiaryExportService diaryExportService) {
         this.trainingService = trainingService;
         this.catalogService = catalogService;
         this.tagService = tagService;
@@ -71,6 +73,7 @@ public class DiaryPageController {
         this.typeToInputMapper = typeToInputMapper;
         this.emailService = emailService;
         this.textPlanService = textPlanService;
+        this.diaryExportService = diaryExportService;
     }
 
     /**
@@ -335,6 +338,39 @@ public class DiaryPageController {
             flash.addFlashAttribute("flashError", ex.getMessage());
         }
         return "redirect:/diary";
+    }
+
+    // -----------------------------------------------------------------------------
+    // ScoutMeto kolo 9: export deníku v JSON (+ popis formátu) na e-mail
+    // -----------------------------------------------------------------------------
+
+    @PostMapping("/export")
+    public String exportDiary(@AuthenticationPrincipal AccountEntity user, RedirectAttributes flash) {
+        byte[] data = diaryExportService.exportDiary(user);
+        byte[] schema = diaryExportService.exportSchema();
+        // Při impersonaci se export posílá adminovi na JEHO e-mail, ne uživateli
+        String recipient = resolveExportRecipient(user);
+        emailService.sendDiaryExport(recipient,
+                user.getFirstName() + " " + user.getLastName(), data, schema);
+        flash.addFlashAttribute("flashSuccess",
+                "Export deníku (JSON + popis formátu) odeslán na " + recipient + ".");
+        return "redirect:/diary";
+    }
+
+    /** E-mail příjemce exportu: původní admin při impersonaci, jinak přihlášený uživatel. */
+    private String resolveExportRecipient(AccountEntity viewer) {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        if (auth != null) {
+            for (var ga : auth.getAuthorities()) {
+                if (ga instanceof org.springframework.security.web.authentication.switchuser
+                        .SwitchUserGrantedAuthority sga
+                        && sga.getSource().getPrincipal() instanceof AccountEntity admin) {
+                    return admin.getEmail();
+                }
+            }
+        }
+        return viewer.getEmail();
     }
 
     // -----------------------------------------------------------------------------

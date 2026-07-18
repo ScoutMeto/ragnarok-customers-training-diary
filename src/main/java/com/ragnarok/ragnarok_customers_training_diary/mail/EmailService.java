@@ -340,4 +340,44 @@ public class EmailService {
             log.error("[mail/{}] FAILED to={} reason={}", kind, toEmail, e.getMessage(), e);
         }
     }
+
+    // ============================================================================
+    // ScoutMeto kolo 9: export deníku v JSON (2 přílohy — data + popis formátu)
+    // ============================================================================
+
+    @Async
+    public void sendDiaryExport(String toEmail, String ownerName, byte[] dataJson, byte[] schemaJson) {
+        String subject = "Export tréninkového deníku — " + ownerName;
+        String text = "Ahoj,\n\n"
+                + "v příloze je kompletní export tréninkového deníku (" + ownerName + ") ve formátu JSON:\n"
+                + "- diary-export.json — všechna data deníku\n"
+                + "- diary-export-schema.json — popis formátu (co která pole znamenají)\n\n"
+                + "Oba soubory můžeš předat libovolné AI k vyhodnocení.\n\n"
+                + "—\nRagnarok Training Diary";
+        if (props.isFake()) {
+            log.info("[mail/diary-export] FAKE-SEND to={} data={}B schema={}B",
+                    toEmail, dataJson.length, schemaJson.length);
+            return;
+        }
+        try {
+            var mime = mailSender.createMimeMessage();
+            var helper = new org.springframework.mail.javamail.MimeMessageHelper(mime, true, "UTF-8");
+            try {
+                helper.setFrom(props.getFrom(), props.getFromName());
+            } catch (UnsupportedEncodingException e) {
+                helper.setFrom(props.getFrom());
+            }
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(text, false);
+            helper.addAttachment("diary-export.json",
+                    new org.springframework.core.io.ByteArrayResource(dataJson), "application/json");
+            helper.addAttachment("diary-export-schema.json",
+                    new org.springframework.core.io.ByteArrayResource(schemaJson), "application/json");
+            mailSender.send(mime);
+            log.info("[mail/diary-export] sent to={} data={}B", toEmail, dataJson.length);
+        } catch (MessagingException | MailException e) {
+            log.error("[mail/diary-export] FAILED to={} reason={}", toEmail, e.getMessage(), e);
+        }
+    }
 }

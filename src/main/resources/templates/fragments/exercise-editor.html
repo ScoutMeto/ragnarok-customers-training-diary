@@ -202,7 +202,7 @@
                                        class="form-control form-control-sm emom-total-minutes">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label form-label-sm">Default reps</label>
+                                <label class="form-label form-label-sm">Přednastavený počet opakování</label>
                                 <input type="number"
                                        data-name="emom.defaultReps"
                                        th:name="|exercises[${exStat.index}].emom.defaultReps|"
@@ -327,10 +327,18 @@
                         </div>
                         <!-- kolo 8: validace souladu start/peak/krok + vygenerovaná editovatelná tabulka -->
                         <div class="series-warning small fw-bold mt-2" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                        <!-- kolo 9: jednotka pro Carry (metry/sekundy) / Isometrie (sekundy) — synchronizuje se se setUnit -->
+                        <div class="series-unit-wrap mt-2" style="display:none">
+                            <select class="form-select form-select-sm series-unit-select" style="width:auto;">
+                                <option value="REPS">Opakování</option>
+                                <option value="SECONDS">Sekundy</option>
+                                <option value="METERS" class="series-unit-meters">Metry</option>
+                            </select>
+                        </div>
                         <div class="series-preview mt-2"
                              th:style="${ex.numericSeries != null and !ex.numericSeries.rows.isEmpty()} ? '' : 'display:none'">
                             <table class="table table-sm series-rows-table">
-                                <thead><tr><th style="width:110px">Série</th><th>Počet opakování</th><th>Váha (kg)</th></tr></thead>
+                                <thead><tr><th style="width:110px">Série</th><th class="series-reps-header">Počet opakování</th><th>Váha (kg)</th><th style="width:40px"></th></tr></thead>
                                 <tbody class="series-rows-tbody">
                                 <tr th:each="r, rStat : ${ex.numericSeries?.rows}" class="series-row">
                                     <td class="series-row-label" th:text="${r.rung} + '. série'">1. série</td>
@@ -339,7 +347,9 @@
                                         <input type="hidden" th:attr="data-name=|numericSeries.rows[${rStat.index}].rung|" th:value="${r.rung}" class="series-row-rung">
                                         <input type="hidden" th:attr="data-name=|numericSeries.rows[${rStat.index}].rowIndex|" th:value="${rStat.index}" class="series-row-index">
                                     </td>
-                                    <td><input type="number" step="0.25" th:attr="data-name=|numericSeries.rows[${rStat.index}].weightKg|" th:value="${r.weightKg}" class="form-control form-control-sm"></td>
+                                    <td><input type="number" step="0.25" th:attr="data-name=|numericSeries.rows[${rStat.index}].weightKg|" th:value="${r.weightKg}" class="form-control form-control-sm series-row-weight"></td>
+                                    <!-- kolo 9: sérii lze smazat (např. už ji nezvládnu odjet) -->
+                                    <td><button type="button" class="btn btn-sm btn-outline-danger remove-series-row" title="Smazat řádek">×</button></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -388,8 +398,17 @@
                                         <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
                                         <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
                                     </div>
-                                    <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm"></div>
-                                    <div class="col-md-2"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" th:value="${s.durationSeconds}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2">
+                                        <label class="form-label form-label-sm step-reps-label">Opakování</label>
+                                        <!-- kolo 9: jednotka (Carry: metry/sekundy; Isometrie: sekundy) -->
+                                        <select data-step-field="repUnit" class="form-select form-select-sm step-unit-select mb-1" style="display:none">
+                                            <option value="REPS" th:selected="${s.repUnit == null or s.repUnit == 'REPS'}">Opakování</option>
+                                            <option value="SECONDS" th:selected="${s.repUnit == 'SECONDS'}">Sekundy</option>
+                                            <option value="METERS" class="step-unit-meters" th:selected="${s.repUnit == 'METERS'}">Metry</option>
+                                        </select>
+                                        <input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm step-reps-input">
+                                    </div>
+                                    <div class="col-md-2 step-seconds-col"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" th:value="${s.durationSeconds}" class="form-control form-control-sm step-seconds-input"></div>
                                     <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" th:value="${s.restSeconds}" class="form-control form-control-sm"></div>
                                     <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></div>
                                 </div>
@@ -726,7 +745,7 @@
                 <h6 class="mb-2">EMOM schéma</h6>
                 <div class="row g-2">
                     <div class="col-md-3"><label class="form-label form-label-sm">Celkem minut *</label><input type="number" min="1" max="120" data-name="emom.totalMinutes" class="form-control form-control-sm emom-total-minutes"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Default reps</label><input type="number" data-name="emom.defaultReps" class="form-control form-control-sm emom-default-reps"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Přednastavený počet opakování</label><input type="number" data-name="emom.defaultReps" class="form-control form-control-sm emom-default-reps"></div>
                 </div>
                 <div class="mt-2">
                     <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
@@ -776,9 +795,16 @@
                     <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi (s)</label><input type="number" data-name="numericSeries.restSecondsBetween" class="form-control form-control-sm"></div>
                 </div>
                 <div class="series-warning small fw-bold mt-2" style="display:none; color: var(--rk-danger, #dc3545);"></div>
+                <div class="series-unit-wrap mt-2" style="display:none">
+                    <select class="form-select form-select-sm series-unit-select" style="width:auto;">
+                        <option value="REPS">Opakování</option>
+                        <option value="SECONDS">Sekundy</option>
+                        <option value="METERS" class="series-unit-meters">Metry</option>
+                    </select>
+                </div>
                 <div class="series-preview mt-2" style="display:none">
                     <table class="table table-sm series-rows-table">
-                        <thead><tr><th style="width:110px">Série</th><th>Počet opakování</th><th>Váha (kg)</th></tr></thead>
+                        <thead><tr><th style="width:110px">Série</th><th class="series-reps-header">Počet opakování</th><th>Váha (kg)</th><th style="width:40px"></th></tr></thead>
                         <tbody class="series-rows-tbody"></tbody>
                     </table>
                 </div>
@@ -940,8 +966,16 @@
                 <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
                 <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
             </div>
-            <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" data-step-field="reps" class="form-control form-control-sm"></div>
-            <div class="col-md-2"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" class="form-control form-control-sm"></div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm step-reps-label">Opakování</label>
+                <select data-step-field="repUnit" class="form-select form-select-sm step-unit-select mb-1" style="display:none">
+                    <option value="REPS">Opakování</option>
+                    <option value="SECONDS">Sekundy</option>
+                    <option value="METERS" class="step-unit-meters">Metry</option>
+                </select>
+                <input type="number" data-step-field="reps" class="form-control form-control-sm step-reps-input">
+            </div>
+            <div class="col-md-2 step-seconds-col"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" class="form-control form-control-sm step-seconds-input"></div>
             <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" class="form-control form-control-sm"></div>
             <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" class="form-control form-control-sm"></div>
         </div>

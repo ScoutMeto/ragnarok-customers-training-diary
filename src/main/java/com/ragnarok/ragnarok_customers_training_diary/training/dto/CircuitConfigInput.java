@@ -35,6 +35,9 @@ public class CircuitConfigInput {
         private Integer durationSeconds;
         private BigDecimal weightKg;
         private Integer restSeconds;
+        /** ScoutMeto kolo 9: jednotka Opakování — null/REPS, METERS/SECONDS (Carry/Isometrie). */
+        @jakarta.validation.constraints.Pattern(regexp = "REPS|METERS|SECONDS")
+        private String repUnit;
         private String note;
         // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
         private String equipmentName;

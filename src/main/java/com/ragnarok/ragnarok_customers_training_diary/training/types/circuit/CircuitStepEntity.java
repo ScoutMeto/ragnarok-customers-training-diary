@@ -46,6 +46,10 @@ public class CircuitStepEntity {
     @Column(name = "rest_seconds")
     private Integer restSeconds;
 
+    /** ScoutMeto kolo 9: jednotka pole „Opakování" — NULL=opakování, METERS/SECONDS (Carry/Isometrie). */
+    @Column(name = "rep_unit", length = 10)
+    private String repUnit;
+
     @Column(length = 255)
     private String note;
 

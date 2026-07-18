@@ -1,0 +1,54 @@
+{
+  "format": "ragnarok-training-diary",
+  "formatVersion": 1,
+  "description": "Popis exportu tréninkového deníku Ragnarok. Hlavní soubor obsahuje objekt s poli 'user' (základní profil) a 'trainings' (pole tréninků, od nejnovějšího). Všechna pole jsou volitelná — klient si zapisuje jen to, co chce sledovat. Chybějící pole = nezaznamenáno.",
+  "language": "Hodnoty enumů jsou anglicky/systémově, texty poznámek česky.",
+  "user": {
+    "nickname": "přezdívka",
+    "firstName": "jméno",
+    "lastName": "příjmení",
+    "gender": "MALE | FEMALE | null",
+    "birthDate": "datum narození (ISO), pro výpočet věku a max. tepové frekvence"
+  },
+  "trainings[]": {
+    "date": "datum tréninku (ISO)",
+    "startTime/endTime": "čas začátku/konce (HH:mm), volitelné",
+    "name": "název tréninku",
+    "difficulty": "LIGHT | MEDIUM | HARD — subjektivní náročnost dle klienta",
+    "rpe": "vnímaná námaha celého tréninku 1–10 (10 = maximum)",
+    "notes": "poznámky klienta",
+    "flagged": "true = trénink označený vlaječkou (důležitý)",
+    "tags": "štítky zaměření tréninku (česky, např. Síla, Kardio, Kettlebell)",
+    "bodyweightKg": "tělesná hmotnost v den tréninku (kg)",
+    "restingHeartRate/avgHeartRate/maxHeartRate": "klidová/průměrná/maximální tepová frekvence (BPM)",
+    "sleepQuality": "kvalita spánku 0–100 (např. ze zařízení)",
+    "sleepRpe": "subjektivně vnímaná kvalita spánku 1–10 (10 = výborný spánek)",
+    "cycleDay/cyclePhase": "den menstruačního cyklu a fáze (MENSTRUAL/FOLLICULAR/OVULATION/LUTEAL) — jen ženy",
+    "exercises[]": {
+      "order": "pořadí části v tréninku (0-based)",
+      "type": "typ provedení: FREEFORM (klasické série), EMOM (every minute on the minute), CIRCUIT (kruhový trénink), TABATA, AMRAP (as many rounds as possible), LADDER/STEPLADDER/PYRAMID (vzestupné/vzestupně-sestupné série), SUPERSET/COMPLEX (kombinace cviků), STRAIGHT_SETS, INTERVAL, STRONGFIRST_LADDER, KB_SPORT_TIME (kettlebell sport — opakování za čas), CARDIO",
+      "name": "název cviku (z katalogu nebo vlastní)",
+      "rpe": "vnímaná námaha cviku 1–10",
+      "tags": "zaměření cviku; speciální: 'Carry' = nošení břemene (hodnoty mohou být v metrech/sekundách), 'Isometrie' = statická výdrž (hodnoty v sekundách)",
+      "setUnit": "jednotka pole 'value' v sets/series.rows: null nebo REPS = počet opakování, METERS = metry, SECONDS = sekundy",
+      "equipment": "použité náčiní: name (např. kettlebell, osa), weightKg (váha), count (1 = jedna zátěž, 2 = dvě současně), secondWeightKg (váha druhé zátěže)",
+      "sets[]": "klasické série (FREEFORM): index (pořadí), weightKg, value (počet dle setUnit), restSeconds (odpočinek po sérii), rpe, note",
+      "emom": "totalMinutes (délka), defaultReps (přednastavený počet opakování/min), minutes[] = rozpis po minutách {minute (1-based), reps, weightKg}",
+      "tabata": "rounds (počet kol), workSeconds/restSeconds (práce/pauza), roundsDetail[] = skutečná opakování v každém kole {round (1-based), reps}",
+      "amrap": "timecapSeconds (časový limit), targetRepsPerRound (cíl), roundsCompleted + extraReps (výsledek)",
+      "circuit": "rounds (počet kol), restBetweenRoundsSeconds, steps[] = cviky v kole {order, name, value + valueUnit (null=opakování, METERS, SECONDS), durationSeconds, restSeconds, equipment, tags}, actualLog[] = skutečný průběh po kolech {round, stepOrder, skipped, substituteName, actualReps, actualWeightKg}",
+      "series": "LADDER/STEPLADDER/PYRAMID: startValue/peakValue/stepSize (parametry generování), rows[] = jednotlivé řádky {rung (číslo série), value (dle setUnit), weightKg}. LADDER: série s hodnotou V má V řádků. STEPLADDER: nahoru a zase dolů. PYRAMID: 1 řádek na stupeň, nahoru i dolů.",
+      "composite": "SUPERSET/COMPLEX: rounds, sharedWeightKg, steps[] = cviky v kombinaci {order, name, reps, weightKg, restAfterSeconds}",
+      "straightSets": "setCount × repsPerSet @ weightKg, restSeconds mezi sériemi",
+      "interval": "rounds × (workReps NEBO workSeconds) + restSeconds pauza",
+      "strongFirstLadder": "žebřík 1..ladderHeight opakování, cycles = počet průchodů, unilateral = L/P zvlášť",
+      "kbSport": "kettlebell sport: totalSeconds (délka setu), totalReps (celkem opakování), unilateralHandswitch (jedna ruka se střídáním), parts[] = podrobný rozpis {part (1-based), reps, durationSeconds, side (L/P)}"
+    }
+  },
+  "hints": [
+    "Objem (volume) pro FREEFORM: suma weightKg × value přes sets (jen když setUnit je null/REPS).",
+    "U 'Carry' cviků porovnávej metry/sekundy, ne opakování.",
+    "trainings jsou seřazené od nejnovějšího; pro trend analýzy řaď podle 'date' vzestupně.",
+    "RPE = rate of perceived exertion, škála 1–10."
+  ]
+}

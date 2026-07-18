@@ -282,6 +282,9 @@ public class ExerciseTypeConfigMapper {
                 step.setDurationSeconds(s.getDurationSeconds());
                 step.setWeightKg(s.getWeightKg());
                 step.setRestSeconds(s.getRestSeconds());
+                // ScoutMeto kolo 9: jednotka Opakování (REPS se normalizuje na NULL)
+                step.setRepUnit(s.getRepUnit() != null && !s.getRepUnit().isBlank()
+                        && !"REPS".equals(s.getRepUnit()) ? s.getRepUnit() : null);
                 step.setNote(s.getNote());
                 // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
                 step.setEquipmentName(s.getEquipmentName() != null && !s.getEquipmentName().isBlank()
