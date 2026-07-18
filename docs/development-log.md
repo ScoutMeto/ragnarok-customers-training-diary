@@ -445,6 +445,51 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ ScoutMeto kolo 9 (DONE 2026-07-18)
+
+Migrace **V41**, commity d3dfc23 (účty) + fdbefcd (formuláře/Isometrie/export).
+
+**ADMIN — účty (P40)**
+- **„Poslat do záhrobí"** (dřív Anonymizovat): jen `deleted_at`, data NEDOTČENÁ →
+  zelené **„Probrat ze záhrobí"** = plná obnova beze změn. Záhrobní účet neprojde
+  loginem vůbec (na rozdíl od deaktivace = read-only, ale login funguje).
+  ⚠️ Změna sémantiky: e-mail zůstává obsazený (daň za obnovitelnost — dřív se
+  anonymizací uvolňoval pro re-registraci).
+- **„Zrodit vikinga"**: `account.approved_at` (V41, backfill NOW). Nový účet svítí
+  v listu zeleně (badge 🐣 NEZROZEN), admin ho musí poprvé aktivovat (tlačítko po
+  aktivaci mizí — list i detail). Do té doby login hlásí **„Ještě není tvůj čas.
+  Kontaktuj admina, třeba s tím něco udělá."** (custom AuthenticationFailureHandler;
+  záhrobí se záměrně neodlišuje od špatného hesla). Admin list nově ukazuje všechny
+  účty (záhrobí červený řádek). Bootstrap admin + createByAdmin auto-schválené.
+
+**USER — formuláře**
+- **Živé tabulky (P41):** „Přednastavený počet opakování" (rename Default reps)
+  přepisuje všechny řádky EMOM okamžitě při psaní; změna váhy náčiní / počtu
+  zátěží okamžitě aktualizuje kg v EMOM i tabulkách sérií — **2 zátěže = součet**
+  (nově i prefill Pyramid/Stepladder/Ladder).
+- **Circuit (P42):** Opakování XOR Sekundy (vzájemné disable; legacy s oběma
+  hodnotami se neblokuje). Carry tag na kroku → select Sekundy/Metry
+  (`circuit_step.rep_unit`, V41) a pevné pole Sekundy mizí; Isometrie → jen Sekundy.
+- **Série (P43):** řádek tabulky lze smazat (nedokončená pyramida, seriesReindex);
+  Carry/Isometrie u cviku → jednotka i pro tabulku série (zrcadlový select
+  synchronizovaný s kanonickým setUnit — POZOR: zrcadlo nemá data-name, jinak by
+  vznikla duplicitní form pole).
+- **Isometrie (P44):** nový systémový tag (V41; sdílený pool trénink+cvik) —
+  jednotky jen Opakování/Sekundy (statická výdrž, metry se nepřekonávají).
+- **Počeštění tagů:** Síla, Kardio, Vlastní váha, Mobilita, Kondice, Střed těla,
+  Celé tělo, Síla a kondice. Kettlebell/OS Resets/Carry ponechány (zavedené termíny;
+  Carry+Isometrie jsou navíc technické spouštěče jednotek — JS matchuje dle labelu!).
+- **Export deníku v JSON (P45):** tlačítko v deníku → e-mailem 2 přílohy:
+  `diary-export.json` (kompletní PRIVATE deník: metriky, tagy, náčiní, sety,
+  všechny per-type configy) + `diary-export-schema.json` (popis formátu pro AI,
+  resources). Při impersonaci jde na e-mail admina (SwitchUserGrantedAuthority).
+  EmailService nově umí přílohy (multipart MimeMessageHelper).
+
+Ověřeno E2E proti PostgreSQL (V41): viking flow (notborn → Zrodit → login OK;
+záhrobí → Probrat → login OK), Pyramid 5 řádků + živý součet 28 kg + smazání
+řádku, jednotky Metry / Isometrie bez metrů, EMOM živé reps+kg, circuit XOR +
+Carry na kroku, export flash + FAKE-SEND 2 příloh. **135 testů.**
+
 ## ✅ ScoutMeto kolo 8 (DONE 2026-07-11)
 
 Přepracování formulářů typů cviků + rezervace. Migrace **V40**, 3 feature commity
