@@ -28,6 +28,10 @@
                             <span th:text="${account.firstName + ' ' + account.lastName}">Jméno Příjmení</span>
                             <span th:if="${account.deactivated}" class="rk-badge rk-badge--danger"
                                   style="vertical-align: middle; margin-left: 8px;">NEAKTIVNÍ</span>
+                            <span th:if="${!account.active}" class="rk-badge rk-badge--danger"
+                                  style="vertical-align: middle; margin-left: 8px;">⚰️ V ZÁHROBÍ</span>
+                            <span th:if="${account.active and !account.approved}" class="rk-badge"
+                                  style="vertical-align: middle; margin-left: 8px; background:#198754; color:#fff;">🐣 NEZROZEN</span>
                         </h1>
                         <p class="text-muted" style="margin: 0; font-size: var(--fs-sm); line-height: 1.7;">
                             <strong>Email:</strong> <span th:text="${account.email}">x@y.cz</span><br>
@@ -58,9 +62,19 @@
                         <button type="submit" class="btn btn-outline btn-sm" style="color: var(--rk-success); border-color: var(--rk-success);">Reaktivovat</button>
                     </form>
 
-                    <form th:action="@{/admin/accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline"
-                          onsubmit="return confirm('Opravdu anonymizovat tento účet? Tréninky zůstanou v DB ale účet se nesmí přihlásit.');">
-                        <button type="submit" class="btn btn-danger-outline btn-sm">Anonymizovat</button>
+                    <!-- kolo 9: „Zrodit vikinga" — první aktivace, po ní tlačítko mizí -->
+                    <form th:if="${account.active and !account.approved}"
+                          th:action="@{/admin/accounts/{id}/approve(id=${account.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm" style="background:#198754; color:#fff;">⚔️ Zrodit vikinga</button>
+                    </form>
+
+                    <!-- kolo 9: záhrobí — data zůstávají, login je zablokovaný, obnova kdykoli -->
+                    <form th:if="${account.active}" th:action="@{/admin/accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline"
+                          onsubmit="return confirm('Poslat účet do záhrobí? Uživatel se nepřihlásí, ale data zůstávají a účet lze kdykoli probrat zpět.');">
+                        <button type="submit" class="btn btn-danger-outline btn-sm">⚰️ Poslat do záhrobí</button>
+                    </form>
+                    <form th:if="${!account.active}" th:action="@{/admin/accounts/{id}/restore(id=${account.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm" style="background:#198754; color:#fff;">🌱 Probrat ze záhrobí</button>
                     </form>
                 </div>
             </div>

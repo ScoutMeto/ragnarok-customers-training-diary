@@ -38,6 +38,7 @@ class Phase10FeaturesTest {
         client.setFirstName("In");
         client.setLastName("Active");
         client.setEmailConfirmed(true);
+        client.setApprovedAt(java.time.LocalDateTime.now()); // kolo 9: zrozený viking
         client = accountRepository.save(client);
     }
 

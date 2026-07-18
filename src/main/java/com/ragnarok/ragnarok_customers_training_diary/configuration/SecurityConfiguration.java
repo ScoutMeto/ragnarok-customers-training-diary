@@ -25,8 +25,30 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class SecurityConfiguration {
 
+    /**
+     * ScoutMeto kolo 9: rozlišení hlášky pro nezrozeného vikinga (účet čeká na
+     * první aktivaci adminem) od běžného „špatné heslo". Účty v záhrobí se
+     * záměrně NEodlišují (neleakovat existenci účtu).
+     */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SwitchUserFilter switchUserFilter) throws Exception {
+    public org.springframework.security.web.authentication.AuthenticationFailureHandler loginFailureHandler(
+            com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository accountRepository) {
+        return (request, response, exception) -> {
+            String target = "/login?error";
+            String username = request.getParameter("username");
+            if (username != null) {
+                var acc = accountRepository.findByEmailAndDeletedAtIsNull(username.trim()).orElse(null);
+                if (acc != null && acc.isEmailConfirmed() && acc.getApprovedAt() == null) {
+                    target = "/login?notborn";
+                }
+            }
+            response.sendRedirect(target);
+        };
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SwitchUserFilter switchUserFilter,
+            org.springframework.security.web.authentication.AuthenticationFailureHandler loginFailureHandler) throws Exception {
         http
                 .addFilterAfter(switchUserFilter, AuthorizationFilter.class)
                 // /admin/impersonate je GET (CSRF se GETu netýká); /impersonate/exit povolíme
@@ -51,7 +73,7 @@ public class SecurityConfiguration {
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/dashboard", true)
-                        .failureUrl("/login?error")
+                        .failureHandler(loginFailureHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout

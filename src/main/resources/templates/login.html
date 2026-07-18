@@ -26,6 +26,10 @@
                         Neplatný email nebo heslo. Pokud jsi se právě registroval(a),
                         nejdřív <a th:href="@{/confirm-email}" style="color: var(--rk-danger); font-weight: 600;">potvrď svůj email</a>.
                     </div>
+                    <!-- kolo 9: účet čeká na první aktivaci adminem („Zrodit vikinga") -->
+                    <div th:if="${param.notborn}" class="alert alert-warning">
+                        Ještě není tvůj čas. Kontaktuj admina, třeba s tím něco udělá.
+                    </div>
                     <div th:if="${param.logout}" class="alert alert-info">Byl jsi odhlášen.</div>
                     <div th:if="${param.reset}" class="alert alert-success">
                         ✅ Heslo změněno — přihlas se novým heslem.

@@ -124,6 +124,8 @@ class AccountFlowSmokeTest {
         var acc = accountRepository.findByEmail("login@example.com").orElseThrow();
         acc.setEmailConfirmed(true);
         acc.setEmailConfirmationCode(null);
+        // kolo 9: login vyžaduje i „Zrodit vikinga" (schválení adminem)
+        acc.setApprovedAt(java.time.LocalDateTime.now());
         accountRepository.save(acc);
 
         // 2. Pošli form-login a ověř redirect + autentikovaný stav

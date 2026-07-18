@@ -158,6 +158,10 @@ class Phase6FeaturesTest {
         emailConfirmationService.verifyCode("enabled@example.cz", acc.getEmailConfirmationCode());
 
         AccountEntity reloaded = accountRepository.findByEmail("enabled@example.cz").orElseThrow();
-        assertThat(reloaded.isEnabled()).isTrue();
+        // kolo 9: potvrzený e-mail nestačí — čeká na „Zrodit vikinga"
+        assertThat(reloaded.isEnabled()).isFalse();
+        accountService.approve(reloaded.getId());
+        AccountEntity approved = accountRepository.findByEmail("enabled@example.cz").orElseThrow();
+        assertThat(approved.isEnabled()).isTrue();
     }
 }

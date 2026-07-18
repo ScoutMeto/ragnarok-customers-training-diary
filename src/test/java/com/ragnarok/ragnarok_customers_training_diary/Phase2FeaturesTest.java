@@ -138,14 +138,27 @@ class Phase2FeaturesTest {
     // -----------------------------------------------------------------------------
 
     @Test
-    void softDeleteAnonymizesAndDisables() {
+    void softDelete_keepsDataAndDisablesLogin() {
+        // kolo 9: „Poslat do záhrobí" — bez anonymizace, data zůstávají
+        String originalEmail = bob.getEmail();
         accountService.softDelete(bob.getId());
 
         AccountEntity reloaded = accountRepository.findById(bob.getId()).orElseThrow();
         assertThat(reloaded.getDeletedAt()).isNotNull();
-        assertThat(reloaded.getEmail()).startsWith("deleted-" + bob.getId() + "-");
-        assertThat(reloaded.getFirstName()).isEqualTo("Smazaný");
-        assertThat(reloaded.isEnabled()).isFalse();  // soft-deleted nesmí login
+        assertThat(reloaded.getEmail()).isEqualTo(originalEmail);   // data nedotčená
+        assertThat(reloaded.getFirstName()).isEqualTo(bob.getFirstName());
+        assertThat(reloaded.isEnabled()).isFalse();  // v záhrobí nesmí login
+    }
+
+    @Test
+    void restore_fullyRevivesAccount() {
+        // kolo 9: „Probrat ze záhrobí" = plná obnova beze změn
+        accountService.softDelete(bob.getId());
+        accountService.restore(bob.getId());
+
+        AccountEntity reloaded = accountRepository.findById(bob.getId()).orElseThrow();
+        assertThat(reloaded.getDeletedAt()).isNull();
+        assertThat(reloaded.isActive()).isTrue(); // enabled závisí ještě na confirm/approve
     }
 
     @Test

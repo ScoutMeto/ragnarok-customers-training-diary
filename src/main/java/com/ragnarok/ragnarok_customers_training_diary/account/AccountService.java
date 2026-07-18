@@ -112,8 +112,9 @@ public class AccountService {
         account.setLastName(request.lastName());
         account.setPhone(request.phone());
         account.setRole(role);
-        // Admin-vytvořené účty obcházejí email confirmation flow
+        // Admin-vytvořené účty obcházejí email confirmation flow i „Zrodit vikinga"
         account.setEmailConfirmed(true);
+        account.setApprovedAt(LocalDateTime.now());
 
         return accountRepository.save(account);
     }
@@ -163,24 +164,41 @@ public class AccountService {
     }
 
     /**
-     * Soft delete — anonymizuje účet a nastaví {@code deleted_at}. Účet se nesmaže
-     * fyzicky, aby zůstaly historické tréninky a komentáře platné. Po soft delete
-     * se nelze přihlásit (viz {@link AccountEntity#isEnabled()}).
+     * ScoutMeto kolo 9: „Poslat do záhrobí" (dřív soft delete s anonymizací).
+     * Nastaví jen {@code deleted_at} — data zůstávají nedotčená, takže účet lze
+     * kdykoli plně obnovit přes {@link #restore}. Uživatel neprojde loginem.
      */
     @Transactional
     public void softDelete(Long id) {
         AccountEntity account = getById(id);
         if (account.getDeletedAt() != null) {
-            return; // už smazaný
+            return; // už v záhrobí
         }
-
-        // Anonymizace — uvolní email pro pozdější re-registraci
-        String anonymizedEmail = "deleted-" + account.getId() + "-" + UUID.randomUUID() + "@deleted.local";
-        account.setEmail(anonymizedEmail);
-        account.setNickname("Smazaný účet");
-        account.setFirstName("Smazaný");
-        account.setLastName("Účet");
-        account.setPhone(null);
         account.setDeletedAt(LocalDateTime.now());
+    }
+
+    /** ScoutMeto kolo 9: „Probrat ze záhrobí" — plná obnova účtu beze změn. Idempotentní. */
+    @Transactional
+    public void restore(Long id) {
+        AccountEntity account = getById(id);
+        account.setDeletedAt(null);
+    }
+
+    /**
+     * ScoutMeto kolo 9: „Zrodit vikinga" — první aktivace nového účtu adminem.
+     * Do té doby se uživatel nepřihlásí. Idempotentní.
+     */
+    @Transactional
+    public void approve(Long id) {
+        AccountEntity account = getById(id);
+        if (account.getApprovedAt() == null) {
+            account.setApprovedAt(LocalDateTime.now());
+        }
+    }
+
+    /** Všechny účty včetně záhrobí (admin přehled — záhrobní svítí červeně). */
+    @Transactional(readOnly = true)
+    public List<AccountEntity> listAllAccounts() {
+        return accountRepository.findAllByOrderByLastNameAscFirstNameAsc();
     }
 }

@@ -148,12 +148,25 @@ public class AccountEntity implements UserDetails {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     /**
-     * Soft-delete timestamp. {@code null} = aktivní účet. Když je nastaven, účet
-     * je anonymizován (email, jméno, telefon přepsány) a v dotazech aktivních
-     * účtů se ignoruje.
+     * „Záhrobí" (ScoutMeto kolo 9, dřív soft delete s anonymizací). {@code null}
+     * = aktivní účet. Když je nastaven, uživatel neprojde loginem a účet se
+     * v dotazech aktivních účtů ignoruje — data ale zůstávají nedotčená, takže
+     * „Probrat ze záhrobí" účet plně obnoví.
      */
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    /**
+     * ScoutMeto kolo 9: „Zrodit vikinga" — admin musí nový účet poprvé aktivovat.
+     * {@code null} = čeká na zrození, uživatel se nepřihlásí.
+     */
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    /** Konvenience getter — prošel „Zrodit vikinga"? */
+    public boolean isApproved() {
+        return approvedAt != null;
+    }
 
     /**
      * Phase 10: deaktivace účtu (read-only mód pro neplatiče). {@code null} = aktivní.
@@ -261,6 +274,7 @@ public class AccountEntity implements UserDetails {
      */
     @Override
     public boolean isEnabled() {
-        return deletedAt == null && emailConfirmed;
+        // kolo 9: navíc „Zrodit vikinga" — bez schválení adminem se nelze přihlásit
+        return deletedAt == null && emailConfirmed && approvedAt != null;
     }
 }

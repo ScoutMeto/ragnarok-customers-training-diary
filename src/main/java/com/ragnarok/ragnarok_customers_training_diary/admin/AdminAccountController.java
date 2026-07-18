@@ -51,7 +51,8 @@ public class AdminAccountController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("accounts", accountService.listActiveAccounts());
+        // kolo 9: i účty v záhrobí (červeně) a nezrozené (zeleně) musí být vidět
+        model.addAttribute("accounts", accountService.listAllAccounts());
         return "admin/accounts/list";
     }
 
@@ -197,14 +198,31 @@ public class AdminAccountController {
     }
 
     // -----------------------------------------------------------------------------
-    // Soft delete
+    // Kolo 9: záhrobí (dřív soft delete) + Zrodit vikinga
     // -----------------------------------------------------------------------------
 
     @PostMapping("/{id}/delete")
     public String softDelete(@PathVariable Long id, RedirectAttributes flash) {
         accountService.softDelete(id);
-        flash.addFlashAttribute("flashSuccess", "Účet anonymizován.");
+        flash.addFlashAttribute("flashSuccess",
+                "Účet poslán do záhrobí. Kdykoli ho můžeš probrat zpět.");
         return "redirect:/admin/accounts";
+    }
+
+    /** „Probrat ze záhrobí" — plná obnova účtu beze změn. */
+    @PostMapping("/{id}/restore")
+    public String restore(@PathVariable Long id, RedirectAttributes flash) {
+        accountService.restore(id);
+        flash.addFlashAttribute("flashSuccess", "Účet probrán ze záhrobí — vše funguje jako dřív.");
+        return "redirect:/admin/accounts/" + id;
+    }
+
+    /** „Zrodit vikinga" — první aktivace nového účtu. */
+    @PostMapping("/{id}/approve")
+    public String approve(@PathVariable Long id, RedirectAttributes flash) {
+        accountService.approve(id);
+        flash.addFlashAttribute("flashSuccess", "Viking zrozen — uživatel se teď může přihlásit.");
+        return "redirect:/admin/accounts/" + id;
     }
 
     // -----------------------------------------------------------------------------

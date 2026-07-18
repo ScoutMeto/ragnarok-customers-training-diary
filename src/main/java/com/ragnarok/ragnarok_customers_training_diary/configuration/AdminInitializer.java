@@ -62,6 +62,9 @@ public class AdminInitializer implements CommandLineRunner {
         admin.setNickname(nickname);
         admin.setFirstName(firstName);
         admin.setLastName(lastName);
+        // Bootstrap admin obchází email confirmation i „Zrodit vikinga" (kolo 9)
+        admin.setEmailConfirmed(true);
+        admin.setApprovedAt(java.time.LocalDateTime.now());
         accountRepository.save(admin);
 
         log.info("Bootstrap admin {} vytvořen.", adminEmail);

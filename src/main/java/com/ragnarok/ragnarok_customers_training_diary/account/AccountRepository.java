@@ -24,6 +24,9 @@ public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     /** Aktivní účty seřazené podle příjmení (admin sekce list). */
     List<AccountEntity> findByDeletedAtIsNullOrderByLastNameAscFirstNameAsc();
 
+    /** ScoutMeto kolo 9: všechny účty včetně záhrobí (admin přehled). */
+    List<AccountEntity> findAllByOrderByLastNameAscFirstNameAsc();
+
     /** Aktivní účty filtrované rolí. */
     List<AccountEntity> findByRoleAndDeletedAtIsNullOrderByLastNameAscFirstNameAsc(AccountRole role);
 }
