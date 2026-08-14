@@ -445,6 +445,78 @@ přístup do rez. systému).
 - **Pozn.:** rezervační systém je potřeba **nasadit** (commit v jeho repu) — diary cancel bez toho
   vrátí 403. Párování „moje rezervace" je podle jména (ne emailu) → u jmenovců nespolehlivé.
 
+## ✅ ScoutMeto kolo 10 (DONE 2026-08-14)
+
+Migrace **V42–V48**, commity 89c52ba (tagy) + 7be7d7e (katalog) + 99cc2e3
+(circuit) + 3139792 (AMRAP) + 3450b37 (straight sets/interval) + a696dfb
+(SF žebřík) + a1b1c90 (CARDIO) + 62c64e7 (statistiky úklid) + cbd6f2a (analytika).
+
+### Klíčové rozhodnutí kola: `training_tag.system_key`
+
+Do kola 9 se UI rozhodovalo podle **názvu** tagu (`if (text === 'Carry')`).
+Kolo 10 tagy hromadně přejmenovává — což by tichounce rozbilo jednotky i statistiky.
+V42 proto přidává stabilní klíč (`CARRY`, `ISOMETRY`, `REPETITIVE`, …), který je od
+teď jedinou pravdou pro logiku; název je pouhý popisek a Meto ho může měnit.
+Konstanty v `SystemTag`, v šablonách `data-system-key`, v JS `triggerTags()`.
+
+### Tagy a katalog (P47–P49)
+- počeštění: Carry→Nošení, Isolation→Izolované cvičení, Others→Jiné,
+  Stretching→Strečink, Barbell→Olympijská osa, Kondice→Silová vytrvalost
+- smazán tag „Síla a kondice“ (⚠️ odebírá se i z tréninků, které ho měly — kaskáda)
+- nový systémový tag **Repetitivní provedení** (protipól Nošení/Izometrie)
+- Nošení/Izometrie už **nenabízí záznam na opakování** (volba REPS se skryje)
+- synchronizace: tag u cviku se sám zatrhne i u tréninku; tag u tréninku bez cviku
+  má červený rámeček a před uložením nevynucující upozornění
+- katalog (V43): české popisky oblastí těla + **víc oblastí i víc vzorců na cvik**
+  (i u systémových), původní sloupce zrušeny, aby nebyly dva zdroje pravdy
+
+### Typy provedení (P50–P56)
+- **CIRCUIT/SUPERSET/COMPLEX (V44):** SUPERSET a COMPLEX už nejsou samostatné typy,
+  ale režim kruhového tréninku. Byly to tři varianty téhož se dvěma paralelními
+  datovými strukturami. COMPLEX zašediví odpočinek a propíše náčiní prvního cviku
+  k ostatním. Volba režimu je **radio, ne checkbox** — možnosti se vylučují.
+- **Pauzy po kolech (V8 konečně s UI):** generovaná editovatelná tabulka, m+s
+- **AMRAP (V45):** sada cviků jako u circuitu + záznam kolo × cvik včetně
+  posledního, rozjetého kola („Nestihnuto“). Time-cap 1–14400 s.
+- **Straight Sets (V46):** generovaná tabulka setů, prefill váhy z náčiní, pauza m:s
+- **Interval:** propis váhy (i součet dvou zátěží), práce i pauza v minutách
+- **StrongFirst žebřík (V47):** 1,2,…vrchol → nový žebřík od 1 (default 5),
+  izometrie i Nošení, unilaterálně L/P, váha z náčiní do všech řádků
+- **CARDIO (V48):** obecný model dlouhého kardia — aktivita z katalogu, žádné
+  Running/Cycling typy. Povinná doba trvání (jinak dopočet z časů tréninkové
+  jednotky, jinak chyba). Čistý čas = celkový − pauzy. Volitelné metriky
+  (vzdálenost/opakování/kroky/převýšení) lze kombinovat. Rychlost a tempo
+  z ČISTÉHO času, přepisovatelné. Přestávky = události uvnitř aktivity.
+
+### Analytika (P57–P64)
+- statistiky už nejsou omezené na PRIVATE — potá se každý trénink v deníku
+- **`PerformanceAnalysisService`** počítá metriky v Javě nad načtenými tréninky,
+  ne přes JPQL nad `exercise_set`. Výkon už leží v deseti per-type configech;
+  dvacet dotazů by bylo křehčí než jeden průchod v paměti.
+- charakter provedení (Repetitivní / Nošení / Izometrie) rozhoduje, které metriky
+  se zobrazí; cvik bez tagu = repetitivní
+- tabulka tréninků s rozklikáváním na cviky, line chart pěti oblastí
+  (normalizovaný na maximum — jinak kg×s přebíjí vše), radar/pie/bar sada,
+  filtrace podle tagů, vývoj sledovaných proměnných
+- **dlouhé kardio se pozná podle TYPU cviku, ne podle tagu „Kardio“** — ten nosí
+  i intervalový trénink
+- zrušeny grafy „Celkový objem v čase“, „RPE trend“, „Objem podle obtížnosti“;
+  max-weight přejmenován na „Vývoj maximálních pokusů v čase pro vybraný cvik“
+
+### Nové gotchas z tohoto kola
+- **Smazání entity vyžaduje `mvnw clean`** — stará `.class` v `target/classes` drží
+  Hibernate mapping na zrušenou tabulku a app nenastartuje („missing table“).
+- **`value` je v H2 rezervované slovo** — Postgres ho vezme, testy ne
+  (`strongfirst_ladder_row.actual_value`).
+- **Duplicitní název funkce v diary-form.js** — deklarace se ve stejném scope
+  přepisují, takže nová `fmtTime` tichě používala starou (2 h → „120:00“).
+- **Úprava již aplikované migrace** rozbije Flyway checksum — na lokále nutný
+  zásah do `flyway_schema_history` (na produkci se to nestane, dokud migrace nejela).
+
+**Testy:** 155 zelených (Kolo10FeaturesTest + Kolo10AnalysisTest).
+
+---
+
 ## ✅ ScoutMeto kolo 9 (DONE 2026-07-18)
 
 Migrace **V41**, commity d3dfc23 (účty) + fdbefcd (formuláře/Isometrie/export).

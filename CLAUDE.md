@@ -215,6 +215,7 @@ Lze přebít env proměnnými `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD
 | — | Admin správa rezervací z deníku — přihlášení klienti u lekce + zrušení komukoli (klíčovaný endpoint 7.2) | ✅ DONE | na `develop` (2026-07-03) |
 | — | ScoutMeto kolo 8 — Náplň tréninku/Části, KB sport podrobný záznam (handswitch/bilaterální), EMOM/Tabata inline tabulky, Circuit náčiní+tagy per cvik, Ladder/Stepladder/Pyramid generovaná tabulka s validací, Freeform Odpočinek, tag Carry (metry/sekundy), katalog→náčiní prefill, CORE pryč, max 1 rezervace na lekci | ✅ DONE | na `develop` (2026-07-11, V40) |
 | — | ScoutMeto kolo 9 — účty (Poslat do záhrobí/Probrat, Zrodit vikinga + notborn hláška), živé tabulky (reps/kg okamžitě, 2 zátěže = součet), circuit XOR + Carry per krok, mazání řádků série, tag Isometrie (jen sekundy), počeštění tagů, export deníku v JSON + AI schema na e-mail | ✅ DONE | na `develop` (2026-07-18, V41) |
+| — | ScoutMeto kolo 10 — tagy system_key + počeštění, katalog multi-atributy, CIRCUIT/SUPERSET/COMPLEX, AMRAP sada cviků, StrongFirst žebřík, CARDIO model, nová výkonnostní analytika | ✅ DONE | na `develop` (2026-08-14, V42–V48) |
 | 6 | Email confirmation při registraci + notifikace (cron + 3 eventy) | ✅ DONE | na `develop` |
 | 7.1 | Integrace s rezervačním systémem — kalendář + rezervace 1 klikem (jen veřejné API) | ✅ DONE | na `develop` |
 | 7.2 | Rezervace: cancel + "moje rezervace" + historie (sdílený API klíč, cross-repo) | ✅ DONE | na `develop` (deploy: klíč v obou appkách!) |
@@ -292,6 +293,25 @@ Při běhu přes `spring-boot:run` se Thymeleaf šablony čtou z `target/classes
 (zkopírované při `process-resources` na startu). I s `spring.thymeleaf.cache=false` se **úprava
 souboru v `src/main/resources` neprojeví bez restartu** (nebo bez devtools / ručního re-copy).
 Po editaci šablony app restartuj, jinak testuješ starou verzi (stálo to debug v kolo 5 retestu).
+
+### Smazání entity vyžaduje `mvnw clean` (kolo 10)
+Když zrušíš entitu i její tabulku, stará `.class` v `target/classes` zůstane a Hibernate
+podle ní dál validuje schéma → `Schema-validation: missing table [...]` a app nenastartuje.
+`mvnw -o compile` to nespraví, stará třída se nemaže.
+
+### `value` je v H2 rezervované slovo (kolo 10)
+Postgres sloupec `value` vezme, H2 (testy) ne — `Syntax error ... expected "identifier"`.
+Proto `strongfirst_ladder_row.actual_value`.
+
+### Duplicitní název funkce v diary-form.js (kolo 10)
+Soubor je dlouhý a deklarace funkcí se ve stejném scope tiše přepisují. Nová `fmtTime`
+(h:mm:ss) se jmenovala stejně jako starší (mm:ss) → CARDIO zobrazovalo 2 hodiny jako
+„120:00". Před přidáním helperu si jméno vygrepuj.
+
+### Úprava už aplikované Flyway migrace = rozbitý checksum
+Pokud upravíš migraci, která na lokále už proběhla, Flyway odmítne start
+(`Validate failed`). Řešení lokálně: smazat řádek z `flyway_schema_history` + ručně
+vrátit, co migrace udělala. Na produkci nehrozí, dokud tam migrace neproběhla.
 
 ### Postgres `user` je reserved keyword
 Proto je tabulka `account`, ne `user` — historicky byla `user`, opraveno v Fázi 0.

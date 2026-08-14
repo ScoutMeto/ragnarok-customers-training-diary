@@ -56,19 +56,30 @@ public class PerformanceAnalysisService {
         Character character = Character.REPETITIVE;
         boolean bodyweight = true;
         boolean seen = false;
+        // Tělesná váha je parametr tréninkové jednotky a mezi tréninky se mění,
+        // takže poměr počítáme za každý trénink zvlášť a sčítáme.
+        BigDecimal ratioSum = BigDecimal.ZERO;
+        boolean anyRatio = false;
 
         for (TrainingEntity t : loadTrainings(owner, from, to)) {
+            Acc perTraining = new Acc();
             for (TrainingExerciseEntity ex : t.getExercises()) {
                 if (!exerciseName.equals(displayName(ex))) continue;
                 if (!seen) { character = characterOf(ex); seen = true; }
                 bodyweight = bodyweight && isBodyweight(ex);
-                collect(ex, acc, t);
+                collect(ex, acc);
+                collect(ex, perTraining);
+            }
+            BigDecimal ratio = ratioToBodyweight(perTraining.liftedKg, t.getBodyweightKg());
+            if (ratio != null && ratio.signum() > 0) {
+                ratioSum = ratioSum.add(ratio);
+                anyRatio = true;
             }
         }
         return new ExerciseSummary(exerciseName, character.name(), bodyweight,
                 acc.sets, acc.reps, acc.liftedKg, acc.meters, acc.seconds,
                 acc.minWeightKg, acc.maxWeightKg,
-                ratioToBodyweight(acc.liftedKg, null));
+                anyRatio ? ratioSum : null);
     }
 
     /** Tréninky za období se souhrnem a rozpadem na cviky — P59. */
@@ -82,8 +93,8 @@ public class PerformanceAnalysisService {
             List<ExerciseSummary> perExercise = new ArrayList<>();
             for (TrainingExerciseEntity ex : t.getExercises()) {
                 Acc one = new Acc();
-                collect(ex, one, t);
-                collect(ex, total, t);
+                collect(ex, one);
+                collect(ex, total);
                 perExercise.add(new ExerciseSummary(displayName(ex), characterOf(ex).name(),
                         isBodyweight(ex), one.sets, one.reps, one.liftedKg, one.meters, one.seconds,
                         one.minWeightKg, one.maxWeightKg,
@@ -156,7 +167,7 @@ public class PerformanceAnalysisService {
                     case REPETITIVE -> repetitive;
                     case CARRY -> carry;
                     case ISOMETRY -> isometry;
-                }, t);
+                });
             }
         }
         return new Distributions(byType, byDifficulty, byBodyPart, byLaterality, byLoadKind,
@@ -195,7 +206,7 @@ public class PerformanceAnalysisService {
             for (TrainingExerciseEntity ex : t.getExercises()) {
                 if (!hasAllTags(ex.getTags(), requiredTagIds)) continue;
                 Acc acc = new Acc();
-                collect(ex, acc, t);
+                collect(ex, acc);
                 out.add(new ExerciseOccurrence(t.getId(), t.getTrainingDate(), t.getName(),
                         displayName(ex), characterOf(ex).name(),
                         acc.sets, acc.reps, acc.liftedKg, acc.meters, acc.seconds));
@@ -229,7 +240,7 @@ public class PerformanceAnalysisService {
         }
     }
 
-    private void collect(TrainingExerciseEntity ex, Acc acc, TrainingEntity training) {
+    private void collect(TrainingExerciseEntity ex, Acc acc) {
         BigDecimal eqWeight = equipmentWeight(ex);
         String exUnit = ex.getSetUnit();
 
@@ -382,7 +393,7 @@ public class PerformanceAnalysisService {
         }
 
         Acc acc = new Acc();
-        collect(ex, acc, null);
+        collect(ex, acc);
         BigDecimal weight = acc.maxWeightKg != null ? acc.maxWeightKg : equipmentWeight(ex);
 
         switch (characterOf(ex)) {
