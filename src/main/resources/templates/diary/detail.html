@@ -287,27 +287,6 @@
                 </table>
             </th:block>
 
-            <!-- Composite (Superset / Complex) -->
-            <div th:if="${ex.compositeSetConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
-                <strong th:text="${ex.type}">SUPERSET</strong> ·
-                <span class="num" th:text="${ex.compositeSetConfig.rounds}">3</span> kol
-                <span th:if="${ex.compositeSetConfig.sharedWeightKg != null}">· shared <b class="num" th:text="${ex.compositeSetConfig.sharedWeightKg}">16</b> kg</span>
-                <span th:if="${ex.compositeSetConfig.restBetweenRoundsS != null}">· pauza mezi koly <span class="num" th:text="${ex.compositeSetConfig.restBetweenRoundsS}">60</span>&nbsp;s</span>
-            </div>
-            <table class="rk-series" th:if="${ex.compositeSetConfig != null and !ex.compositeSetConfig.steps.isEmpty()}"
-                   style="margin: 0 var(--sp-5) var(--sp-4);">
-                <thead><tr><th>#</th><th>Cvik</th><th>Reps</th><th>Kg</th><th>Rest po (s)</th></tr></thead>
-                <tbody>
-                <tr th:each="s, st : ${ex.compositeSetConfig.steps}">
-                    <td th:text="${st.count}">1</td>
-                    <td th:text="${s.name}">Squat</td>
-                    <td th:text="${s.reps} ?: '—'">5</td>
-                    <td th:text="${s.weightKg} ?: '—'">—</td>
-                    <td th:text="${s.restAfterSeconds} ?: '—'">15</td>
-                </tr>
-                </tbody>
-            </table>
-
             <!-- Numeric series (Ladder/Stepladder/Pyramid) -->
             <div th:if="${ex.numericSeriesConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong th:text="${ex.type}">LADDER</strong>
@@ -337,10 +316,23 @@
 
             <!-- Circuit -->
             <div th:if="${ex.circuitConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
-                <strong>Circuit</strong> ·
+                <!-- kolo 10: režim (CIRCUIT / SUPERSET / COMPLEX) -->
+                <strong th:text="${ex.circuitConfig.mode} ?: 'CIRCUIT'">Circuit</strong> ·
                 <span class="num" th:text="${ex.circuitConfig.rounds}">3</span> kol
                 <span th:if="${ex.circuitConfig.restBetweenRoundsS != null}">· pauza mezi koly <span class="num" th:text="${ex.circuitConfig.restBetweenRoundsS}">60</span>&nbsp;s</span>
             </div>
+            <!-- kolo 10: pauzy na konci jednotlivých kol, pokud se liší od výchozí -->
+            <table class="rk-series" th:if="${ex.circuitConfig != null and !ex.circuitConfig.roundRests.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Kolo</th><th>Pauza na konci kola</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${ex.circuitConfig.roundRests}">
+                    <td th:text="${r.roundIndex + 1}">1</td>
+                    <td><span class="num" th:text="${r.restSeconds / 60}">1</span>:<span
+                            class="num" th:text="${#strings.replace(#numbers.formatInteger(r.restSeconds % 60, 2), ',', '')}">30</span></td>
+                </tr>
+                </tbody>
+            </table>
             <!-- kolo 8: Opakování/Odpočinek, Kg pryč (váha je u náčiní), náčiní + zaměření per cvik -->
             <table class="rk-series" th:if="${ex.circuitConfig != null and !ex.circuitConfig.steps.isEmpty()}"
                    style="margin: 0 var(--sp-5) var(--sp-4);">

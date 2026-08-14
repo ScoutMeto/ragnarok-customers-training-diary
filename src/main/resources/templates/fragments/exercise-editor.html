@@ -26,8 +26,10 @@
                     <div class="mb-3">
                         <label class="form-label">Typ provedení</label>
                         <select data-name="type" th:name="|exercises[${exStat.index}].type|" class="form-select type-select">
+                            <!-- kolo 10: CIRCUIT zastřešuje i SUPERSET a COMPLEX (režim uvnitř) -->
                             <option th:each="t : ${exerciseTypes}" th:value="${t}"
-                                    th:selected="${ex.type == t}" th:text="${t}">FREEFORM</option>
+                                    th:selected="${ex.type == t}"
+                                    th:text="${t.name() == 'CIRCUIT' ? 'CIRCUIT/SUPERSET/COMPLEX' : t}">FREEFORM</option>
                         </select>
                     </div>
 
@@ -362,7 +364,30 @@
 
                     <!-- =============== CIRCUIT config =============== -->
                     <div class="type-config type-circuit mt-4" style="display:none">
-                        <h6 class="mb-2">Circuit schéma</h6>
+                        <h6 class="mb-2 circuit-title">Circuit schéma</h6>
+                        <!-- kolo 10: režim kruhového tréninku. Volby se vzájemně vylučují,
+                             proto radio (chová se jako checkbox, který odškrtne ostatní). -->
+                        <div class="d-flex flex-wrap gap-3 mb-2 circuit-modes">
+                            <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                                <input type="radio" class="form-check-input circuit-mode" value="CIRCUIT"
+                                       data-name="circuit.mode" th:name="|exercises[${exStat.index}].circuit.mode|"
+                                       th:checked="${ex.circuit?.mode == null or ex.circuit.mode == 'CIRCUIT'}">
+                                <span>CIRCUIT</span>
+                            </label>
+                            <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                                <input type="radio" class="form-check-input circuit-mode" value="SUPERSET"
+                                       data-name="circuit.mode" th:name="|exercises[${exStat.index}].circuit.mode|"
+                                       th:checked="${ex.circuit?.mode == 'SUPERSET'}">
+                                <span>SUPERSET</span>
+                            </label>
+                            <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                                <input type="radio" class="form-check-input circuit-mode" value="COMPLEX"
+                                       data-name="circuit.mode" th:name="|exercises[${exStat.index}].circuit.mode|"
+                                       th:checked="${ex.circuit?.mode == 'COMPLEX'}">
+                                <span>COMPLEX</span>
+                            </label>
+                        </div>
+                        <div class="form-text mb-2 circuit-mode-help" style="display:none"></div>
                         <div class="row g-2 mb-2">
                             <div class="col-md-3">
                                 <label class="form-label form-label-sm">Kola *</label>
@@ -371,12 +396,19 @@
                                        th:value="${ex.circuit?.rounds} ?: 3"
                                        class="form-control form-control-sm">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Pauza mezi koly (s)</label>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Pauza mezi koly (m)</label>
                                 <input type="number" min="0"
-                                       data-name="circuit.restBetweenRoundsS" th:name="|exercises[${exStat.index}].circuit.restBetweenRoundsS|"
-                                       th:value="${ex.circuit?.restBetweenRoundsS}"
-                                       class="form-control form-control-sm">
+                                       data-name="circuit.restBetweenRoundsMin" th:name="|exercises[${exStat.index}].circuit.restBetweenRoundsMin|"
+                                       th:value="${ex.circuit?.restBetweenRoundsMin}"
+                                       class="form-control form-control-sm circuit-rest-min">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Pauza mezi koly (s)</label>
+                                <input type="number" min="0" max="59"
+                                       data-name="circuit.restBetweenRoundsSec" th:name="|exercises[${exStat.index}].circuit.restBetweenRoundsSec|"
+                                       th:value="${ex.circuit?.restBetweenRoundsSec}"
+                                       class="form-control form-control-sm circuit-rest-sec">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label form-label-sm">Poznámky</label>
@@ -385,6 +417,14 @@
                                        th:value="${ex.circuit?.notes}"
                                        class="form-control form-control-sm">
                             </div>
+                        </div>
+                        <!-- kolo 10: pauza na konci každého kola — předvyplněná, editovatelná -->
+                        <div class="circuit-round-rests mb-3" style="display:none">
+                            <div class="form-text mb-1">Pauza na konci kola (předvyplněno, můžeš upravit):</div>
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th style="width:70px">Kolo</th><th style="width:110px">Minuty</th><th style="width:110px">Sekundy</th></tr></thead>
+                                <tbody class="circuit-round-rests-tbody"></tbody>
+                            </table>
                         </div>
                         <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
                         <div class="circuit-steps-tbody">
@@ -410,7 +450,7 @@
                                         <input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm step-reps-input">
                                     </div>
                                     <div class="col-md-2 step-seconds-col"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" th:value="${s.durationSeconds}" class="form-control form-control-sm step-seconds-input"></div>
-                                    <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" th:value="${s.restSeconds}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" th:value="${s.restSeconds}" class="form-control form-control-sm step-rest-input"></div>
                                     <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></div>
                                 </div>
                                 <!-- kolo 8: náčiní per cvik kruhového tréninku -->
@@ -419,7 +459,7 @@
                                         <label class="form-label form-label-sm">Náčiní</label>
                                         <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" th:value="${s.equipmentName}" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
                                     </div>
-                                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" th:value="${s.equipmentWeightKg}" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" th:value="${s.equipmentWeightKg}" class="form-control form-control-sm step-equipment-weight"></div>
                                     <div class="col-md-3">
                                         <label class="form-label form-label-sm">Počet zátěží</label>
                                         <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
@@ -429,7 +469,7 @@
                                     </div>
                                     <div class="col-md-3 step-equipment-second" th:style="${s.equipmentCount == 2} ? '' : 'display:none'">
                                         <label class="form-label form-label-sm">2. zátěž (kg)</label>
-                                        <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm">
+                                        <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm step-equipment-second-weight">
                                     </div>
                                 </div>
                                 <!-- kolo 8: zaměření (tagy) per cvik kruhového tréninku -->
@@ -550,40 +590,6 @@
                         </div>
                     </div>
 
-                    <!-- =============== COMPOSITE (Superset/Complex) =============== -->
-                    <div class="type-config type-superset type-complex mt-4" style="display:none">
-                        <h6 class="mb-2">Schéma (kompozitní série)</h6>
-                        <p class="form-text mb-2">
-                            <strong>Superset:</strong> 2-4 cviky střídavě × N kol. ·
-                            <strong>Complex:</strong> 2-4 cviky se stejnou činkou × N kol (vyplň „shared weight").
-                        </p>
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="composite.rounds" th:name="|exercises[${exStat.index}].composite.rounds|" th:value="${ex.composite?.rounds} ?: 3" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Shared kg (Complex)</label><input type="number" step="0.25" data-name="composite.sharedWeightKg" th:name="|exercises[${exStat.index}].composite.sharedWeightKg|" th:value="${ex.composite?.sharedWeightKg}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" data-name="composite.restBetweenRoundsS" th:name="|exercises[${exStat.index}].composite.restBetweenRoundsS|" th:value="${ex.composite?.restBetweenRoundsS}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"></div>
-                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="composite.notes" th:name="|exercises[${exStat.index}].composite.notes|" th:value="${ex.composite?.notes}" class="form-control form-control-sm"></div>
-                        </div>
-                        <table class="table table-sm">
-                            <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th><th style="width:40px"></th></tr></thead>
-                            <tbody class="composite-steps-tbody">
-                            <tr th:each="s, sStat : ${ex.composite?.steps}" class="composite-step-row">
-                                <td class="step-num" th:text="${sStat.count}">1</td>
-                                <td>
-                                    <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
-                                    <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
-                                </td>
-                                <td><input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm"></td>
-                                <td><input type="number" step="0.25" data-step-field="weightKg" th:value="${s.weightKg}" class="form-control form-control-sm"></td>
-                                <td><input type="number" data-step-field="restAfterSeconds" th:value="${s.restAfterSeconds}" class="form-control form-control-sm"></td>
-                                <td><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></td>
-                                <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
-                            </tr>
-                            </tbody>
-                        </table>
-                        <button type="button" class="btn btn-sm btn-outline-secondary add-composite-step">+ Přidat cvik</button>
-                    </div>
-
                     <!-- =============== AMRAP config =============== -->
                     <div class="type-config type-amrap mt-4" style="display:none">
                         <h6 class="mb-2">AMRAP schéma</h6>
@@ -666,7 +672,7 @@
                     </select>
                     <div class="form-text">Chybí ti cvik? Přidej si ho v sekci Cviky.</div>
                 </div>
-                <!-- skryté: zástupný customName pro sdružené typy (superset/complex/circuit) -->
+                <!-- skryté: zástupný customName pro sdružené typy (kruhový trénink) -->
                 <input type="hidden" data-name="customName" class="custom-name-input">
                 <div class="col-md-3">
                     <label class="form-label">RPE (1-10)</label>
@@ -815,11 +821,31 @@
                 </div>
             </div>
             <div class="type-config type-circuit mt-4" style="display:none">
-                <h6 class="mb-2">Circuit schéma</h6>
+                <h6 class="mb-2 circuit-title">Circuit schéma</h6>
+                <div class="d-flex flex-wrap gap-3 mb-2 circuit-modes">
+                    <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                        <input type="radio" class="form-check-input circuit-mode" value="CIRCUIT" data-name="circuit.mode" checked><span>CIRCUIT</span>
+                    </label>
+                    <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                        <input type="radio" class="form-check-input circuit-mode" value="SUPERSET" data-name="circuit.mode"><span>SUPERSET</span>
+                    </label>
+                    <label class="form-check small m-0" style="display:flex;gap:5px;align-items:center;cursor:pointer;">
+                        <input type="radio" class="form-check-input circuit-mode" value="COMPLEX" data-name="circuit.mode"><span>COMPLEX</span>
+                    </label>
+                </div>
+                <div class="form-text mb-2 circuit-mode-help" style="display:none"></div>
                 <div class="row g-2 mb-2">
                     <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="circuit.rounds" value="3" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" min="0" data-name="circuit.restBetweenRoundsS" class="form-control form-control-sm"></div>
-                    <div class="col-md-6"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="circuit.notes" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza mezi koly (m)</label><input type="number" min="0" data-name="circuit.restBetweenRoundsMin" class="form-control form-control-sm circuit-rest-min"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" min="0" max="59" data-name="circuit.restBetweenRoundsSec" class="form-control form-control-sm circuit-rest-sec"></div>
+                    <div class="col-md-5"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="circuit.notes" class="form-control form-control-sm"></div>
+                </div>
+                <div class="circuit-round-rests mb-3" style="display:none">
+                    <div class="form-text mb-1">Pauza na konci kola (předvyplněno, můžeš upravit):</div>
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th style="width:70px">Kolo</th><th style="width:110px">Minuty</th><th style="width:110px">Sekundy</th></tr></thead>
+                        <tbody class="circuit-round-rests-tbody"></tbody>
+                    </table>
                 </div>
                 <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
                 <div class="circuit-steps-tbody"></div>
@@ -900,20 +926,6 @@
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="kbSport.notes" class="form-control form-control-sm"></div>
                 </div>
             </div>
-            <div class="type-config type-superset type-complex mt-4" style="display:none">
-                <h6 class="mb-2">Schéma (kompozitní)</h6>
-                <div class="row g-2 mb-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Kola *</label><input type="number" min="1" max="30" data-name="composite.rounds" value="3" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Shared kg (Complex)</label><input type="number" step="0.25" data-name="composite.sharedWeightKg" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza mezi koly (s)</label><input type="number" data-name="composite.restBetweenRoundsS" class="form-control form-control-sm"></div>
-                    <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="composite.notes" class="form-control form-control-sm"></div>
-                </div>
-                <table class="table table-sm">
-                    <thead><tr><th style="width:40px">#</th><th>Cvik *</th><th style="width:80px">Reps</th><th style="width:80px">Kg</th><th style="width:80px">Rest po (s)</th><th>Pozn.</th><th style="width:40px"></th></tr></thead>
-                    <tbody class="composite-steps-tbody"></tbody>
-                </table>
-                <button type="button" class="btn btn-sm btn-outline-secondary add-composite-step">+ Přidat cvik</button>
-            </div>
             <div class="type-config type-amrap mt-4" style="display:none">
                 <h6 class="mb-2">AMRAP schéma</h6>
                 <div class="row g-2">
@@ -941,21 +953,6 @@
     </tr>
 </template>
 
-<template id="compositeStepTemplate">
-    <tr class="composite-step-row">
-        <td class="step-num">N</td>
-        <td>
-            <select class="form-select form-select-sm step-catalog-select"><option value="">— z katalogu —</option></select>
-            <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
-        </td>
-        <td><input type="number" data-step-field="reps" class="form-control form-control-sm"></td>
-        <td><input type="number" step="0.25" data-step-field="weightKg" class="form-control form-control-sm"></td>
-        <td><input type="number" data-step-field="restAfterSeconds" class="form-control form-control-sm"></td>
-        <td><input type="text" data-step-field="note" class="form-control form-control-sm"></td>
-        <td><button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">×</button></td>
-    </tr>
-</template>
-
 <template id="circuitStepTemplate">
     <div class="circuit-step-row border rounded p-2 mb-2">
         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -978,7 +975,7 @@
                 <input type="number" data-step-field="reps" class="form-control form-control-sm step-reps-input">
             </div>
             <div class="col-md-2 step-seconds-col"><label class="form-label form-label-sm">Sekundy</label><input type="number" data-step-field="durationSeconds" class="form-control form-control-sm step-seconds-input"></div>
-            <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" class="form-control form-control-sm step-rest-input"></div>
             <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" class="form-control form-control-sm"></div>
         </div>
         <div class="row g-2 mt-1 align-items-end">
@@ -986,7 +983,7 @@
                 <label class="form-label form-label-sm">Náčiní</label>
                 <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
             </div>
-            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-step-field="equipmentWeightKg" class="form-control form-control-sm step-equipment-weight"></div>
             <div class="col-md-3">
                 <label class="form-label form-label-sm">Počet zátěží</label>
                 <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
@@ -996,7 +993,7 @@
             </div>
             <div class="col-md-3 step-equipment-second" style="display:none">
                 <label class="form-label form-label-sm">2. zátěž (kg)</label>
-                <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm">
+                <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm step-equipment-second-weight">
             </div>
         </div>
         <div class="mt-2" th:if="${tags != null and !tags.isEmpty()}">

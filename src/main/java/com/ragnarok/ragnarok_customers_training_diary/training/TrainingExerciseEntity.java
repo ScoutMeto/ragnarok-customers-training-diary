@@ -3,7 +3,6 @@ package com.ragnarok.ragnarok_customers_training_diary.training;
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.AmrapConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
-import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.emom.EmomConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.straight.StraightSetsConfigEntity;
@@ -133,10 +132,6 @@ public class TrainingExerciseEntity {
     /** Sdílená config pro Ladder, Stepladder, Pyramid (typ rozliší {@link #type}). */
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private NumericSeriesConfigEntity numericSeriesConfig;
-
-    /** Sdílená config pro Superset a Complex. */
-    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private CompositeSetConfigEntity compositeSetConfig;
 
     /** Straight sets (3×8, 5×5, ...). */
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

@@ -14,10 +14,27 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CircuitConfigInput {
 
+    /** kolo 10: CIRCUIT (výchozí) / SUPERSET / COMPLEX. */
+    @jakarta.validation.constraints.Pattern(regexp = "CIRCUIT|SUPERSET|COMPLEX")
+    private String mode = "CIRCUIT";
+
     @Min(1) @Max(30)
     private Integer rounds = 3;
 
+    /**
+     * Kanonická hodnota v sekundách. kolo 10: uživatel ji zadává ve dvou polích
+     * (minuty + sekundy), mapper si z nich součet spočítá.
+     */
     private Integer restBetweenRoundsS;
+
+    private Integer restBetweenRoundsMin;
+    private Integer restBetweenRoundsSec;
+
+    /** Sekundy z dvojice minuty+sekundy; {@code null}, když uživatel nevyplnil ani jedno. */
+    public static Integer toSeconds(Integer min, Integer sec, Integer fallbackSeconds) {
+        if (min == null && sec == null) return fallbackSeconds;
+        return (min != null ? min * 60 : 0) + (sec != null ? sec : 0);
+    }
 
     private String notes;
 
@@ -53,5 +70,8 @@ public class CircuitConfigInput {
     public static class RoundRestInput {
         private Integer roundIndex;
         private Integer restSeconds;
+        // kolo 10: pauza na konci konkrétního kola se zadává v minutách + sekundách
+        private Integer restMin;
+        private Integer restSec;
     }
 }

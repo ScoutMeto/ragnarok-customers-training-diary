@@ -34,6 +34,17 @@ public class CircuitConfigEntity {
     @JoinColumn(name = "training_exercise_id")
     private TrainingExerciseEntity trainingExercise;
 
+    /**
+     * kolo 10: CIRCUIT / SUPERSET / COMPLEX. Struktura je stejná, liší se pravidla:
+     * <ul>
+     *   <li>CIRCUIT — pauza mezi cviky i mezi koly</li>
+     *   <li>SUPERSET — bez pauzy mezi cviky, různá váha per cvik, pauza po kole ano</li>
+     *   <li>COMPLEX — bez pauzy mezi cviky, jedno náčiní o stejné váze pro všechny cviky</li>
+     * </ul>
+     */
+    @Column(nullable = false, length = 16)
+    private String mode = "CIRCUIT";
+
     @Column(nullable = false)
     private Integer rounds = 3;
 

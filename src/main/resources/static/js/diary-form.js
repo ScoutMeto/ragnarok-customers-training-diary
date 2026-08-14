@@ -24,7 +24,8 @@
 
     // Phase 12: typy, které sdružují víc cviků do kroků (steps) — pro ně skrýváme
     // horní pojmenování cviku (redundantní, A8) a doplňujeme zástupný customName.
-    const GROUPED_TYPES = { SUPERSET: 'Superset', COMPLEX: 'Complex', CIRCUIT: 'Circuit' };
+    // kolo 10: SUPERSET/COMPLEX jsou režimem CIRCUITu, ne samostatnými typy.
+    const GROUPED_TYPES = { CIRCUIT: 'Circuit' };
 
     // kolo 8 (P37): mapování katalogového náčiní (systémové EN hodnoty) na názvy v "Moje náčiní"
     const EQUIPMENT_LABELS = {
@@ -43,7 +44,7 @@
         });
     }
 
-    // Phase 12 (A6/A7): naplní dropdown katalogu v rámci kroku (composite/circuit).
+    // Phase 12 (A6/A7): naplní dropdown katalogu v rámci kroku kruhového tréninku.
     // value = název cviku (denormalizovaně se ukládá do textového pole kroku).
     function populateStepCatalog(selectEl) {
         if (!selectEl || selectEl.dataset.populated === '1') return;
@@ -57,14 +58,6 @@
         selectEl.dataset.populated = '1';
     }
 
-    function addCompositeStepRow(tbody) {
-        const tpl = document.getElementById('compositeStepTemplate');
-        const row = tpl.content.firstElementChild.cloneNode(true);
-        populateStepCatalog(row.querySelector('.step-catalog-select'));
-        tbody.appendChild(row);
-        return row;
-    }
-
     function addCircuitStepRow(tbody) {
         const tpl = document.getElementById('circuitStepTemplate');
         const row = tpl.content.firstElementChild.cloneNode(true);
@@ -73,12 +66,15 @@
         return row;
     }
 
+    // kolo 10: CIRCUIT zastřešuje i SUPERSET a COMPLEX (režim se volí uvnitř bloku)
+    const TYPE_LABELS = { CIRCUIT: 'CIRCUIT/SUPERSET/COMPLEX' };
+
     function populateTypeSelect(selectEl, currentValue) {
         const types = window.__exerciseTypes || ['FREEFORM'];
         types.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t;
-            opt.textContent = t;
+            opt.textContent = TYPE_LABELS[t] || t;
             if (t === currentValue) opt.selected = true;
             selectEl.appendChild(opt);
         });
@@ -120,22 +116,134 @@
         if (selected === 'LADDER' || selected === 'STEPLADDER' || selected === 'PYRAMID') {
             seriesValidate(exerciseCard);
         }
+        if (selected === 'CIRCUIT') {
+            updateCircuitMode(exerciseCard);
+            circuitRoundRestsSync(exerciseCard);
+        }
+    }
+
+    // ----- kolo 10: CIRCUIT / SUPERSET / COMPLEX -----
+
+    const CIRCUIT_MODE_HELP = {
+        CIRCUIT: '',
+        SUPERSET: 'Superset je zjednodušeně a velmi zkrácená forma kruhového tréninku, bez pauzy '
+            + 'mezi cviky, ale na rozdíl od COMPLEXů je možné pracovat s odlišnou váhou pro cviky. '
+            + 'Superset se zaměřuje na stejné svalové skupiny, ale jinak, NEBO na opačné svalové '
+            + 'skupiny (biceps, triceps), NEBO na odlišné části těla - horní končetiny X dolní končetiny.',
+        COMPLEX: 'Complex je definován jako sled cviků se stejným náčiním o stejné váze pro každý '
+            + 'cvik, bez pauzy mezi cviky a ideálně bez přerušení - tedy s absolutní návazností pohybů.'
+    };
+
+    function circuitMode(card) {
+        const checked = card.querySelector('.circuit-mode:checked');
+        return checked ? checked.value : 'CIRCUIT';
+    }
+
+    /**
+     * Režim mění jen pravidla, ne strukturu:
+     * SUPERSET/COMPLEX = bez pauzy mezi cviky (pole zašedne), COMPLEX navíc sdílí
+     * náčiní a váhu prvního cviku se všemi ostatními. Pauza na konci kola zůstává vždy.
+     */
+    function updateCircuitMode(card) {
+        const block = card.querySelector('.type-config.type-circuit');
+        if (!block) return;
+        const mode = circuitMode(card);
+
+        const title = block.querySelector('.circuit-title');
+        if (title) title.textContent = mode === 'COMPLEX' ? 'Complex schéma'
+                : mode === 'SUPERSET' ? 'Superset schéma' : 'Circuit schéma';
+
+        const help = block.querySelector('.circuit-mode-help');
+        if (help) {
+            help.textContent = CIRCUIT_MODE_HELP[mode] || '';
+            help.style.display = CIRCUIT_MODE_HELP[mode] ? '' : 'none';
+        }
+
+        // pauza mezi cviky: jen CIRCUIT
+        const restAllowed = mode === 'CIRCUIT';
+        block.querySelectorAll('.step-rest-input').forEach(inp => {
+            inp.disabled = !restAllowed;
+            if (!restAllowed) inp.value = '';
+        });
+
+        if (mode === 'COMPLEX') applyComplexSharedEquipment(block);
+    }
+
+    /** COMPLEX: náčiní + váha (+ název) prvního cviku se propíše k ostatním. */
+    function applyComplexSharedEquipment(block) {
+        const rows = block.querySelectorAll('.circuit-step-row');
+        if (rows.length < 2) return;
+        const first = rows[0];
+        const read = sel => { const el = first.querySelector(sel); return el ? el.value : null; };
+        const fields = ['.step-equipment-name', '.step-equipment-weight',
+                        '.step-equipment-count', '.step-equipment-second-weight'];
+        const src = {};
+        fields.forEach(sel => { src[sel] = read(sel); });
+        rows.forEach((row, i) => {
+            if (i === 0) return;
+            fields.forEach(sel => {
+                const el = row.querySelector(sel);
+                if (el && src[sel] !== null) el.value = src[sel];
+            });
+            // druhá zátěž: viditelnost se řídí počtem zátěží prvního cviku
+            const secondWrap = row.querySelector('.step-equipment-second');
+            if (secondWrap) secondWrap.style.display = (src['.step-equipment-count'] === '2') ? '' : 'none';
+        });
+    }
+
+    /** kolo 10: předvyplněná (editovatelná) tabulka pauz na konci každého kola. */
+    function circuitRoundRestsSync(card) {
+        const block = card.querySelector('.type-config.type-circuit');
+        if (!block) return;
+        const wrap = block.querySelector('.circuit-round-rests');
+        const tbody = block.querySelector('.circuit-round-rests-tbody');
+        if (!wrap || !tbody) return;
+
+        const roundsInput = block.querySelector('[data-name="circuit.rounds"]');
+        const rounds = parseInt(roundsInput && roundsInput.value, 10);
+        if (!rounds || rounds < 1) { wrap.style.display = 'none'; return; }
+
+        const defMin = block.querySelector('.circuit-rest-min');
+        const defSec = block.querySelector('.circuit-rest-sec');
+
+        // dorovnat počet řádků (existující hodnoty se nepřepisují)
+        while (tbody.querySelectorAll('tr').length > rounds) tbody.lastElementChild.remove();
+        while (tbody.querySelectorAll('tr').length < rounds) {
+            const i = tbody.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.className = 'circuit-round-rest-row';
+            tr.innerHTML = '<td class="round-num">' + (i + 1) + '</td>'
+                + '<td><input type="number" min="0" data-round-field="restMin" class="form-control form-control-sm"></td>'
+                + '<td><input type="number" min="0" max="59" data-round-field="restSec" class="form-control form-control-sm"></td>';
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.setAttribute('data-round-field', 'roundIndex');
+            hidden.value = i;
+            tr.querySelector('td').appendChild(hidden);
+            tbody.appendChild(tr);
+        }
+        // předvyplnit prázdné řádky výchozí pauzou mezi koly
+        tbody.querySelectorAll('tr').forEach((tr, i) => {
+            const num = tr.querySelector('.round-num');
+            if (num) num.childNodes[0].nodeValue = (i + 1);
+            const ri = tr.querySelector('[data-round-field="roundIndex"]');
+            if (ri) ri.value = i;
+            const m = tr.querySelector('[data-round-field="restMin"]');
+            const sc = tr.querySelector('[data-round-field="restSec"]');
+            if (m && !m.value && defMin) m.value = defMin.value;
+            if (sc && !sc.value && defSec) sc.value = defSec.value;
+        });
+        wrap.style.display = '';
+        renumberExercises();
     }
 
     // Phase 12: pro sdružené typy doplní minimální počet prázdných kroků, pokud žádné nejsou.
     function ensureMinSteps(card, selected) {
-        if (selected === 'CIRCUIT') {
-            const tbody = card.querySelector('.circuit-steps-tbody');
-            if (tbody && tbody.querySelectorAll('.circuit-step-row').length === 0) {
-                for (let i = 0; i < 2; i++) addCircuitStepRow(tbody);
-                renumberExercises();
-            }
-        } else { // SUPERSET / COMPLEX
-            const tbody = card.querySelector('.composite-steps-tbody');
-            if (tbody && tbody.querySelectorAll('.composite-step-row').length === 0) {
-                for (let i = 0; i < 2; i++) addCompositeStepRow(tbody);
-                renumberExercises();
-            }
+        if (selected !== 'CIRCUIT') return;
+        const tbody = card.querySelector('.circuit-steps-tbody');
+        if (tbody && tbody.querySelectorAll('.circuit-step-row').length === 0) {
+            for (let i = 0; i < 2; i++) addCircuitStepRow(tbody);
+            renumberExercises();
         }
     }
 
@@ -178,12 +286,11 @@
                 });
             });
 
-            // Phase 12: composite (superset/complex) kroky
-            card.querySelectorAll('.composite-step-row').forEach((row, sIdx) => {
-                const numTd = row.querySelector('.step-num');
-                if (numTd) numTd.textContent = (sIdx + 1);
-                row.querySelectorAll('[data-step-field]').forEach(el => {
-                    el.name = 'exercises[' + idx + '].composite.steps[' + sIdx + '].' + el.getAttribute('data-step-field');
+            // kolo 10: pauzy na konci jednotlivých kol kruhového tréninku
+            card.querySelectorAll('.circuit-round-rest-row').forEach((row, rIdx) => {
+                row.querySelectorAll('[data-round-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].circuit.roundRests[' + rIdx + '].'
+                            + el.getAttribute('data-round-field');
                 });
             });
 
@@ -804,17 +911,12 @@
                 tbody.appendChild(setRowTemplate.content.firstElementChild.cloneNode(true));
             }
             renumberExercises();
-        } else if (target.classList.contains('add-composite-step')) {
-            const card = target.closest('.exercise-card');
-            addCompositeStepRow(card.querySelector('.composite-steps-tbody'));
-            renumberExercises();
         } else if (target.classList.contains('add-circuit-step')) {
             const card = target.closest('.exercise-card');
             addCircuitStepRow(card.querySelector('.circuit-steps-tbody'));
             renumberExercises();
         } else if (target.classList.contains('remove-step')) {
-            // composite krok = <tr>, circuit krok (kolo 8) = <div>
-            const row = target.closest('.circuit-step-row, .composite-step-row');
+            const row = target.closest('.circuit-step-row');
             if (row) row.remove();
             renumberExercises();
         } else if (target.classList.contains('remove-series-row')) {
@@ -894,6 +996,19 @@
             // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
             emomSync(card, false);
             emomApplyReps(card);
+        } else if (t.classList.contains('circuit-mode')) {
+            // kolo 10: přepnutí CIRCUIT/SUPERSET/COMPLEX
+            updateCircuitMode(card);
+        } else if (t.getAttribute('data-name') === 'circuit.rounds'
+                || t.classList.contains('circuit-rest-min') || t.classList.contains('circuit-rest-sec')) {
+            circuitRoundRestsSync(card);
+        } else if (t.getAttribute('data-step-field') === 'equipmentName'
+                || t.getAttribute('data-step-field') === 'equipmentWeightKg'
+                || t.getAttribute('data-step-field') === 'equipmentCount'
+                || t.getAttribute('data-step-field') === 'equipmentSecondWeightKg') {
+            // COMPLEX sdílí náčiní prvního cviku se všemi ostatními
+            const block = card.querySelector('.type-config.type-circuit');
+            if (block && circuitMode(card) === 'COMPLEX') applyComplexSharedEquipment(block);
         } else if (t.classList.contains('tabata-rounds')) {
             tabataSync(card, false);
         } else if (t.classList.contains('tabata-default-reps')) {
@@ -1043,6 +1158,9 @@
         updateExerciseUnits(card);
         // kolo 9: jednotky + XOR u circuit kroků (server-rendered)
         card.querySelectorAll('.circuit-step-row').forEach(updateStepUnits);
+        // kolo 10: režim kruhového tréninku + tabulka pauz po kolech
+        updateCircuitMode(card);
+        circuitRoundRestsSync(card);
         // kolo 8: druhá zátěž u circuit kroků (server-rendered)
         card.querySelectorAll('.circuit-step-row').forEach(stepRow => {
             const sel = stepRow.querySelector('.step-equipment-count');
@@ -1051,7 +1169,7 @@
         });
         kbValidate(card);
     });
-    // Phase 12: server-rendered kroky (composite/circuit) mají jen data-step-field,
+    // Phase 12: server-rendered kroky kruhového tréninku mají jen data-step-field,
     // jméno pole doplníme až tady → nutné zavolat renumber na load.
     renumberExercises();
 })();

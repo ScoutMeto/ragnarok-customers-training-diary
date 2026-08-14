@@ -72,10 +72,6 @@ public class TrainingExerciseInput {
     @Valid
     private NumericSeriesConfigInput numericSeries;
 
-    /** Sdílený pro Superset a Complex. */
-    @Valid
-    private CompositeSetConfigInput composite;
-
     @Valid
     private StraightSetsConfigInput straightSets;
 

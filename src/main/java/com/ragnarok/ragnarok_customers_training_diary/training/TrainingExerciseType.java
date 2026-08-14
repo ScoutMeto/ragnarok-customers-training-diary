@@ -14,7 +14,10 @@ public enum TrainingExerciseType {
     /** Every Minute On the Minute (Fáze 3). */
     EMOM,
 
-    /** Kruhový trénink s opakovanými koly (Fáze 3). */
+    /**
+     * Kruhový trénink s opakovanými koly (Fáze 3). Od kola 10 zastřešuje i SUPERSET
+     * a COMPLEX — liší se jen režimem ({@code circuit_config.mode}), ne strukturou.
+     */
     CIRCUIT,
 
     TABATA,
@@ -22,9 +25,7 @@ public enum TrainingExerciseType {
     LADDER,
     STEPLADDER,
     PYRAMID,
-    SUPERSET,
     STRAIGHT_SETS,
-    COMPLEX,
 
     /** Intervalový trénink — Phase 13 (A11): N kol práce (reps/čas) + pauza. */
     INTERVAL,
@@ -39,4 +40,5 @@ public enum TrainingExerciseType {
     CARDIO
 
     // CORE zrušen (ScoutMeto kolo 8) — V40 převedla existující záznamy na FREEFORM
+    // SUPERSET a COMPLEX zrušeny (kolo 10) — V44 je převedla na CIRCUIT s režimem
 }

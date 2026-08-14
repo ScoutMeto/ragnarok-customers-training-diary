@@ -248,27 +248,6 @@ public class DiaryExportService {
             if (!rows.isEmpty()) cm.put("rows", rows);
             m.put("series", cm);
         }
-        if (ex.getCompositeSetConfig() != null) {
-            var c = ex.getCompositeSetConfig();
-            Map<String, Object> cm = new LinkedHashMap<>();
-            cm.put("rounds", c.getRounds());
-            cm.put("sharedWeightKg", c.getSharedWeightKg());
-            cm.put("restBetweenRoundsSeconds", c.getRestBetweenRoundsS());
-            cm.put("notes", c.getNotes());
-            List<Map<String, Object>> steps = new ArrayList<>();
-            c.getSteps().forEach(s -> {
-                Map<String, Object> sm = new LinkedHashMap<>();
-                sm.put("order", s.getOrderIndex());
-                sm.put("name", s.getName());
-                sm.put("reps", s.getReps());
-                sm.put("weightKg", s.getWeightKg());
-                sm.put("restAfterSeconds", s.getRestAfterSeconds());
-                sm.put("note", s.getNote());
-                steps.add(sm);
-            });
-            cm.put("steps", steps);
-            m.put("composite", cm);
-        }
         if (ex.getStraightSetsConfig() != null) {
             var c = ex.getStraightSetsConfig();
             Map<String, Object> cm = new LinkedHashMap<>();

@@ -11,9 +11,6 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
-import com.ragnarok.ragnarok_customers_training_diary.training.dto.CompositeSetConfigInput;
-import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
-import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.StraightSetsConfigInput;
@@ -52,7 +49,6 @@ public class ExerciseTypeConfigMapper {
         exercise.setAmrapConfig(null);
         exercise.setCircuitConfig(null);
         exercise.setNumericSeriesConfig(null);
-        exercise.setCompositeSetConfig(null);
         exercise.setStraightSetsConfig(null);
         exercise.setIntervalConfig(null);
         exercise.setStrongFirstLadderConfig(null);
@@ -67,7 +63,6 @@ public class ExerciseTypeConfigMapper {
             case AMRAP -> applyAmrap(exercise, input.getAmrap());
             case CIRCUIT -> applyCircuit(exercise, input.getCircuit());
             case LADDER, STEPLADDER, PYRAMID -> applyNumericSeries(exercise, input.getNumericSeries());
-            case SUPERSET, COMPLEX -> applyComposite(exercise, input.getComposite());
             case STRAIGHT_SETS -> applyStraightSets(exercise, input.getStraightSets());
             case INTERVAL -> applyInterval(exercise, input.getInterval());
             case STRONGFIRST_LADDER -> applyStrongFirstLadder(exercise, input.getStrongFirstLadder());
@@ -266,8 +261,11 @@ public class ExerciseTypeConfigMapper {
 
         CircuitConfigEntity cfg = new CircuitConfigEntity();
         cfg.setTrainingExercise(exercise);
+        cfg.setMode(in.getMode() != null ? in.getMode() : "CIRCUIT");
         cfg.setRounds(in.getRounds());
-        cfg.setRestBetweenRoundsS(in.getRestBetweenRoundsS());
+        // kolo 10: pauza mezi koly přichází jako minuty + sekundy
+        cfg.setRestBetweenRoundsS(CircuitConfigInput.toSeconds(
+                in.getRestBetweenRoundsMin(), in.getRestBetweenRoundsSec(), in.getRestBetweenRoundsS()));
         cfg.setNotes(in.getNotes());
 
         if (in.getSteps() != null) {
@@ -304,11 +302,13 @@ public class ExerciseTypeConfigMapper {
 
         if (in.getRoundRests() != null) {
             for (CircuitConfigInput.RoundRestInput r : in.getRoundRests()) {
-                if (r.getRoundIndex() == null || r.getRestSeconds() == null) continue;
+                if (r.getRoundIndex() == null) continue;
+                Integer sec = CircuitConfigInput.toSeconds(r.getRestMin(), r.getRestSec(), r.getRestSeconds());
+                if (sec == null) continue;
                 CircuitRoundRestEntity rr = new CircuitRoundRestEntity();
                 rr.setCircuitConfig(cfg);
                 rr.setRoundIndex(r.getRoundIndex());
-                rr.setRestSeconds(r.getRestSeconds());
+                rr.setRestSeconds(sec);
                 cfg.getRoundRests().add(rr);
             }
         }
@@ -316,36 +316,6 @@ public class ExerciseTypeConfigMapper {
         exercise.setCircuitConfig(cfg);
     }
 
-    // ----- COMPOSITE (Superset / Complex) -----
-
-    private void applyComposite(TrainingExerciseEntity exercise, CompositeSetConfigInput in) {
-        if (in == null || in.getRounds() == null) return;
-
-        CompositeSetConfigEntity cfg = new CompositeSetConfigEntity();
-        cfg.setTrainingExercise(exercise);
-        cfg.setRounds(in.getRounds());
-        cfg.setSharedWeightKg(in.getSharedWeightKg());
-        cfg.setRestBetweenRoundsS(in.getRestBetweenRoundsS());
-        cfg.setNotes(in.getNotes());
-
-        if (in.getSteps() != null) {
-            int idx = 0;
-            for (CompositeSetConfigInput.StepInput s : in.getSteps()) {
-                if (s.getName() == null || s.getName().isBlank()) continue;
-                CompositeSetStepEntity step = new CompositeSetStepEntity();
-                step.setCompositeConfig(cfg);
-                step.setOrderIndex(idx++);
-                step.setName(s.getName().trim());
-                step.setReps(s.getReps());
-                step.setWeightKg(s.getWeightKg());
-                step.setRestAfterSeconds(s.getRestAfterSeconds());
-                step.setNote(s.getNote());
-                cfg.getSteps().add(step);
-            }
-        }
-
-        exercise.setCompositeSetConfig(cfg);
-    }
 
     // ----- NUMERIC SERIES (Ladder / Stepladder / Pyramid) -----
 

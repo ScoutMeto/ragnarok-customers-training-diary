@@ -10,9 +10,6 @@ import com.ragnarok.ragnarok_customers_training_diary.training.types.amrap.Amrap
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitRoundRestEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.circuit.CircuitStepEntity;
-import com.ragnarok.ragnarok_customers_training_diary.training.dto.CompositeSetConfigInput;
-import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetConfigEntity;
-import com.ragnarok.ragnarok_customers_training_diary.training.types.composite.CompositeSetStepEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.NumericSeriesConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.types.series.NumericSeriesConfigEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.StraightSetsConfigInput;
@@ -45,9 +42,6 @@ public class ExerciseTypeConfigToInputMapper {
         }
         if (ex.getNumericSeriesConfig() != null) {
             input.setNumericSeries(toNumericSeriesInput(ex.getNumericSeriesConfig()));
-        }
-        if (ex.getCompositeSetConfig() != null) {
-            input.setComposite(toCompositeInput(ex.getCompositeSetConfig()));
         }
         if (ex.getStraightSetsConfig() != null) {
             input.setStraightSets(toStraightSetsInput(ex.getStraightSetsConfig()));
@@ -113,24 +107,6 @@ public class ExerciseTypeConfigToInputMapper {
         return in;
     }
 
-    private CompositeSetConfigInput toCompositeInput(CompositeSetConfigEntity e) {
-        CompositeSetConfigInput in = new CompositeSetConfigInput();
-        in.setRounds(e.getRounds());
-        in.setSharedWeightKg(e.getSharedWeightKg());
-        in.setRestBetweenRoundsS(e.getRestBetweenRoundsS());
-        in.setNotes(e.getNotes());
-        for (CompositeSetStepEntity s : e.getSteps()) {
-            CompositeSetConfigInput.StepInput si = new CompositeSetConfigInput.StepInput();
-            si.setOrderIndex(s.getOrderIndex());
-            si.setName(s.getName());
-            si.setReps(s.getReps());
-            si.setWeightKg(s.getWeightKg());
-            si.setRestAfterSeconds(s.getRestAfterSeconds());
-            si.setNote(s.getNote());
-            in.getSteps().add(si);
-        }
-        return in;
-    }
 
     private NumericSeriesConfigInput toNumericSeriesInput(NumericSeriesConfigEntity e) {
         NumericSeriesConfigInput in = new NumericSeriesConfigInput();
@@ -154,8 +130,13 @@ public class ExerciseTypeConfigToInputMapper {
 
     private CircuitConfigInput toCircuitInput(CircuitConfigEntity e) {
         CircuitConfigInput in = new CircuitConfigInput();
+        in.setMode(e.getMode());
         in.setRounds(e.getRounds());
         in.setRestBetweenRoundsS(e.getRestBetweenRoundsS());
+        if (e.getRestBetweenRoundsS() != null) {
+            in.setRestBetweenRoundsMin(e.getRestBetweenRoundsS() / 60);
+            in.setRestBetweenRoundsSec(e.getRestBetweenRoundsS() % 60);
+        }
         in.setNotes(e.getNotes());
         for (CircuitStepEntity s : e.getSteps()) {
             CircuitConfigInput.StepInput si = new CircuitConfigInput.StepInput();
@@ -181,6 +162,10 @@ public class ExerciseTypeConfigToInputMapper {
             CircuitConfigInput.RoundRestInput ri = new CircuitConfigInput.RoundRestInput();
             ri.setRoundIndex(r.getRoundIndex());
             ri.setRestSeconds(r.getRestSeconds());
+            if (r.getRestSeconds() != null) {
+                ri.setRestMin(r.getRestSeconds() / 60);
+                ri.setRestSec(r.getRestSeconds() % 60);
+            }
             in.getRoundRests().add(ri);
         }
         return in;

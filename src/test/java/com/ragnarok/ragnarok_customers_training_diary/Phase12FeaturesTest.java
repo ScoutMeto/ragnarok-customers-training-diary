@@ -13,7 +13,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.ragnarok.ragnarok_customers_training_diary.common.ForbiddenException;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.CircuitRoundLogInput;
-import com.ragnarok.ragnarok_customers_training_diary.training.dto.CompositeSetConfigInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.SetInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingExerciseInput;
 import com.ragnarok.ragnarok_customers_training_diary.training.dto.TrainingInput;
@@ -77,27 +76,30 @@ class Phase12FeaturesTest {
         input.setTrainingDate(LocalDate.now());
         input.setName("Superset test");
         var ex = new TrainingExerciseInput();
-        ex.setType(TrainingExerciseType.SUPERSET);
+        // kolo 10: SUPERSET je režim kruhového tréninku, ne samostatný typ
+        ex.setType(TrainingExerciseType.CIRCUIT);
         ex.setCustomName("Superset");
         ex.getSets().add(set(20, 10)); // měl by být ignorován
 
-        var comp = new CompositeSetConfigInput();
+        var comp = new CircuitConfigInput();
+        comp.setMode("SUPERSET");
         comp.setRounds(4);
         // bez limitu — přidáme 8 kroků (dřív byl strop 6)
         for (int i = 1; i <= 8; i++) {
-            var s = new CompositeSetConfigInput.StepInput();
+            var s = new CircuitConfigInput.StepInput();
             s.setName("Cvik " + i);
             s.setReps(i);
             comp.getSteps().add(s);
         }
-        ex.setComposite(comp);
+        ex.setCircuit(comp);
         input.getExercises().add(ex);
 
         TrainingEntity created = trainingService.create(alice, input);
         var saved = created.getExercises().get(0);
         assertThat(saved.getSets()).isEmpty();
-        assertThat(saved.getCompositeSetConfig()).isNotNull();
-        assertThat(saved.getCompositeSetConfig().getSteps()).hasSize(8);
+        assertThat(saved.getCircuitConfig()).isNotNull();
+        assertThat(saved.getCircuitConfig().getMode()).isEqualTo("SUPERSET");
+        assertThat(saved.getCircuitConfig().getSteps()).hasSize(8);
     }
 
     @Test
