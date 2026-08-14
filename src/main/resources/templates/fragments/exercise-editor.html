@@ -590,52 +590,119 @@
                         </div>
                     </div>
 
-                    <!-- =============== AMRAP config =============== -->
+                    <!-- =============== AMRAP config (kolo 10) =============== -->
                     <div class="type-config type-amrap mt-4" style="display:none">
                         <h6 class="mb-2">AMRAP schéma</h6>
-                        <div class="row g-2">
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Time-cap (s) *</label>
-                                <input type="number" min="30" max="7200"
-                                       data-name="amrap.timecapSeconds" th:name="|exercises[${exStat.index}].amrap.timecapSeconds|"
-                                       th:value="${ex.amrap?.timecapSeconds}"
+                        <div class="form-text mb-2">Délka AMRAP definuje celý blok; údaje níže popisují jednotlivé cviky. AMRAP je kruhový trénink bez předdefinovaných pauz — sada cviků se opakuje, dokud nedojde čas.</div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Délka AMRAP (m) *</label>
+                                <input type="number" min="0"
+                                       data-name="amrap.timecapMin" th:name="|exercises[${exStat.index}].amrap.timecapMin|"
+                                       th:value="${ex.amrap?.timecapMin}"
                                        class="form-control form-control-sm">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Target reps/kolo</label>
-                                <input type="number"
-                                       data-name="amrap.targetRepsPerRound" th:name="|exercises[${exStat.index}].amrap.targetRepsPerRound|"
-                                       th:value="${ex.amrap?.targetRepsPerRound}"
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Délka AMRAP (s)</label>
+                                <input type="number" min="0" max="59"
+                                       data-name="amrap.timecapSec" th:name="|exercises[${exStat.index}].amrap.timecapSec|"
+                                       th:value="${ex.amrap?.timecapSec}"
                                        class="form-control form-control-sm">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Target kg</label>
-                                <input type="number" step="0.25"
-                                       data-name="amrap.targetWeightKg" th:name="|exercises[${exStat.index}].amrap.targetWeightKg|"
-                                       th:value="${ex.amrap?.targetWeightKg}"
-                                       class="form-control form-control-sm">
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label form-label-sm">Výsledek: kol</label>
-                                <input type="number"
+                                <input type="number" min="0"
                                        data-name="amrap.roundsCompleted" th:name="|exercises[${exStat.index}].amrap.roundsCompleted|"
                                        th:value="${ex.amrap?.roundsCompleted}"
-                                       class="form-control form-control-sm">
+                                       class="form-control form-control-sm amrap-rounds">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label form-label-sm">Výsledek: navíc reps</label>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Opakování navíc</label>
                                 <input type="number"
                                        data-name="amrap.extraReps" th:name="|exercises[${exStat.index}].amrap.extraReps|"
                                        th:value="${ex.amrap?.extraReps}"
                                        class="form-control form-control-sm">
                             </div>
-                            <div class="col-md-9">
+                            <div class="col-md-4">
                                 <label class="form-label form-label-sm">Poznámky k AMRAPu</label>
                                 <input type="text"
                                        data-name="amrap.notes" th:name="|exercises[${exStat.index}].amrap.notes|"
                                        th:value="${ex.amrap?.notes}"
                                        class="form-control form-control-sm">
                             </div>
+                        </div>
+
+                        <div class="form-text mb-2">Cviky v kole — náčiní a zaměření se zadává u každého zvlášť:</div>
+                        <div class="amrap-steps-tbody">
+                            <div th:each="s, sStat : ${ex.amrap?.steps}" class="amrap-step-row border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small"><span class="step-num" th:text="${sStat.count}">1</span>. cvik</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">&times;</button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="form-label form-label-sm">Cvik *</label>
+                                        <select class="form-select form-select-sm step-catalog-select"><option value="">&mdash; z katalogu &mdash;</option></select>
+                                        <input type="text" data-step-field="name" th:value="${s.name}" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label form-label-sm step-reps-label">Počet opakování/kolo</label>
+                                        <select data-step-field="repUnit" class="form-select form-select-sm mb-1 step-unit-select" style="display:none">
+                                            <option value="REPS" th:selected="${s.repUnit == null or s.repUnit == &#39;REPS&#39;}">Opakování</option>
+                                            <option value="SECONDS" th:selected="${s.repUnit == &#39;SECONDS&#39;}">Sekundy</option>
+                                            <option value="METERS" class="step-unit-meters" th:selected="${s.repUnit == &#39;METERS&#39;}">Metry</option>
+                                        </select>
+                                        <input type="number" data-step-field="reps" th:value="${s.reps}" class="form-control form-control-sm step-reps-input">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label form-label-sm">Poznámka</label>
+                                        <input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label form-label-sm">Náčiní</label>
+                                        <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" th:value="${s.equipmentName}" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label form-label-sm">Váha (kg)</label>
+                                        <input type="number" step="0.25" data-step-field="equipmentWeightKg" th:value="${s.equipmentWeightKg}" class="form-control form-control-sm step-equipment-weight">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label form-label-sm">Počet zátěží</label>
+                                        <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
+                                            <option value="1" th:selected="${s.equipmentCount != 2}">1</option>
+                                            <option value="2" th:selected="${s.equipmentCount == 2}">2</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 step-equipment-second" th:style="${s.equipmentCount == 2} ? &#39;&#39; : &#39;display:none&#39;">
+                                        <label class="form-label form-label-sm">Druhá zátěž (kg)</label>
+                                        <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm step-equipment-second-weight">
+                                    </div>
+                                </div>
+                                <div class="mt-2" th:if="${!tags.isEmpty()}">
+                                    <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
+                                                   th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
+                                            <span th:text="${tag.name}">Tag</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-amrap-step">+ Přidat cvik</button>
+
+                        <div class="amrap-rounds-wrap mt-3" style="display:none">
+                            <div class="form-text mb-1">
+                                Odcvičená kola — poslední kolo bývá rozjeté: uprav hodnoty a co jsi nestihl(a), zaškrtni jako nestihnuté.
+                            </div>
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th style="width:60px">Kolo</th><th>Cvik</th><th style="width:110px">Výkon</th><th style="width:110px">Váha (kg)</th><th style="width:100px">Nestihnuto</th></tr></thead>
+                                <tbody class="amrap-rounds-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>
@@ -928,13 +995,23 @@
             </div>
             <div class="type-config type-amrap mt-4" style="display:none">
                 <h6 class="mb-2">AMRAP schéma</h6>
-                <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Time-cap (s) *</label><input type="number" min="30" max="7200" data-name="amrap.timecapSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Target reps/kolo</label><input type="number" data-name="amrap.targetRepsPerRound" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Target kg</label><input type="number" step="0.25" data-name="amrap.targetWeightKg" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Výsledek: kol</label><input type="number" data-name="amrap.roundsCompleted" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Výsledek: navíc reps</label><input type="number" data-name="amrap.extraReps" class="form-control form-control-sm"></div>
-                    <div class="col-md-9"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="amrap.notes" class="form-control form-control-sm"></div>
+                <div class="form-text mb-2">Délka AMRAP definuje celý blok; údaje níže popisují jednotlivé cviky. AMRAP je kruhový trénink bez předdefinovaných pauz — sada cviků se opakuje, dokud nedojde čas.</div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-2"><label class="form-label form-label-sm">Délka AMRAP (m) *</label><input type="number" min="0" data-name="amrap.timecapMin" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Délka AMRAP (s)</label><input type="number" min="0" max="59" data-name="amrap.timecapSec" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Výsledek: kol</label><input type="number" min="0" data-name="amrap.roundsCompleted" class="form-control form-control-sm amrap-rounds"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Opakování navíc</label><input type="number" data-name="amrap.extraReps" class="form-control form-control-sm"></div>
+                    <div class="col-md-4"><label class="form-label form-label-sm">Poznámky k AMRAPu</label><input type="text" data-name="amrap.notes" class="form-control form-control-sm"></div>
+                </div>
+                <div class="form-text mb-2">Cviky v kole — náčiní a zaměření se zadává u každého zvlášť:</div>
+                <div class="amrap-steps-tbody"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary add-amrap-step">+ Přidat cvik</button>
+                <div class="amrap-rounds-wrap mt-3" style="display:none">
+                    <div class="form-text mb-1">Odcvičená kola — poslední kolo bývá rozjeté: uprav hodnoty a co jsi nestihl(a), zaškrtni jako nestihnuté.</div>
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th style="width:60px">Kolo</th><th>Cvik</th><th style="width:110px">Výkon</th><th style="width:110px">Váha (kg)</th><th style="width:100px">Nestihnuto</th></tr></thead>
+                        <tbody class="amrap-rounds-tbody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -951,6 +1028,64 @@
         <td><input type="text" data-name="note" class="form-control form-control-sm"></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger remove-set">×</button></td>
     </tr>
+</template>
+
+<template id="amrapStepTemplate">
+    <div class="amrap-step-row border rounded p-2 mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <strong class="small"><span class="step-num">N</span>. cvik</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Odebrat cvik">&times;</button>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-5">
+                <label class="form-label form-label-sm">Cvik *</label>
+                <select class="form-select form-select-sm step-catalog-select"><option value="">&mdash; z katalogu &mdash;</option></select>
+                <input type="text" data-step-field="name" class="form-control form-control-sm mt-1 step-name-input" placeholder="nebo vlastní název">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm step-reps-label">Počet opakování/kolo</label>
+                <select data-step-field="repUnit" class="form-select form-select-sm mb-1 step-unit-select" style="display:none">
+                    <option value="REPS">Opakování</option>
+                    <option value="SECONDS">Sekundy</option>
+                    <option value="METERS" class="step-unit-meters">Metry</option>
+                </select>
+                <input type="number" data-step-field="reps" class="form-control form-control-sm step-reps-input">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Poznámka</label>
+                <input type="text" data-step-field="note" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Náčiní</label>
+                <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Váha (kg)</label>
+                <input type="number" step="0.25" data-step-field="equipmentWeightKg" class="form-control form-control-sm step-equipment-weight">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Počet zátěží</label>
+                <select data-step-field="equipmentCount" class="form-select form-select-sm step-equipment-count">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="col-md-3 step-equipment-second" style="display:none">
+                <label class="form-label form-label-sm">Druhá zátěž (kg)</label>
+                <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm step-equipment-second-weight">
+            </div>
+        </div>
+        <div class="mt-2" th:if="${tags != null and !tags.isEmpty()}">
+            <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
+            <div class="d-flex flex-wrap gap-2">
+                <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
+                    <span th:text="${tag.name}">Tag</span>
+                </label>
+            </div>
+        </div>
+    </div>
 </template>
 
 <template id="circuitStepTemplate">

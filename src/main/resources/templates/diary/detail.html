@@ -416,7 +416,8 @@
             <!-- AMRAP -->
             <div th:if="${ex.amrapConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong>AMRAP</strong> ·
-                time-cap <span class="num" th:text="${ex.amrapConfig.timecapSeconds}">480</span>&nbsp;s
+                délka <span class="num" th:text="${ex.amrapConfig.timecapSeconds / 60}">8</span>:<span
+                    class="num" th:text="${#strings.replace(#numbers.formatInteger(ex.amrapConfig.timecapSeconds % 60, 2), &#39;,&#39;, &#39;&#39;)}">00</span>
                 <span th:if="${ex.amrapConfig.targetRepsPerRound != null}">· target <b class="num" th:text="${ex.amrapConfig.targetRepsPerRound}">10</b> reps/kolo</span>
                 <span th:if="${ex.amrapConfig.targetWeightKg != null}">· <b class="num" th:text="${ex.amrapConfig.targetWeightKg}">24</b> kg</span>
                 <span th:if="${ex.amrapConfig.roundsCompleted != null}" class="rk-badge rk-badge--success" style="margin-left: 8px;">
@@ -425,6 +426,42 @@
                         + <span class="num" th:text="${ex.amrapConfig.extraReps}">3</span></span>
                 </span>
             </div>
+            <!-- kolo 10: sada cviků AMRAPu -->
+            <table class="rk-series" th:if="${ex.amrapConfig != null and !ex.amrapConfig.steps.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>#</th><th>Cvik</th><th>Na kolo</th><th>Náčiní</th><th>Zaměření</th></tr></thead>
+                <tbody>
+                <tr th:each="s, st : ${ex.amrapConfig.steps}">
+                    <td th:text="${st.count}">1</td>
+                    <td th:text="${s.name}">Swing</td>
+                    <td th:text="${s.reps != null
+                                   ? s.reps + (s.repUnit == &#39;METERS&#39; ? &#39; m&#39; : (s.repUnit == &#39;SECONDS&#39; ? &#39; s&#39; : &#39;&#39;))
+                                   : &#39;&mdash;&#39;}">20</td>
+                    <td>
+                        <span th:if="${s.equipmentName != null}" th:text="${s.equipmentName}">kettlebell</span><span
+                              th:if="${s.equipmentWeightKg != null}"> <b class="num" th:text="${s.equipmentWeightKg}">24</b> kg</span><span
+                              th:if="${s.equipmentCount == 2 and s.equipmentSecondWeightKg != null}"> + <b class="num" th:text="${s.equipmentSecondWeightKg}">24</b> kg</span>
+                    </td>
+                    <td><span th:each="tag : ${s.tags}" class="rk-badge" th:text="${tag.name}">Tag</span></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- kolo 10: odcvičená kola (poslední bývá rozjeté) -->
+            <table class="rk-series" th:if="${ex.amrapConfig != null and !ex.amrapConfig.roundEntries.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Kolo</th><th>Cvik</th><th>Výkon</th><th>Váha</th><th>Stav</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${ex.amrapConfig.roundEntries}">
+                    <td th:text="${r.roundIndex}">1</td>
+                    <td th:text="${ex.amrapConfig.steps.size() > r.stepOrder ? ex.amrapConfig.steps[r.stepOrder].name : &#39;&mdash;&#39;}">Swing</td>
+                    <td th:text="${r.actualReps} ?: &#39;&mdash;&#39;">20</td>
+                    <td th:text="${r.actualWeightKg} ?: &#39;&mdash;&#39;">24</td>
+                    <td th:text="${r.skipped} ? &#39;nestihnuto&#39; : &#39;&#39;"></td>
+                </tr>
+                </tbody>
+            </table>
+
 
             <p th:if="${ex.notes != null and !ex.notes.isEmpty()}"
                class="text-muted"

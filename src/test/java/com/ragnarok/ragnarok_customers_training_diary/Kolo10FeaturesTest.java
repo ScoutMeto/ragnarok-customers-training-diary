@@ -134,6 +134,86 @@ class Kolo10FeaturesTest {
     }
 
     @Test
+    void amrap_persistsStepsRoundEntriesAndTimecapFromMinutes() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 AMRAP");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.AMRAP);
+        ex.setCustomName("AMRAP");
+
+        var a = new com.ragnarok.ragnarok_customers_training_diary.training.dto.AmrapConfigInput();
+        a.setTimecapMin(5);
+        a.setTimecapSec(30);
+        a.setRoundsCompleted(2);
+
+        var s1 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.StepInput();
+        s1.setName("KB Swing");
+        s1.setReps(20);
+        var s2 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.StepInput();
+        s2.setName("Burpee");
+        s2.setReps(10);
+        a.getSteps().add(s1);
+        a.getSteps().add(s2);
+
+        // druhé (rozjeté) kolo: první cvik jen částečně, druhý nestihnut
+        var e1 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.RoundEntryInput();
+        e1.setRoundIndex(2);
+        e1.setStepOrder(0);
+        e1.setActualReps(15);
+        var e2 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.RoundEntryInput();
+        e2.setRoundIndex(2);
+        e2.setStepOrder(1);
+        e2.setSkipped(true);
+        a.getRoundEntries().add(e1);
+        a.getRoundEntries().add(e2);
+        ex.setAmrap(a);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        var cfg = created.getExercises().get(0).getAmrapConfig();
+        assertThat(cfg.getTimecapSeconds()).isEqualTo(330);
+        assertThat(cfg.getSteps()).hasSize(2);
+        assertThat(cfg.getSteps().get(1).getName()).isEqualTo("Burpee");
+        assertThat(cfg.getRoundEntries()).hasSize(2);
+        assertThat(cfg.getRoundEntries().get(0).getActualReps()).isEqualTo(15);
+        assertThat(cfg.getRoundEntries().get(1).isSkipped()).isTrue();
+    }
+
+    @Test
+    void amrap_dropsRoundEntriesForDeletedSteps() {
+        // Uživatel v editaci smaže cvik — řádky kol na neexistující cvik nesmí projít.
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 AMRAP cleanup");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.AMRAP);
+        ex.setCustomName("AMRAP");
+
+        var a = new com.ragnarok.ragnarok_customers_training_diary.training.dto.AmrapConfigInput();
+        a.setTimecapMin(3);
+        var s1 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.StepInput();
+        s1.setName("KB Swing");
+        a.getSteps().add(s1);
+
+        var orphan = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .AmrapConfigInput.RoundEntryInput();
+        orphan.setRoundIndex(1);
+        orphan.setStepOrder(3); // cvik, který už neexistuje
+        a.getRoundEntries().add(orphan);
+        ex.setAmrap(a);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        assertThat(created.getExercises().get(0).getAmrapConfig().getRoundEntries()).isEmpty();
+    }
+
+    @Test
     void systemTag_keepsStableKeyWhenRenamed() {
         // Detekce jednotek v UI se řídí klíčem, ne názvem — přejmenování ji nesmí rozbít.
         TrainingTagEntity carry = new TrainingTagEntity();

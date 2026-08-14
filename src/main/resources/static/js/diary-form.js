@@ -120,6 +120,97 @@
             updateCircuitMode(exerciseCard);
             circuitRoundRestsSync(exerciseCard);
         }
+        if (selected === 'AMRAP') {
+            const tbody = exerciseCard.querySelector('.amrap-steps-tbody');
+            if (tbody && tbody.querySelectorAll('.amrap-step-row').length === 0) {
+                addAmrapStepRow(tbody);
+                renumberExercises();
+            }
+            exerciseCard.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
+            amrapRoundsSync(exerciseCard);
+        }
+    }
+
+    // ----- kolo 10: AMRAP (sada cviků + záznam po kolech) -----
+
+    function addAmrapStepRow(tbody) {
+        const tpl = document.getElementById('amrapStepTemplate');
+        if (!tpl || !tbody) return null;
+        const row = tpl.content.firstElementChild.cloneNode(true);
+        populateStepCatalog(row.querySelector('.step-catalog-select'));
+        tbody.appendChild(row);
+        return row;
+    }
+
+    /**
+     * Tabulka odcvičených kol: kolo × cvik. Poslední kolo bývá rozjeté, proto se
+     * generuje i ono — u cviku, na který nezbyl čas, se zaškrtne „Nestihnuto".
+     * Vyplněné hodnoty se při přegenerování zachovávají (klíč kolo|cvik).
+     */
+    function amrapRoundsSync(card) {
+        const block = card.querySelector('.type-config.type-amrap');
+        if (!block) return;
+        const wrap = block.querySelector('.amrap-rounds-wrap');
+        const tbody = block.querySelector('.amrap-rounds-tbody');
+        if (!wrap || !tbody) return;
+
+        const rounds = parseInt(block.querySelector('.amrap-rounds')?.value, 10);
+        const steps = [...block.querySelectorAll('.amrap-step-row')];
+        if (!rounds || rounds < 1 || steps.length === 0) { wrap.style.display = 'none'; return; }
+
+        // zapamatovat vyplněné hodnoty, ať přegenerování nic nesmaže
+        const prev = {};
+        tbody.querySelectorAll('tr').forEach(tr => {
+            prev[tr.dataset.key] = {
+                reps: tr.querySelector('[data-round-field="actualReps"]')?.value || '',
+                weight: tr.querySelector('[data-round-field="actualWeightKg"]')?.value || '',
+                skipped: !!tr.querySelector('[data-round-field="skipped"]')?.checked
+            };
+        });
+
+        tbody.innerHTML = '';
+        for (let r = 1; r <= rounds; r++) {
+            steps.forEach((step, sIdx) => {
+                const key = r + '|' + sIdx;
+                const saved = prev[key] || {};
+                const name = (step.querySelector('.step-name-input')?.value || '').trim() || ('cvik ' + (sIdx + 1));
+                const plannedReps = step.querySelector('[data-step-field="reps"]')?.value || '';
+                const plannedWeight = step.querySelector('.step-equipment-weight')?.value || '';
+
+                const tr = document.createElement('tr');
+                tr.className = 'amrap-round-row';
+                tr.dataset.key = key;
+                tr.innerHTML =
+                    '<td class="round-num">' + (sIdx === 0 ? r : '') + '</td>'
+                    + '<td class="small step-name-cell"></td>'
+                    + '<td><input type="number" data-round-field="actualReps" class="form-control form-control-sm"></td>'
+                    + '<td><input type="number" step="0.25" data-round-field="actualWeightKg" class="form-control form-control-sm"></td>'
+                    + '<td class="text-center"><input type="checkbox" data-round-field="skipped" class="form-check-input"></td>';
+                // název cviku vkládáme textem (může obsahovat uvozovky/apostrofy)
+                tr.querySelector('.step-name-cell').textContent = name;
+
+                const hiddenRound = document.createElement('input');
+                hiddenRound.type = 'hidden';
+                hiddenRound.setAttribute('data-round-field', 'roundIndex');
+                hiddenRound.value = r;
+                const hiddenStep = document.createElement('input');
+                hiddenStep.type = 'hidden';
+                hiddenStep.setAttribute('data-round-field', 'stepOrder');
+                hiddenStep.value = sIdx;
+                tr.firstElementChild.appendChild(hiddenRound);
+                tr.firstElementChild.appendChild(hiddenStep);
+
+                tr.querySelector('[data-round-field="actualReps"]').value =
+                        saved.reps !== undefined && saved.reps !== '' ? saved.reps : plannedReps;
+                tr.querySelector('[data-round-field="actualWeightKg"]').value =
+                        saved.weight !== undefined && saved.weight !== '' ? saved.weight : plannedWeight;
+                tr.querySelector('[data-round-field="skipped"]').checked = !!saved.skipped;
+
+                tbody.appendChild(tr);
+            });
+        }
+        wrap.style.display = '';
+        renumberExercises();
     }
 
     // ----- kolo 10: CIRCUIT / SUPERSET / COMPLEX -----
@@ -283,6 +374,22 @@
                 ['weightKg', 'reps', 'restSeconds', 'rpe', 'note'].forEach(fieldName => {
                     const el = row.querySelector('[data-name="' + fieldName + '"]');
                     if (el) el.name = 'exercises[' + idx + '].sets[' + sIdx + '].' + fieldName;
+                });
+            });
+
+            // kolo 10: AMRAP — cviky v kole a záznam po kolech
+            card.querySelectorAll('.amrap-step-row').forEach((row, sIdx) => {
+                const numEl = row.querySelector('.step-num');
+                if (numEl) numEl.textContent = (sIdx + 1);
+                row.querySelectorAll('[data-step-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].amrap.steps[' + sIdx + '].'
+                            + el.getAttribute('data-step-field');
+                });
+            });
+            card.querySelectorAll('.amrap-round-row').forEach((row, rIdx) => {
+                row.querySelectorAll('[data-round-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].amrap.roundEntries[' + rIdx + '].'
+                            + el.getAttribute('data-round-field');
                 });
             });
 
@@ -911,14 +1018,22 @@
                 tbody.appendChild(setRowTemplate.content.firstElementChild.cloneNode(true));
             }
             renumberExercises();
+        } else if (target.classList.contains('add-amrap-step')) {
+            const card = target.closest('.exercise-card');
+            addAmrapStepRow(card.querySelector('.amrap-steps-tbody'));
+            renumberExercises();
+            amrapRoundsSync(card);
         } else if (target.classList.contains('add-circuit-step')) {
             const card = target.closest('.exercise-card');
             addCircuitStepRow(card.querySelector('.circuit-steps-tbody'));
             renumberExercises();
         } else if (target.classList.contains('remove-step')) {
-            const row = target.closest('.circuit-step-row');
+            const card = target.closest('.exercise-card');
+            const row = target.closest('.circuit-step-row, .amrap-step-row');
+            const wasAmrap = row && row.classList.contains('amrap-step-row');
             if (row) row.remove();
             renumberExercises();
+            if (wasAmrap && card) amrapRoundsSync(card);
         } else if (target.classList.contains('remove-series-row')) {
             // kolo 9: smazání řádku série (např. nedokončená pyramida)
             const card = target.closest('.exercise-card');
@@ -961,6 +1076,12 @@
             const wrap = t.parentElement;
             const nameInput = wrap && wrap.querySelector('.step-name-input');
             if (nameInput) nameInput.value = t.value;
+            // kolo 10: tabulka kol AMRAPu ukazuje názvy cviků → přegenerovat
+            if (t.closest('.amrap-step-row')) amrapRoundsSync(card);
+        } else if ((t.getAttribute('data-step-field') === 'name'
+                    || t.getAttribute('data-step-field') === 'reps')
+                && t.closest('.amrap-step-row')) {
+            amrapRoundsSync(card);
         } else if (t.classList.contains('kb-detail-unilateral') || t.classList.contains('kb-detail-bilateral')) {
             // vzájemně výlučné checkboxy
             const block = card.querySelector('.type-config.type-kb_sport_time');
@@ -981,8 +1102,8 @@
             if (canonical) canonical.value = t.value;
             updateExerciseUnits(card);
         } else if (t.getAttribute('data-step-field') === 'tagIds') {
-            // kolo 9: Carry/Isometrie tag na kroku circuitu → jednotky + skrytí Sekund
-            const stepRow = t.closest('.circuit-step-row');
+            // kolo 9/10: Nošení/Izometrie na kroku kruhového tréninku i AMRAPu → jednotky
+            const stepRow = t.closest('.circuit-step-row, .amrap-step-row');
             if (stepRow) updateStepUnits(stepRow);
         } else if (t.closest('.exercise-tags')) {
             updateExerciseUnits(card);
@@ -996,6 +1117,8 @@
             // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
             emomSync(card, false);
             emomApplyReps(card);
+        } else if (t.classList.contains('amrap-rounds')) {
+            amrapRoundsSync(card);
         } else if (t.classList.contains('circuit-mode')) {
             // kolo 10: přepnutí CIRCUIT/SUPERSET/COMPLEX
             updateCircuitMode(card);
@@ -1158,6 +1281,7 @@
         updateExerciseUnits(card);
         // kolo 9: jednotky + XOR u circuit kroků (server-rendered)
         card.querySelectorAll('.circuit-step-row').forEach(updateStepUnits);
+        card.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
         // kolo 10: režim kruhového tréninku + tabulka pauz po kolech
         updateCircuitMode(card);
         circuitRoundRestsSync(card);
@@ -1168,6 +1292,7 @@
             if (sel && second) second.style.display = (sel.value === '2') ? '' : 'none';
         });
         kbValidate(card);
+        amrapRoundsSync(card);
     });
     // Phase 12: server-rendered kroky kruhového tréninku mají jen data-step-field,
     // jméno pole doplníme až tady → nutné zavolat renumber na load.

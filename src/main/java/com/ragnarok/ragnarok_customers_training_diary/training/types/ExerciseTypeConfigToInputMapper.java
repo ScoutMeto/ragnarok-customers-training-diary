@@ -211,6 +211,35 @@ public class ExerciseTypeConfigToInputMapper {
     private AmrapConfigInput toAmrapInput(AmrapConfigEntity e) {
         AmrapConfigInput in = new AmrapConfigInput();
         in.setTimecapSeconds(e.getTimecapSeconds());
+        if (e.getTimecapSeconds() != null) {
+            in.setTimecapMin(e.getTimecapSeconds() / 60);
+            in.setTimecapSec(e.getTimecapSeconds() % 60);
+        }
+        for (var st : e.getSteps()) {
+            var si = new AmrapConfigInput.StepInput();
+            si.setOrderIndex(st.getOrderIndex());
+            si.setName(st.getName());
+            si.setReps(st.getReps());
+            si.setRepUnit(st.getRepUnit());
+            si.setWeightKg(st.getWeightKg());
+            si.setNote(st.getNote());
+            si.setEquipmentName(st.getEquipmentName());
+            si.setEquipmentWeightKg(st.getEquipmentWeightKg());
+            si.setEquipmentCount(st.getEquipmentCount());
+            si.setEquipmentSecondWeightKg(st.getEquipmentSecondWeightKg());
+            for (var tag : st.getTags()) si.getTagIds().add(tag.getId());
+            in.getSteps().add(si);
+        }
+        for (var re : e.getRoundEntries()) {
+            var ri = new AmrapConfigInput.RoundEntryInput();
+            ri.setRoundIndex(re.getRoundIndex());
+            ri.setStepOrder(re.getStepOrder());
+            ri.setSkipped(re.isSkipped());
+            ri.setActualReps(re.getActualReps());
+            ri.setActualWeightKg(re.getActualWeightKg());
+            ri.setNote(re.getNote());
+            in.getRoundEntries().add(ri);
+        }
         in.setTargetRepsPerRound(e.getTargetRepsPerRound());
         in.setTargetWeightKg(e.getTargetWeightKg());
         in.setRoundsCompleted(e.getRoundsCompleted());

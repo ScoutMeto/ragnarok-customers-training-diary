@@ -51,4 +51,18 @@ public class AmrapConfigEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** kolo 10: sada cviků, která se v AMRAPu opakuje (jako kroky kruhového tréninku). */
+    @jakarta.persistence.OneToMany(mappedBy = "amrapConfig",
+            cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @jakarta.persistence.OrderBy("orderIndex ASC")
+    private java.util.List<AmrapStepEntity> steps = new java.util.ArrayList<>();
+
+    /** kolo 10: skutečný záznam po kolech včetně posledního, rozjetého. */
+    @jakarta.persistence.OneToMany(mappedBy = "amrapConfig",
+            cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @jakarta.persistence.OrderBy("roundIndex ASC, stepOrder ASC")
+    private java.util.List<AmrapRoundEntryEntity> roundEntries = new java.util.ArrayList<>();
 }

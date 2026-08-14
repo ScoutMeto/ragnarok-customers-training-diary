@@ -240,16 +240,69 @@ public class ExerciseTypeConfigMapper {
     // ----- AMRAP -----
 
     private void applyAmrap(TrainingExerciseEntity exercise, AmrapConfigInput in) {
-        if (in == null || in.getTimecapSeconds() == null) return;
+        if (in == null) return;
+        // kolo 10: délka AMRAPu přichází jako minuty + sekundy
+        Integer timecap = CircuitConfigInput.toSeconds(
+                in.getTimecapMin(), in.getTimecapSec(), in.getTimecapSeconds());
+        if (timecap == null || timecap <= 0) return;
 
         AmrapConfigEntity cfg = new AmrapConfigEntity();
         cfg.setTrainingExercise(exercise);
-        cfg.setTimecapSeconds(in.getTimecapSeconds());
+        cfg.setTimecapSeconds(timecap);
         cfg.setTargetRepsPerRound(in.getTargetRepsPerRound());
         cfg.setTargetWeightKg(in.getTargetWeightKg());
         cfg.setRoundsCompleted(in.getRoundsCompleted());
         cfg.setExtraReps(in.getExtraReps());
         cfg.setNotes(in.getNotes());
+
+        if (in.getSteps() != null) {
+            int idx = 0;
+            for (AmrapConfigInput.StepInput s : in.getSteps()) {
+                if (s.getName() == null || s.getName().isBlank()) continue;
+                var step = new com.ragnarok.ragnarok_customers_training_diary.training.types.amrap
+                        .AmrapStepEntity();
+                step.setAmrapConfig(cfg);
+                step.setOrderIndex(idx++);
+                step.setName(s.getName().trim());
+                step.setReps(s.getReps());
+                // REPS se normalizuje na NULL (výchozí jednotka)
+                step.setRepUnit(s.getRepUnit() != null && !s.getRepUnit().isBlank()
+                        && !"REPS".equals(s.getRepUnit()) ? s.getRepUnit() : null);
+                step.setWeightKg(s.getWeightKg());
+                step.setNote(s.getNote());
+                step.setEquipmentName(s.getEquipmentName() != null && !s.getEquipmentName().isBlank()
+                        ? s.getEquipmentName().trim() : null);
+                step.setEquipmentWeightKg(s.getEquipmentWeightKg());
+                step.setEquipmentCount(s.getEquipmentCount() != null && s.getEquipmentCount() == 2 ? 2 : 1);
+                step.setEquipmentSecondWeightKg(
+                        step.getEquipmentCount() == 2 ? s.getEquipmentSecondWeightKg() : null);
+                if (s.getTagIds() != null) {
+                    for (Long tagId : s.getTagIds()) {
+                        tagRepository.findById(tagId).ifPresent(step.getTags()::add);
+                    }
+                }
+                cfg.getSteps().add(step);
+            }
+        }
+
+        if (in.getRoundEntries() != null) {
+            int stepCount = cfg.getSteps().size();
+            for (AmrapConfigInput.RoundEntryInput r : in.getRoundEntries()) {
+                if (r.getRoundIndex() == null || r.getStepOrder() == null) continue;
+                // řádky pro mezitím smazané cviky zahodíme
+                if (r.getStepOrder() >= stepCount) continue;
+                var entry = new com.ragnarok.ragnarok_customers_training_diary.training.types.amrap
+                        .AmrapRoundEntryEntity();
+                entry.setAmrapConfig(cfg);
+                entry.setRoundIndex(r.getRoundIndex());
+                entry.setStepOrder(r.getStepOrder());
+                entry.setSkipped(r.isSkipped());
+                entry.setActualReps(r.getActualReps());
+                entry.setActualWeightKg(r.getActualWeightKg());
+                entry.setNote(r.getNote());
+                cfg.getRoundEntries().add(entry);
+            }
+        }
 
         exercise.setAmrapConfig(cfg);
     }
