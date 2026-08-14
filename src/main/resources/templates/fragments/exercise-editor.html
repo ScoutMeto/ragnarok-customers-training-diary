@@ -80,6 +80,7 @@
                             <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox"
                                        data-name="tagIds"
+                                       th:data-system-key="${tag.systemKey}"
                                        th:id="|extag-${exStat.index}-${tag.id}|"
                                        th:name="|exercises[${exStat.index}].tagIds|"
                                        th:value="${tag.id}"
@@ -330,7 +331,7 @@
                         <!-- kolo 9: jednotka pro Carry (metry/sekundy) / Isometrie (sekundy) — synchronizuje se se setUnit -->
                         <div class="series-unit-wrap mt-2" style="display:none">
                             <select class="form-select form-select-sm series-unit-select" style="width:auto;">
-                                <option value="REPS">Opakování</option>
+                                <option value="REPS" class="series-unit-reps">Opakování</option>
                                 <option value="SECONDS">Sekundy</option>
                                 <option value="METERS" class="series-unit-meters">Metry</option>
                             </select>
@@ -436,7 +437,8 @@
                                     <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
                                     <div class="d-flex flex-wrap gap-2">
                                         <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds" th:value="${tag.id}"
+                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
                                                    th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
                                             <span th:text="${tag.name}">Tag</span>
                                         </label>
@@ -682,7 +684,7 @@
                 <div class="d-flex flex-wrap gap-2 exercise-tags">
                     <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
                         <input class="form-check-input" type="checkbox"
-                               data-name="tagIds" th:value="${tag.id}">
+                               data-name="tagIds" th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
                         <label class="form-check-label small" th:text="${tag.name}">Tag</label>
                     </div>
                 </div>
@@ -717,7 +719,7 @@
                 <h6 class="mb-0">Série</h6>
                 <div class="set-unit-wrap" style="display:none">
                     <select data-name="setUnit" class="form-select form-select-sm set-unit-select" style="width:auto;">
-                        <option value="REPS">Opakování</option>
+                        <option value="REPS" class="series-unit-reps">Opakování</option>
                         <option value="METERS">Metry</option>
                         <option value="SECONDS">Sekundy</option>
                     </select>
@@ -797,7 +799,7 @@
                 <div class="series-warning small fw-bold mt-2" style="display:none; color: var(--rk-danger, #dc3545);"></div>
                 <div class="series-unit-wrap mt-2" style="display:none">
                     <select class="form-select form-select-sm series-unit-select" style="width:auto;">
-                        <option value="REPS">Opakování</option>
+                        <option value="REPS" class="series-unit-reps">Opakování</option>
                         <option value="SECONDS">Sekundy</option>
                         <option value="METERS" class="series-unit-meters">Metry</option>
                     </select>
@@ -969,7 +971,7 @@
             <div class="col-md-2">
                 <label class="form-label form-label-sm step-reps-label">Opakování</label>
                 <select data-step-field="repUnit" class="form-select form-select-sm step-unit-select mb-1" style="display:none">
-                    <option value="REPS">Opakování</option>
+                    <option value="REPS" class="series-unit-reps">Opakování</option>
                     <option value="SECONDS">Sekundy</option>
                     <option value="METERS" class="step-unit-meters">Metry</option>
                 </select>
@@ -1001,7 +1003,8 @@
             <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
             <div class="d-flex flex-wrap gap-2">
                 <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                    <input type="checkbox" class="form-check-input" data-step-field="tagIds" th:value="${tag.id}">
+                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
                     <span th:text="${tag.name}">Tag</span>
                 </label>
             </div>

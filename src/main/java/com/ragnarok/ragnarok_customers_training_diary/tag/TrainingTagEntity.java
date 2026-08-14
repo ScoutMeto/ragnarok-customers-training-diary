@@ -44,6 +44,16 @@ public class TrainingTagEntity {
     @Column(name = "is_system", nullable = false)
     private boolean isSystem = false;
 
+    /**
+     * Stabilní identifikátor systémového tagu (kolo 10) — u vlastních tagů {@code null}.
+     *
+     * <p>UI i statistiky se rozhodují podle klíče, ne podle {@link #name}, aby přejmenování
+     * tagu (počeštění, úprava terminologie) nerozbilo logiku jednotek a agregací.
+     * Hodnoty viz {@link SystemTag}.
+     */
+    @Column(name = "system_key", length = 32)
+    private String systemKey;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private AccountEntity owner;

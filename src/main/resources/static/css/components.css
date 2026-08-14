@@ -512,3 +512,12 @@ html[data-theme="dark"] .form-control:focus, html[data-theme="dark"] .form-selec
   font-family: var(--rk-font-display);
 }
 @media (max-width: 576px) { .rk-fab { display: inline-flex; } }
+
+/* kolo 10: tag zaškrtnutý u tréninku, ale nepoužitý u žádného konkrétního cviku.
+   Nejde o chybu — uložit lze, jen se to zvýrazní a uživatel dostane upozornění. */
+.training-tags .form-check-inline.tag-unused {
+  border: 2px solid var(--rk-danger);
+  border-radius: 999px;
+  padding: 2px 10px 2px 6px;
+  background: var(--rk-danger-soft);
+}

@@ -663,48 +663,51 @@
         return v === 'METERS' ? 'Metry' : v === 'SECONDS' ? 'Sekundy' : 'Opakování';
     }
 
-    /** Zjistí zaškrtnuté spouštěcí tagy v kontejneru checkboxů (label Carry / Isometrie). */
-    function triggerTags(container, labelSelector) {
+    /**
+     * Zjistí zaškrtnuté spouštěcí tagy v kontejneru checkboxů.
+     *
+     * kolo 10: rozhoduje `data-system-key` (CARRY / ISOMETRY), ne text labelu — názvy
+     * systémových tagů se počešťují a dřívější porovnávání podle názvu logiku tiše rozbilo.
+     */
+    function triggerTags(container) {
         const res = { carry: false, iso: false };
         if (!container) return res;
         container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-            const wrap = chk.closest('label') || chk.parentElement;
-            const label = labelSelector ? wrap.querySelector(labelSelector) : wrap;
-            const text = (label ? label.textContent : '').trim();
-            if (chk.checked && text === 'Carry') res.carry = true;
-            if (chk.checked && text === 'Isometrie') res.iso = true;
+            if (!chk.checked) return;
+            const key = chk.dataset.systemKey;
+            if (key === 'CARRY') res.carry = true;
+            if (key === 'ISOMETRY') res.iso = true;
         });
         return res;
     }
 
     /**
-     * Jednotka záznamu cviku (Carry: opakování/sekundy/metry; Isometrie: opakování/sekundy
-     * — statická výdrž, metry se nepřekonávají). Platí pro freeform sety i tabulku série.
+     * Jednotka záznamu cviku. kolo 10: Nošení = metry/sekundy, Izometrie = jen sekundy —
+     * ani jeden z těchto tagů NEumožňuje záznam na opakování (dřív šlo REPS nechat).
+     * Platí pro freeform sety i tabulku série.
      */
     function updateExerciseUnits(card) {
         const select = card.querySelector('.set-unit-select');
         if (!select) return;
-        let carry = false, iso = false;
-        card.querySelectorAll('.exercise-tags .form-check-inline').forEach(div => {
-            const label = div.querySelector('label');
-            const chk = div.querySelector('input[type="checkbox"]');
-            if (!label || !chk || !chk.checked) return;
-            const t = label.textContent.trim();
-            if (t === 'Carry') carry = true;
-            if (t === 'Isometrie') iso = true;
-        });
+        const tags = triggerTags(card.querySelector('.exercise-tags'));
+        const carry = tags.carry, iso = tags.iso;
         const active = carry || iso;
         const wrap = card.querySelector('.set-unit-wrap');
         const seriesWrap = card.querySelector('.series-unit-wrap');
         if (wrap) wrap.style.display = active ? '' : 'none';
         if (seriesWrap) seriesWrap.style.display = active ? '' : 'none';
-        // Isometrie bez Carry → Metry nejsou k dispozici
+        // Isometrie bez Nošení → Metry nejsou k dispozici (výdrž se nepřekonává na vzdálenost)
         const allowMeters = carry;
         card.querySelectorAll('.set-unit-select option[value="METERS"], .series-unit-meters').forEach(opt => {
             opt.hidden = !allowMeters;
         });
+        // kolo 10: s Nošením/Izometrií se opakování nepočítají → volba REPS zmizí
+        card.querySelectorAll('.set-unit-select option[value="REPS"], .series-unit-reps').forEach(opt => {
+            opt.hidden = active;
+        });
         if (!active) select.value = 'REPS';
-        if (!allowMeters && select.value === 'METERS') select.value = 'REPS';
+        if (active && select.value === 'REPS') select.value = carry ? 'METERS' : 'SECONDS';
+        if (!allowMeters && select.value === 'METERS') select.value = 'SECONDS';
         // synchronizace viditelného série-selectu s kanonickým setUnit selectem
         const seriesSel = card.querySelector('.series-unit-select');
         if (seriesSel) seriesSel.value = select.value;
@@ -721,15 +724,19 @@
     function updateStepUnits(stepRow) {
         const sel = stepRow.querySelector('.step-unit-select');
         if (!sel) return;
-        const tags = triggerTags(stepRow, 'span');
+        const tags = triggerTags(stepRow);
         const active = tags.carry || tags.iso;
         sel.style.display = active ? '' : 'none';
         const repsLabel = stepRow.querySelector('.step-reps-label');
         if (repsLabel) repsLabel.style.display = active ? 'none' : '';
         const metersOpt = sel.querySelector('option[value="METERS"]');
         if (metersOpt) metersOpt.hidden = !tags.carry;
+        // kolo 10: Nošení/Izometrie nepřipouští záznam na opakování
+        const repsOpt = sel.querySelector('option[value="REPS"]');
+        if (repsOpt) repsOpt.hidden = active;
         if (!active) sel.value = 'REPS';
-        if (!tags.carry && sel.value === 'METERS') sel.value = 'REPS';
+        if (active && sel.value === 'REPS') sel.value = tags.carry ? 'METERS' : 'SECONDS';
+        if (!tags.carry && sel.value === 'METERS') sel.value = 'SECONDS';
         // pevné pole Sekundy mizí, když je aktivní volba jednotky
         const secondsCol = stepRow.querySelector('.step-seconds-col');
         const secondsInput = stepRow.querySelector('.step-seconds-input');
@@ -952,6 +959,80 @@
         // review fix: destruktivní resize tabulek (KB části / EMOM minuty / Tabata kola /
         // série) se spouští až na 'change', ne na každý stisk klávesy
     });
+
+    // ----- kolo 10: synchronizace tagů „obecné informace o tréninku" ↔ „náplň tréninku" -----
+
+    // Kontejner tagů tréninku existuje jen v klientském formuláři deníku; admin šablony
+    // sdílejí jen editor cviků, takže se celá sekce chová jako no-op.
+    const trainingTagsBox = document.querySelector('.training-tags');
+    const diaryForm = trainingTagsBox ? trainingTagsBox.closest('form') : null;
+
+    /** Id tagů skutečně použitých u konkrétních cviků (včetně kroků kruhového tréninku). */
+    function usedExerciseTagIds() {
+        const ids = new Set();
+        container.querySelectorAll('.exercise-tags input[type="checkbox"]:checked,'
+                + ' input[data-step-field="tagIds"]:checked').forEach(chk => ids.add(chk.value));
+        return ids;
+    }
+
+    /** Tagy tréninku, které nemá žádný cvik → červené zvýraznění (uložit ale jde). */
+    function highlightUnusedTrainingTags(used) {
+        if (!trainingTagsBox) return;
+        const usedIds = used || usedExerciseTagIds();
+        trainingTagsBox.querySelectorAll('.form-check-inline').forEach(wrap => {
+            const chk = wrap.querySelector('input[type="checkbox"]');
+            if (!chk) return;
+            wrap.classList.toggle('tag-unused', chk.checked && !usedIds.has(chk.value));
+        });
+    }
+
+    /** Tag zaškrtnutý u cviku se automaticky zatrhne i v obecných informacích o tréninku. */
+    function syncTrainingTags() {
+        if (!trainingTagsBox) return;
+        const used = usedExerciseTagIds();
+        used.forEach(id => {
+            const box = trainingTagsBox.querySelector('input[type="checkbox"][value="' + id + '"]');
+            if (box && !box.checked) box.checked = true;
+        });
+        highlightUnusedTrainingTags(used);
+    }
+
+    /** Názvy zvýrazněných (nepoužitých) tagů pro upozornění před uložením. */
+    function unusedTrainingTagNames() {
+        if (!trainingTagsBox) return [];
+        const used = usedExerciseTagIds();
+        const names = [];
+        trainingTagsBox.querySelectorAll('.form-check-inline').forEach(wrap => {
+            const chk = wrap.querySelector('input[type="checkbox"]');
+            if (!chk || !chk.checked || used.has(chk.value)) return;
+            const label = wrap.querySelector('label');
+            names.push(label ? label.textContent.trim() : chk.value);
+        });
+        return names;
+    }
+
+    if (trainingTagsBox) {
+        trainingTagsBox.addEventListener('change', () => highlightUnusedTrainingTags());
+        container.addEventListener('change', function (e) {
+            const t = e.target;
+            if (t.getAttribute('data-step-field') === 'tagIds' || t.closest('.exercise-tags')) {
+                syncTrainingTags();
+            }
+        });
+        // Upozornění je nevynucující: uživatel může uložit i s nepoužitými tagy.
+        if (diaryForm) {
+            diaryForm.addEventListener('submit', function (e) {
+                const unused = unusedTrainingTagNames();
+                if (!unused.length) return;
+                const ok = window.confirm(
+                        'Tyhle tagy máš v obecných informacích o tréninku, ale nepoužil(a) jsi je '
+                        + 'u žádného konkrétního cviku:\n\n' + unused.join(', ')
+                        + '\n\nOK = uložit tak, jak to je.\nZrušit = vrátit se k úpravě tréninku.');
+                if (!ok) e.preventDefault();
+            });
+        }
+        highlightUnusedTrainingTags();
+    }
 
     // Při načtení existujících (server-rendered) cviků nastavíme viditelnost
     // a naplníme dropdowny katalogu v krocích.
