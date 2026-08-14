@@ -270,6 +270,51 @@ class Kolo10FeaturesTest {
     }
 
     @Test
+    void strongFirstLadder_persistsRowsSidesAndUnit() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 SF žebřík");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.STRONGFIRST_LADDER);
+        ex.setCustomName("KB Press");
+
+        var sf = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .StrongFirstLadderConfigInput();
+        sf.setLadderHeight(3);
+        sf.setCycles(2);
+        sf.setUnilateral(true);
+        sf.setRepUnit("SECONDS");
+        // dva žebříky × 3 příčky × 2 strany
+        for (int ladder = 1; ladder <= 2; ladder++) {
+            for (int rung = 1; rung <= 3; rung++) {
+                for (String side : new String[] {"L", "P"}) {
+                    var r = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                            .StrongFirstLadderConfigInput.RowInput();
+                    r.setLadderIndex(ladder);
+                    r.setRung(rung);
+                    r.setValue(rung);
+                    r.setSide(side);
+                    sf.getRows().add(r);
+                }
+            }
+        }
+        ex.setStrongFirstLadder(sf);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        var cfg = created.getExercises().get(0).getStrongFirstLadderConfig();
+        assertThat(cfg.getRepUnit()).isEqualTo("SECONDS");
+        assertThat(cfg.getRows()).hasSize(12);
+        // sekvence příček se po vrcholu vrací zpět na 1 (nový žebřík)
+        assertThat(cfg.getRows().get(0).getRung()).isEqualTo(1);
+        assertThat(cfg.getRows().get(5).getRung()).isEqualTo(3);
+        assertThat(cfg.getRows().get(6).getLadderIndex()).isEqualTo(2);
+        assertThat(cfg.getRows().get(6).getRung()).isEqualTo(1);
+        assertThat(cfg.getRows().get(0).getSide()).isEqualTo("L");
+        assertThat(cfg.getRows().get(1).getSide()).isEqualTo("P");
+    }
+
+    @Test
     void systemTag_keepsStableKeyWhenRenamed() {
         // Detekce jednotek v UI se řídí klíčem, ne názvem — přejmenování ji nesmí rozbít.
         TrainingTagEntity carry = new TrainingTagEntity();

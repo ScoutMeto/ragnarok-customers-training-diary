@@ -74,6 +74,18 @@ public class ExerciseTypeConfigToInputMapper {
             in.setRestSeconds(e.getRestSeconds());
             in.setWeightKg(e.getWeightKg());
             in.setUnilateral(e.isUnilateral());
+            in.setRepUnit(e.getRepUnit());
+            for (var r : e.getRows()) {
+                var ri = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                        .StrongFirstLadderConfigInput.RowInput();
+                ri.setLadderIndex(r.getLadderIndex());
+                ri.setRung(r.getRung());
+                ri.setValue(r.getValue());
+                ri.setWeightKg(r.getWeightKg());
+                ri.setRestSeconds(r.getRestSeconds());
+                ri.setSide(r.getSide());
+                in.getRows().add(ri);
+            }
             in.setNotes(e.getNotes());
             input.setStrongFirstLadder(in);
         }

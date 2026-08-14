@@ -557,12 +557,14 @@
 
                     <!-- =============== STRONGFIRST LADDER (Phase 13 A10) =============== -->
                     <div class="type-config type-strongfirst_ladder mt-4" style="display:none">
-                        <h6 class="mb-2">StrongFirst žebřík (1,2,…,vrchol — opakuj v cyklech)</h6>
+                        <h6 class="mb-2">StrongFirst žebřík</h6>
+                        <div class="form-text mb-2">Žebřík = série 1, 2, 3 … až po vrchol, mezi sériemi pauza. Po vrcholu se začíná znovu od 1 — takových žebříků se obvykle odjede 3–5. Váha zůstává stejná.</div>
                         <div class="row g-2">
-                            <div class="col-md-3"><label class="form-label form-label-sm">Vrchol žebříku *</label><input type="number" min="1" max="50" data-name="strongFirstLadder.ladderHeight" th:name="|exercises[${exStat.index}].strongFirstLadder.ladderHeight|" th:value="${ex.strongFirstLadder?.ladderHeight}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">Počet cyklů</label><input type="number" min="1" max="50" data-name="strongFirstLadder.cycles" th:name="|exercises[${exStat.index}].strongFirstLadder.cycles|" th:value="${ex.strongFirstLadder?.cycles}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza po žebříku (s)</label><input type="number" data-name="strongFirstLadder.restSeconds" th:name="|exercises[${exStat.index}].strongFirstLadder.restSeconds|" th:value="${ex.strongFirstLadder?.restSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="strongFirstLadder.weightKg" th:name="|exercises[${exStat.index}].strongFirstLadder.weightKg|" th:value="${ex.strongFirstLadder?.weightKg}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Vrchol žebříku *</label><input type="number" min="1" max="50" data-name="strongFirstLadder.ladderHeight" th:name="|exercises[${exStat.index}].strongFirstLadder.ladderHeight|" th:value="${ex.strongFirstLadder?.ladderHeight}" class="form-control form-control-sm sf-height"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Počet žebříků</label><input type="number" min="1" max="50" data-name="strongFirstLadder.cycles" th:name="|exercises[${exStat.index}].strongFirstLadder.cycles|" th:value="${ex.strongFirstLadder?.cycles} ?: 5" class="form-control form-control-sm sf-cycles"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Pauza po sérii (s)</label><input type="number" data-name="strongFirstLadder.restSeconds" th:name="|exercises[${exStat.index}].strongFirstLadder.restSeconds|" th:value="${ex.strongFirstLadder?.restSeconds}" class="form-control form-control-sm sf-rest"></div>
+                            <div class="col-md-2 sf-unit-wrap" style="display:none"><label class="form-label form-label-sm">Jednotka</label><select data-name="strongFirstLadder.repUnit" th:name="|exercises[${exStat.index}].strongFirstLadder.repUnit|" class="form-select form-select-sm sf-unit-select"><option value="REPS" th:selected="${ex.strongFirstLadder?.repUnit == null}">Opakování</option><option value="SECONDS" th:selected="${ex.strongFirstLadder?.repUnit == &#39;SECONDS&#39;}">Sekundy</option><option value="METERS" class="sf-unit-meters" th:selected="${ex.strongFirstLadder?.repUnit == &#39;METERS&#39;}">Metry</option></select></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="strongFirstLadder.weightKg" th:name="|exercises[${exStat.index}].strongFirstLadder.weightKg|" th:value="${ex.strongFirstLadder?.weightKg}" class="form-control form-control-sm sf-weight"></div>
                             <div class="col-md-2 d-flex align-items-end">
                                 <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
                                     <input type="checkbox" class="form-check-input" data-name="strongFirstLadder.unilateral" th:name="|exercises[${exStat.index}].strongFirstLadder.unilateral|" value="true" th:checked="${ex.strongFirstLadder?.unilateral}">
@@ -571,6 +573,21 @@
                             </div>
                             <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="strongFirstLadder.notes" th:name="|exercises[${exStat.index}].strongFirstLadder.notes|" th:value="${ex.strongFirstLadder?.notes}" class="form-control form-control-sm"></div>
                         </div>
+                        <div class="sf-rows-wrap mt-3" style="display:none">
+                            <div class="form-text mb-1">Série (předvyplněno, můžeš upravit):</div>
+                            <table class="table table-sm mb-0">
+                                <thead><tr>
+                                    <th style="width:70px">Žebřík</th>
+                                    <th style="width:70px">Příčka</th>
+                                    <th class="sf-value-header">Opakování</th>
+                                    <th style="width:110px">Váha (kg)</th>
+                                    <th style="width:110px">Pauza (s)</th>
+                                    <th style="width:80px" class="sf-side-col">Strana</th>
+                                </tr></thead>
+                                <tbody class="sf-rows-tbody"></tbody>
+                            </table>
+                        </div>
+
                         <p class="form-text mb-0">Příklad: vrchol 5 = série 1,2,3,4,5 opakování (krátká pauza mezi nimi se nezapisuje), pak pauza a další cyklus.</p>
                     </div>
 
@@ -992,11 +1009,13 @@
             </div>
             <div class="type-config type-strongfirst_ladder mt-4" style="display:none">
                 <h6 class="mb-2">StrongFirst žebřík</h6>
+                <div class="form-text mb-2">Žebřík = série 1, 2, 3 … až po vrchol, mezi sériemi pauza. Po vrcholu se začíná znovu od 1 — takových žebříků se obvykle odjede 3–5. Váha zůstává stejná.</div>
                 <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Vrchol žebříku *</label><input type="number" min="1" max="50" data-name="strongFirstLadder.ladderHeight" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">Počet cyklů</label><input type="number" min="1" max="50" data-name="strongFirstLadder.cycles" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza po žebříku (s)</label><input type="number" data-name="strongFirstLadder.restSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="strongFirstLadder.weightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Vrchol žebříku *</label><input type="number" min="1" max="50" data-name="strongFirstLadder.ladderHeight" class="form-control form-control-sm sf-height"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Počet žebříků</label><input type="number" min="1" max="50" value="5" data-name="strongFirstLadder.cycles" class="form-control form-control-sm sf-cycles"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza po sérii (s)</label><input type="number" data-name="strongFirstLadder.restSeconds" class="form-control form-control-sm sf-rest"></div>
+                    <div class="col-md-2 sf-unit-wrap" style="display:none"><label class="form-label form-label-sm">Jednotka</label><select data-name="strongFirstLadder.repUnit" class="form-select form-select-sm sf-unit-select"><option value="REPS">Opakování</option><option value="SECONDS">Sekundy</option><option value="METERS" class="sf-unit-meters">Metry</option></select></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="strongFirstLadder.weightKg" class="form-control form-control-sm sf-weight"></div>
                     <div class="col-md-2 d-flex align-items-end">
                         <label class="form-check" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
                             <input type="checkbox" class="form-check-input" data-name="strongFirstLadder.unilateral" value="true">
@@ -1004,6 +1023,20 @@
                         </label>
                     </div>
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="strongFirstLadder.notes" class="form-control form-control-sm"></div>
+                </div>
+                <div class="sf-rows-wrap mt-3" style="display:none">
+                    <div class="form-text mb-1">Série (předvyplněno, můžeš upravit):</div>
+                    <table class="table table-sm mb-0">
+                        <thead><tr>
+                            <th style="width:70px">Žebřík</th>
+                            <th style="width:70px">Příčka</th>
+                            <th class="sf-value-header">Opakování</th>
+                            <th style="width:110px">Váha (kg)</th>
+                            <th style="width:110px">Pauza (s)</th>
+                            <th style="width:80px" class="sf-side-col">Strana</th>
+                        </tr></thead>
+                        <tbody class="sf-rows-tbody"></tbody>
+                    </table>
                 </div>
                 <p class="form-text mb-0">Vrchol 5 = série 1,2,3,4,5 opak., pak pauza a další cyklus.</p>
             </div>

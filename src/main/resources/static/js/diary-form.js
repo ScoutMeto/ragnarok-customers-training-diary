@@ -120,6 +120,11 @@
             updateCircuitMode(exerciseCard);
             circuitRoundRestsSync(exerciseCard);
         }
+        if (selected === 'STRONGFIRST_LADDER') {
+            applyEquipmentWeightTo(exerciseCard, '.sf-weight');
+            sfLadderUnits(exerciseCard);
+            sfLadderSync(exerciseCard);
+        }
         if (selected === 'STRAIGHT_SETS') {
             straightSetsApplyWeight(exerciseCard);
         }
@@ -135,6 +140,119 @@
             exerciseCard.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
             amrapRoundsSync(exerciseCard);
         }
+    }
+
+    // ----- kolo 10: StrongFirst žebřík -----
+
+    /**
+     * Žebřík = série 1, 2, …, vrchol; po vrcholu se začíná znovu od 1. Tabulka se
+     * vygeneruje jako (počet žebříků × vrchol) řádků; u unilaterálního cviku se každá
+     * příčka rozpadne na levou a pravou stranu. Vyplněné hodnoty zůstávají zachovány.
+     */
+    function sfLadderSync(card) {
+        const block = card.querySelector('.type-config.type-strongfirst_ladder');
+        if (!block) return;
+        const wrap = block.querySelector('.sf-rows-wrap');
+        const tbody = block.querySelector('.sf-rows-tbody');
+        if (!wrap || !tbody) return;
+
+        const height = parseInt(block.querySelector('.sf-height')?.value, 10);
+        const ladders = parseInt(block.querySelector('.sf-cycles')?.value, 10) || 5;
+        if (!height || height < 1) { wrap.style.display = 'none'; return; }
+
+        const unilateral = !!block.querySelector('[data-name="strongFirstLadder.unilateral"]')?.checked;
+        const weight = block.querySelector('.sf-weight')?.value || '';
+        const rest = block.querySelector('.sf-rest')?.value || '';
+        const sides = unilateral ? ['L', 'P'] : [null];
+
+        // zapamatovat vyplněné hodnoty podle klíče žebřík|příčka|strana
+        const prev = {};
+        tbody.querySelectorAll('tr').forEach(tr => {
+            prev[tr.dataset.key] = {
+                value: tr.querySelector('[data-sf-field="value"]')?.value || '',
+                weight: tr.querySelector('[data-sf-field="weightKg"]')?.value || '',
+                rest: tr.querySelector('[data-sf-field="restSeconds"]')?.value || ''
+            };
+        });
+
+        tbody.innerHTML = '';
+        for (let l = 1; l <= ladders; l++) {
+            for (let rung = 1; rung <= height; rung++) {
+                sides.forEach(side => {
+                    const key = l + '|' + rung + '|' + (side || '');
+                    const saved = prev[key] || {};
+                    const tr = document.createElement('tr');
+                    tr.className = 'sf-row';
+                    tr.dataset.key = key;
+                    tr.innerHTML =
+                        '<td class="sf-ladder-num"></td>'
+                        + '<td class="sf-rung-num"></td>'
+                        + '<td><input type="number" data-sf-field="value" class="form-control form-control-sm"></td>'
+                        + '<td><input type="number" step="0.25" data-sf-field="weightKg" class="form-control form-control-sm"></td>'
+                        + '<td><input type="number" data-sf-field="restSeconds" class="form-control form-control-sm"></td>'
+                        + '<td class="sf-side-col"></td>';
+                    tr.querySelector('.sf-ladder-num').textContent = (rung === 1 && (!side || side === 'L')) ? l : '';
+                    tr.querySelector('.sf-rung-num').textContent = rung;
+                    tr.querySelector('.sf-side-col').textContent = side || '';
+
+                    ['ladderIndex', 'rung', 'side'].forEach(f => {
+                        const h = document.createElement('input');
+                        h.type = 'hidden';
+                        h.setAttribute('data-sf-field', f);
+                        h.value = f === 'ladderIndex' ? l : (f === 'rung' ? rung : (side || ''));
+                        tr.firstElementChild.appendChild(h);
+                    });
+
+                    tr.querySelector('[data-sf-field="value"]').value =
+                            saved.value !== undefined && saved.value !== '' ? saved.value : rung;
+                    tr.querySelector('[data-sf-field="weightKg"]').value =
+                            saved.weight !== undefined && saved.weight !== '' ? saved.weight : weight;
+                    tr.querySelector('[data-sf-field="restSeconds"]').value =
+                            saved.rest !== undefined && saved.rest !== '' ? saved.rest : rest;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+        // sloupec Strana má smysl jen u unilaterálních cviků
+        block.querySelectorAll('.sf-side-col').forEach(el => {
+            el.style.display = unilateral ? '' : 'none';
+        });
+        wrap.style.display = '';
+        renumberExercises();
+    }
+
+    /**
+     * Změna váhy náčiní se propíše do všech řádků žebříku okamžitě. (Nejde použít
+     * sfLadderSync — ta vyplněné hodnoty naopak chrání, takže by novou váhu zahodila.)
+     */
+    function sfApplyWeight(card) {
+        const block = card.querySelector('.type-config.type-strongfirst_ladder');
+        if (!block) return;
+        const weight = block.querySelector('.sf-weight')?.value || '';
+        block.querySelectorAll('.sf-row [data-sf-field="weightKg"]').forEach(inp => {
+            inp.value = weight;
+        });
+    }
+
+    /** Nošení/Izometrie u žebříku → jednotka místo opakování (metry jen pro Nošení). */
+    function sfLadderUnits(card) {
+        const block = card.querySelector('.type-config.type-strongfirst_ladder');
+        if (!block) return;
+        const sel = block.querySelector('.sf-unit-select');
+        const wrap = block.querySelector('.sf-unit-wrap');
+        if (!sel || !wrap) return;
+        const tags = triggerTags(card.querySelector('.exercise-tags'));
+        const active = tags.carry || tags.iso;
+        wrap.style.display = active ? '' : 'none';
+        const meters = sel.querySelector('.sf-unit-meters');
+        if (meters) meters.hidden = !tags.carry;
+        const reps = sel.querySelector('option[value="REPS"]');
+        if (reps) reps.hidden = active;
+        if (!active) sel.value = 'REPS';
+        if (active && sel.value === 'REPS') sel.value = tags.carry ? 'METERS' : 'SECONDS';
+        if (!tags.carry && sel.value === 'METERS') sel.value = 'SECONDS';
+        const header = block.querySelector('.sf-value-header');
+        if (header) header.textContent = unitLabel(sel.value);
     }
 
     // ----- kolo 10: Straight Sets + Interval (propis váhy náčiní, generovaná tabulka) -----
@@ -443,6 +561,14 @@
                 ['weightKg', 'reps', 'restSeconds', 'rpe', 'note'].forEach(fieldName => {
                     const el = row.querySelector('[data-name="' + fieldName + '"]');
                     if (el) el.name = 'exercises[' + idx + '].sets[' + sIdx + '].' + fieldName;
+                });
+            });
+
+            // kolo 10: StrongFirst žebřík — generovaná tabulka sérií
+            card.querySelectorAll('.sf-row').forEach((row, rIdx) => {
+                row.querySelectorAll('[data-sf-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].strongFirstLadder.rows[' + rIdx + '].'
+                            + el.getAttribute('data-sf-field');
                 });
             });
 
@@ -1184,6 +1310,7 @@
             if (stepRow) updateStepUnits(stepRow);
         } else if (t.closest('.exercise-tags')) {
             updateExerciseUnits(card);
+            sfLadderUnits(card);
         } else if (t.classList.contains('kb-split-parts')) {
             // review fix: resize tabulek až na change (blur/šipky) — resize na každý
             // stisk klávesy mazal vyplněné řádky během přepisování čísla
@@ -1194,6 +1321,16 @@
             // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
             emomSync(card, false);
             emomApplyReps(card);
+        } else if (t.classList.contains('sf-height') || t.classList.contains('sf-cycles')
+                || t.classList.contains('sf-rest')
+                || t.getAttribute('data-name') === 'strongFirstLadder.unilateral') {
+            sfLadderSync(card);
+        } else if (t.classList.contains('sf-weight')) {
+            sfApplyWeight(card);
+        } else if (t.classList.contains('sf-unit-select')) {
+            const block = card.querySelector('.type-config.type-strongfirst_ladder');
+            const header = block && block.querySelector('.sf-value-header');
+            if (header) header.textContent = unitLabel(t.value);
         } else if (t.classList.contains('ss-set-count')) {
             straightSetsSync(card, false);
         } else if (t.classList.contains('ss-reps') || t.classList.contains('ss-weight')
@@ -1229,6 +1366,8 @@
             seriesApplyWeight(card);
             straightSetsApplyWeight(card);
             intervalApplyWeight(card);
+            applyEquipmentWeightTo(card, '.sf-weight');
+            sfApplyWeight(card);
         }
     });
 
@@ -1259,6 +1398,8 @@
             seriesApplyWeight(card);
             straightSetsApplyWeight(card);
             intervalApplyWeight(card);
+            applyEquipmentWeightTo(card, '.sf-weight');
+            sfApplyWeight(card);
         } else if (t.classList.contains('step-reps-input') || t.classList.contains('step-seconds-input')) {
             // kolo 9: Opakování XOR Sekundy u kroku circuitu
             const stepRow = t.closest('.circuit-step-row');
@@ -1381,6 +1522,8 @@
         kbValidate(card);
         amrapRoundsSync(card);
         straightSetsSync(card, false);
+        sfLadderUnits(card);
+        sfLadderSync(card);
     });
     // Phase 12: server-rendered kroky kruhového tréninku mají jen data-step-field,
     // jméno pole doplníme až tady → nutné zavolat renumber na load.

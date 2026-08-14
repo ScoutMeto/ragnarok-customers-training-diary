@@ -134,7 +134,29 @@ public class ExerciseTypeConfigMapper {
         cfg.setRestSeconds(in.getRestSeconds());
         cfg.setWeightKg(in.getWeightKg());
         cfg.setUnilateral(in.isUnilateral());
+        // REPS se normalizuje na NULL (výchozí jednotka)
+        cfg.setRepUnit(in.getRepUnit() != null && !in.getRepUnit().isBlank()
+                && !"REPS".equals(in.getRepUnit()) ? in.getRepUnit() : null);
         cfg.setNotes(in.getNotes());
+
+        if (in.getRows() != null) {
+            int idx = 0;
+            for (var r : in.getRows()) {
+                if (r.getRung() == null) continue;
+                var row = new com.ragnarok.ragnarok_customers_training_diary.training.types.strongfirst
+                        .StrongFirstLadderRowEntity();
+                row.setConfig(cfg);
+                row.setRowIndex(idx++);
+                row.setLadderIndex(r.getLadderIndex() != null ? r.getLadderIndex() : 1);
+                row.setRung(r.getRung());
+                row.setValue(r.getValue());
+                row.setWeightKg(r.getWeightKg());
+                row.setRestSeconds(r.getRestSeconds());
+                row.setSide("L".equals(r.getSide()) || "P".equals(r.getSide()) ? r.getSide() : null);
+                cfg.getRows().add(row);
+            }
+        }
+
         exercise.setStrongFirstLadderConfig(cfg);
     }
 

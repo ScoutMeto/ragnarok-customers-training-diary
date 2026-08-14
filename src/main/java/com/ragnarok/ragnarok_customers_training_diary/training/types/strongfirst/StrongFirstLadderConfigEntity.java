@@ -58,4 +58,15 @@ public class StrongFirstLadderConfigEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** kolo 10: NULL = opakování; METERS/SECONDS pro Nošení a Izometrii. */
+    @Column(name = "rep_unit", length = 10)
+    private String repUnit;
+
+    /** kolo 10: vygenerovaná (a editovatelná) tabulka sérií. */
+    @jakarta.persistence.OneToMany(mappedBy = "config",
+            cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true,
+            fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.OrderBy("rowIndex ASC")
+    private java.util.List<StrongFirstLadderRowEntity> rows = new java.util.ArrayList<>();
 }
