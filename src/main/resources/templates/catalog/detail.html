@@ -26,8 +26,8 @@
                         <span th:unless="${item.system}" class="rk-badge rk-badge--accent" style="vertical-align: middle;">MŮJ</span>
                     </h1>
                     <div class="rk-row" style="gap: 6px; margin-bottom: var(--sp-3);">
-                        <span th:if="${item.bodyRegion != null}" class="rk-badge" th:text="${item.bodyRegion}">UPPER_BODY</span>
-                        <span th:if="${item.movementPattern != null}" class="rk-badge" th:text="${item.movementPattern}">PUSH</span>
+                        <span th:each="br : ${item.bodyRegions}" class="rk-badge" th:text="${br.label}">Horní část těla</span>
+                        <span th:each="mp : ${item.movementPatterns}" class="rk-badge" th:text="${mp}">PUSH</span>
                         <span th:if="${item.equipment != null}" class="rk-badge" th:text="${item.equipment}">KETTLEBELL</span>
                     </div>
                 </div>

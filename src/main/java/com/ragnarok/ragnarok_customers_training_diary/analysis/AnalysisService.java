@@ -1,6 +1,7 @@
 package com.ragnarok.ragnarok_customers_training_diary.analysis;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.BodyRegion;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.math.BigDecimal;
@@ -213,41 +214,47 @@ public class AnalysisService {
                 r[4] != null ? toBigDecimal(r[4]) : null);
     }
 
-    /** Počet setů per body region. */
+    /**
+     * Počet setů per body region. kolo 10: cvik může mít víc oblastí těla — set se pak
+     * započítá do každé z nich (proto součet přes oblasti může být vyšší než počet setů).
+     */
     public List<LabelValuePoint> setsPerBodyRegion(AccountEntity owner, LocalDate from, LocalDate to) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createQuery(
-                "SELECT e.catalogItem.bodyRegion, COUNT(s) " +
+                "SELECT br, COUNT(s) " +
                 "FROM ExerciseSetEntity s " +
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
+                "  JOIN e.catalogItem ci " +
+                "  JOIN ci.bodyRegions br " +
                 "WHERE t.owner.id = :ownerId " +
                 "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
-                "  AND e.catalogItem IS NOT NULL " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
-                "GROUP BY e.catalogItem.bodyRegion")
+                "GROUP BY br")
                 .setParameter("ownerId", owner.getId())
                 .setParameter("from", from)
                 .setParameter("to", to)
                 .getResultList();
         return rows.stream()
-                .map(r -> new LabelValuePoint(r[0] != null ? r[0].toString() : "—", toBigDecimal(r[1])))
+                .map(r -> new LabelValuePoint(
+                        r[0] != null ? ((BodyRegion) r[0]).getLabel() : "—", toBigDecimal(r[1])))
                 .toList();
     }
 
-    /** Počet setů per movement pattern. */
+    /** Počet setů per movement pattern (kolo 10: cvik jich může mít víc). */
     public List<LabelValuePoint> setsPerMovementPattern(AccountEntity owner, LocalDate from, LocalDate to) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createQuery(
-                "SELECT e.catalogItem.movementPattern, COUNT(s) " +
+                "SELECT mp, COUNT(s) " +
                 "FROM ExerciseSetEntity s " +
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
+                "  JOIN e.catalogItem ci " +
+                "  JOIN ci.movementPatterns mp " +
                 "WHERE t.owner.id = :ownerId " +
                 "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
-                "  AND e.catalogItem IS NOT NULL " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
-                "GROUP BY e.catalogItem.movementPattern")
+                "GROUP BY mp")
                 .setParameter("ownerId", owner.getId())
                 .setParameter("from", from)
                 .setParameter("to", to)

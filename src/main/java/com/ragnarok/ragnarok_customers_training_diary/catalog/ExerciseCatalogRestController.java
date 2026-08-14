@@ -30,8 +30,8 @@ public class ExerciseCatalogRestController {
     public record CatalogItemResponse(
             Long id,
             String name,
-            String bodyRegion,
-            String movementPattern,
+            java.util.List<String> bodyRegions,
+            java.util.List<String> movementPatterns,
             String primaryMuscle,
             String equipment
     ) {
@@ -39,8 +39,8 @@ public class ExerciseCatalogRestController {
             return new CatalogItemResponse(
                     e.getId(),
                     e.getName(),
-                    e.getBodyRegion() != null ? e.getBodyRegion().name() : null,
-                    e.getMovementPattern(),
+                    e.getBodyRegions().stream().map(Enum::name).toList(),
+                    java.util.List.copyOf(e.getMovementPatterns()),
                     e.getPrimaryMuscle(),
                     e.getEquipment()
             );

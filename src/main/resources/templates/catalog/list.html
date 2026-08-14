@@ -55,8 +55,8 @@
                 <a th:href="@{/catalog/{id}(id=${i.id})}" style="color: var(--rk-ink); font-weight: 600;"
                    th:text="${i.name}">Cvik</a>
             </td>
-            <td class="text-muted" th:text="${i.bodyRegion} ?: '—'">—</td>
-            <td class="text-muted" th:text="${i.movementPattern} ?: '—'">—</td>
+            <td class="text-muted" th:text="${i.bodyRegions.isEmpty()} ? '—' : ${#strings.listJoin(i.bodyRegions.![label], ', ')}">—</td>
+            <td class="text-muted" th:text="${i.movementPatterns.isEmpty()} ? '—' : ${#strings.listJoin(i.movementPatterns, ', ')}">—</td>
             <td class="text-muted" th:text="${i.equipment} ?: '—'">—</td>
             <td>
                 <span th:if="${i.system}" class="rk-badge">SYSTÉM</span>

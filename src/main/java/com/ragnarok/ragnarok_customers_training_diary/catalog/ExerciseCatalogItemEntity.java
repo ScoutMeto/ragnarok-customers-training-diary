@@ -1,7 +1,9 @@
 package com.ragnarok.ragnarok_customers_training_diary.catalog;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,6 +15,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,13 +42,26 @@ public class ExerciseCatalogItemEntity {
     @Column(nullable = false, length = 128)
     private String name;
 
-    @Enumerated(EnumType.STRING)
+    /**
+     * kolo 10: cvik může spadat do víc oblastí těla najednou (dřep s výskokem =
+     * dolní část těla + střed těla). Do V42 to byla jedna hodnota.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "exercise_catalog_body_region",
+            joinColumns = @JoinColumn(name = "catalog_item_id"))
     @Column(name = "body_region", length = 32)
-    private BodyRegion bodyRegion;
+    @Enumerated(EnumType.STRING)
+    private Set<BodyRegion> bodyRegions = new LinkedHashSet<>();
 
-    /** Phase 20a: rozšiřitelný číselník (system enum hodnoty + admin custom) → uložen jako text. */
+    /**
+     * Phase 20a: rozšiřitelný číselník (system hodnoty + admin custom) → uložen jako text.
+     * kolo 10: složitější cvik obsahuje víc vzorců, ne jen jeden primární.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "exercise_catalog_movement_pattern",
+            joinColumns = @JoinColumn(name = "catalog_item_id"))
     @Column(name = "movement_pattern", length = 64)
-    private String movementPattern;
+    private Set<String> movementPatterns = new LinkedHashSet<>();
 
     @Column(name = "primary_muscle", length = 64)
     private String primaryMuscle;

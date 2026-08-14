@@ -142,8 +142,12 @@ public class ExerciseCatalogService {
 
     private void copyEditableFields(ExerciseCatalogItemEntity from, ExerciseCatalogItemEntity to) {
         to.setName(from.getName());
-        to.setBodyRegion(from.getBodyRegion());
-        to.setMovementPattern(from.getMovementPattern());
+        // kolo 10: kolekce se přepisují obsahem, ne referencí — u ElementCollection
+        // by výměna instance rozbila Hibernate tracking (orphan removal).
+        to.getBodyRegions().clear();
+        if (from.getBodyRegions() != null) to.getBodyRegions().addAll(from.getBodyRegions());
+        to.getMovementPatterns().clear();
+        if (from.getMovementPatterns() != null) to.getMovementPatterns().addAll(from.getMovementPatterns());
         to.setPrimaryMuscle(from.getPrimaryMuscle());
         to.setSecondaryMuscles(from.getSecondaryMuscles());
         to.setEquipment(from.getEquipment());

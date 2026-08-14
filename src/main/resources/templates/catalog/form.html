@@ -34,23 +34,33 @@
                                    placeholder="např. Turkish Get-Up">
                         </div>
                     </div>
+                    <!-- kolo 10: cvik může spadat do víc oblastí těla i mít víc pohybových vzorců -->
                     <div class="col-md-4">
                         <div class="rk-field">
-                            <label class="rk-label" for="bodyRegion">Oblast těla</label>
-                            <select id="bodyRegion" th:field="*{bodyRegion}" class="form-select">
-                                <option value="">—</option>
-                                <option th:each="b : ${bodyRegions}" th:value="${b}" th:text="${b}">UPPER_BODY</option>
-                            </select>
+                            <label class="rk-label">Oblast těla</label>
+                            <div class="form-text mb-1">Lze zvolit i víc oblastí (např. dolní část těla + střed těla).</div>
+                            <div class="d-flex flex-column gap-1">
+                                <div th:each="b : ${bodyRegions}" class="form-check m-0">
+                                    <input type="checkbox" class="form-check-input"
+                                           th:id="'br-' + ${b}" th:field="*{bodyRegions}" th:value="${b}">
+                                    <label class="form-check-label" th:for="'br-' + ${b}" th:text="${b.label}">Horní část těla</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="rk-field">
-                            <label class="rk-label" for="movementPattern">Pohybový vzorec</label>
-                            <select id="movementPattern" th:field="*{movementPattern}" class="form-select">
-                                <option value="">—</option>
-                                <option th:each="mp : ${movementPatterns}" th:value="${mp.name}" th:text="${mp.name}">PUSH</option>
-                            </select>
-                            <div class="catalog-attr-manage" data-kind="MOVEMENT_PATTERN" data-select="movementPattern">
+                            <label class="rk-label">Pohybový vzorec</label>
+                            <div class="form-text mb-1">Složitější cvik jich může mít víc.</div>
+                            <div id="movementPatternBoxes" class="d-flex flex-column gap-1">
+                                <div th:each="mp : ${movementPatterns}" class="form-check m-0">
+                                    <input type="checkbox" class="form-check-input"
+                                           th:id="'mp-' + ${mp.name}" th:field="*{movementPatterns}" th:value="${mp.name}">
+                                    <label class="form-check-label" th:for="'mp-' + ${mp.name}" th:text="${mp.name}">PUSH</label>
+                                </div>
+                            </div>
+                            <div class="catalog-attr-manage" data-kind="MOVEMENT_PATTERN"
+                                 data-checkboxes="movementPatternBoxes" data-field="movementPatterns">
                                 <div style="display:flex; gap:6px; margin-top:6px;">
                                     <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní vzorec" maxlength="64">
                                     <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
@@ -118,12 +128,55 @@
 (function () {
     document.querySelectorAll('.catalog-attr-manage').forEach(function (box) {
         const kind = box.getAttribute('data-kind');
-        const select = document.getElementById(box.getAttribute('data-select'));
+        // kolo 10: pohybový vzorec je nově víceznačný → checkboxy. Náčiní zůstává select.
+        const boxesId = box.getAttribute('data-checkboxes');
+        const boxes = boxesId ? document.getElementById(boxesId) : null;
+        const fieldName = box.getAttribute('data-field');
+        const select = boxes ? null : document.getElementById(box.getAttribute('data-select'));
         const input = box.querySelector('.attr-new');
         const addBtn = box.querySelector('.attr-add');
         const list = box.querySelector('.attr-custom-list');
+        // hodnoty, které mají po přegenerování zůstat zaškrtnuté (i čerstvě přidaná vlastní)
+        let pending = null;
 
-        function rebuild(options) {
+        function checkedValues() {
+            if (!boxes) return [];
+            return [...boxes.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
+        }
+
+        function customChip(o) {
+            const chip = document.createElement('span');
+            chip.style.cssText = 'display:inline-flex; align-items:center; gap:4px; border:1px solid var(--rk-border); border-radius:999px; padding:2px 8px; font-size:12px;';
+            chip.appendChild(document.createTextNode(o.name));
+            const x = document.createElement('button');
+            x.type = 'button'; x.textContent = '−'; x.title = 'Smazat hodnotu';
+            x.style.cssText = 'background:none; border:none; cursor:pointer; line-height:1; color:var(--rk-danger);';
+            x.addEventListener('click', function () { del(o.id); });
+            chip.appendChild(x);
+            return chip;
+        }
+
+        function rebuildCheckboxes(options) {
+            const current = new Set(pending || checkedValues());
+            pending = null;
+            boxes.innerHTML = '';
+            list.innerHTML = '';
+            options.forEach(function (o) {
+                const wrap = document.createElement('div');
+                wrap.className = 'form-check m-0';
+                const chk = document.createElement('input');
+                chk.type = 'checkbox'; chk.className = 'form-check-input';
+                chk.name = fieldName; chk.value = o.name; chk.id = 'mp-' + o.name;
+                chk.checked = current.has(o.name);
+                const lab = document.createElement('label');
+                lab.className = 'form-check-label'; lab.htmlFor = chk.id; lab.textContent = o.name;
+                wrap.appendChild(chk); wrap.appendChild(lab);
+                boxes.appendChild(wrap);
+                if (!o.system) list.appendChild(customChip(o));
+            });
+        }
+
+        function rebuildSelect(options) {
             const current = select.value;
             // ponech prázdnou volbu, zbytek přegeneruj
             select.innerHTML = '<option value="">—</option>';
@@ -132,17 +185,7 @@
                 const opt = document.createElement('option');
                 opt.value = o.name; opt.textContent = o.name;
                 select.appendChild(opt);
-                if (!o.system) {
-                    const chip = document.createElement('span');
-                    chip.style.cssText = 'display:inline-flex; align-items:center; gap:4px; border:1px solid var(--rk-border); border-radius:999px; padding:2px 8px; font-size:12px;';
-                    chip.appendChild(document.createTextNode(o.name));
-                    const x = document.createElement('button');
-                    x.type = 'button'; x.textContent = '−'; x.title = 'Smazat hodnotu';
-                    x.style.cssText = 'background:none; border:none; cursor:pointer; line-height:1; color:var(--rk-danger);';
-                    x.addEventListener('click', function () { del(o.id); });
-                    chip.appendChild(x);
-                    list.appendChild(chip);
-                }
+                if (!o.system) list.appendChild(customChip(o));
             });
             // obnov vybranou hodnotu (i kdyby to byla vlastní)
             if (current && !Array.prototype.some.call(select.options, o => o.value === current)) {
@@ -150,6 +193,10 @@
                 opt.value = current; opt.textContent = current; select.appendChild(opt);
             }
             select.value = current;
+        }
+
+        function rebuild(options) {
+            if (boxes) rebuildCheckboxes(options); else rebuildSelect(options);
         }
 
         function load() {
@@ -162,7 +209,13 @@
             fetch('/api/catalog-options', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ kind: kind, name: name })
-            }).then(r => { if (r.ok) { input.value=''; select.value=name; load(); setTimeout(()=>{select.value=name;},100);} });
+            }).then(r => {
+                if (!r.ok) return;
+                input.value = '';
+                // nově přidaná hodnota rovnou zaškrtnutá / vybraná
+                if (boxes) { pending = checkedValues().concat([name]); load(); }
+                else { select.value = name; load(); setTimeout(() => { select.value = name; }, 100); }
+            });
         }
         function del(id) {
             fetch('/api/catalog-options/' + id, { method: 'DELETE' }).then(r => { if (r.ok) load(); });

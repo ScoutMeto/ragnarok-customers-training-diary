@@ -163,8 +163,11 @@
             </div>
 
             <div class="rk-ex__tags" th:if="${ex.catalogItem != null or (ex.tags != null and !ex.tags.isEmpty())}">
-                <span th:if="${ex.catalogItem != null and ex.catalogItem.bodyRegion != null}" class="rk-badge" th:text="${ex.catalogItem.bodyRegion}">UPPER_BODY</span>
-                <span th:if="${ex.catalogItem != null and ex.catalogItem.movementPattern != null}" class="rk-badge" th:text="${ex.catalogItem.movementPattern}">PUSH</span>
+                <!-- th:each se vyhodnocuje PŘED th:if, proto je podmínka na obalujícím th:block -->
+                <th:block th:if="${ex.catalogItem != null}">
+                    <span th:each="br : ${ex.catalogItem.bodyRegions}" class="rk-badge" th:text="${br.label}">Horní část těla</span>
+                    <span th:each="mp : ${ex.catalogItem.movementPatterns}" class="rk-badge" th:text="${mp}">PUSH</span>
+                </th:block>
                 <span th:if="${ex.catalogItem != null and ex.catalogItem.equipment != null}" class="rk-badge" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
                 <!-- Phase 11 (A2): per-exercise tagy zaměření -->
                 <span th:each="tag : ${ex.tags}"
