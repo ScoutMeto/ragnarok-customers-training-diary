@@ -16,7 +16,7 @@
     <div class="rk-page__head">
         <div>
             <h1 class="rk-page__title">Statistiky</h1>
-            <p class="rk-page__sub">Z tvých osobních (PRIVATE) tréninků. Skupinové se nezapočítávají.</p>
+            <p class="rk-page__sub">Ze všech tréninků ve tvém deníku — vlastních i převzatých z nabídky.</p>
         </div>
     </div>
 
@@ -48,17 +48,10 @@
         </div>
     </div>
 
-    <!-- Total volume -->
-    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
-        <h3>Celkový objem (kg) v čase</h3>
-        <div class="rk-chart__wrap" style="height: 280px;">
-            <canvas id="chartVolume"></canvas>
-        </div>
-    </div>
-
     <!-- PR per exercise -->
     <div class="rk-chart" style="margin-bottom: var(--sp-4);">
-        <h3>Vývoj max-weight pro cvik</h3>
+        <h3>Vývoj maximálních pokusů v čase pro vybraný cvik</h3>
+        <p class="text-muted" style="font-size: var(--fs-sm);">Nejvyšší použitá váha za trénink pro daný cvik.</p>
         <div class="row g-3" style="margin-bottom: var(--sp-3);">
             <div class="col-md-6">
                 <div class="rk-field">
@@ -169,22 +162,6 @@
                     <canvas id="chartMovementPattern"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- RPE trend -->
-    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
-        <h3>RPE trend (průměr per den)</h3>
-        <div class="rk-chart__wrap" style="height: 280px;">
-            <canvas id="chartRpe"></canvas>
-        </div>
-    </div>
-
-    <!-- Volume per difficulty -->
-    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
-        <h3>Objem podle obtížnosti</h3>
-        <div class="rk-chart__wrap" style="height: 280px;">
-            <canvas id="chartDifficulty"></canvas>
         </div>
     </div>
 

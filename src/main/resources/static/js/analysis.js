@@ -79,14 +79,6 @@
         });
     }
 
-    function loadVolume(p) {
-        return fetchJson(`/api/analysis/total-volume?from=${p.from}&to=${p.to}`)
-            .then(data => lineChart('chartVolume', 'Volume (kg)', data, '#0d6efd'));
-    }
-    function loadRpe(p) {
-        return fetchJson(`/api/analysis/rpe-trend?from=${p.from}&to=${p.to}`)
-            .then(data => lineChart('chartRpe', 'RPE průměr', data, '#dc3545'));
-    }
     function loadBodyRegion(p) {
         return fetchJson(`/api/analysis/sets-per-body-region?from=${p.from}&to=${p.to}`)
             .then(data => barChart('chartBodyRegion', 'Sety', data, '#0dcaf0'));
@@ -94,10 +86,6 @@
     function loadMovementPattern(p) {
         return fetchJson(`/api/analysis/sets-per-movement-pattern?from=${p.from}&to=${p.to}`)
             .then(data => barChart('chartMovementPattern', 'Sety', data, '#198754'));
-    }
-    function loadDifficulty(p) {
-        return fetchJson(`/api/analysis/volume-per-difficulty?from=${p.from}&to=${p.to}`)
-            .then(data => barChart('chartDifficulty', 'Volume (kg)', data, '#ffc107'));
     }
 
     function loadPrHistory(p) {
@@ -154,11 +142,8 @@
         const p = getPeriod();
         if (!p.from || !p.to) return;
         Promise.all([
-            loadVolume(p),
-            loadRpe(p),
             loadBodyRegion(p),
             loadMovementPattern(p),
-            loadDifficulty(p),
             loadPrHistory(p),
             loadHeatmap(p)
         ]).catch(err => {

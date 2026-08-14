@@ -14,9 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Statistiky tréninkového deníku. Klientovy data se počítají z jeho PRIVATE tréninků
- * (visibility=PRIVATE, owner=klient). Pokud klient chce zaznamenat výkon ze
- * skupinového tréninku, použije „Zkopírovat do mého deníku" → vznikne PRIVATE kopie.
+ * Statistiky tréninkového deníku.
+ *
+ * <p>kolo 10: do statistik jde KAŽDÝ trénink, který má klient ve svém deníku — vlastní
+ * i převzatý z nabídky, upravený i ponechaný beze změny. Filtruje se tedy jen podle
+ * vlastníka ({@code t.owner}); skupinové a šablonové tréninky vlastníka nemají, takže
+ * se do klientských statistik nedostanou samy o sobě, ale jejich kopie v deníku ano.
  *
  * <p>Admin overview agreguje napříč všemi klienty.
  */
@@ -41,7 +44,6 @@ public class AnalysisService {
                 "   JOIN s.trainingExercise e " +
                 "   JOIN e.training t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND s.weightKg IS NOT NULL AND s.reps IS NOT NULL " +
                 "GROUP BY t.trainingDate " +
@@ -62,7 +64,6 @@ public class AnalysisService {
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND e.catalogItem.id = :catalogId " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND s.weightKg IS NOT NULL")
@@ -83,7 +84,6 @@ public class AnalysisService {
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND e.catalogItem.id = :catalogId " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND s.weightKg IS NOT NULL " +
@@ -111,7 +111,6 @@ public class AnalysisService {
                 "  JOIN e.training t " +
                 "  LEFT JOIN e.catalogItem ci " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND COALESCE(ci.name, e.customName) IS NOT NULL " +
                 "ORDER BY COALESCE(ci.name, e.customName) ASC")
                 .setParameter("ownerId", owner.getId())
@@ -141,7 +140,6 @@ public class AnalysisService {
                 "  JOIN e.training t " +
                 "  LEFT JOIN e.catalogItem ci " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND COALESCE(ci.name, e.customName) = :name " +
                 "  AND t.trainingDate BETWEEN :from AND :to")
                 .setParameter("ownerId", owner.getId())
@@ -170,7 +168,6 @@ public class AnalysisService {
                 "  JOIN e.training t " +
                 "  JOIN e.tags tag " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "ORDER BY tag.name ASC")
                 .setParameter("ownerId", owner.getId())
                 .getResultList();
@@ -197,7 +194,6 @@ public class AnalysisService {
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND EXISTS (SELECT 1 FROM e.tags tg WHERE tg.id IN :tagIds)")
                 .setParameter("ownerId", owner.getId())
@@ -228,7 +224,6 @@ public class AnalysisService {
                 "  JOIN e.catalogItem ci " +
                 "  JOIN ci.bodyRegions br " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "GROUP BY br")
                 .setParameter("ownerId", owner.getId())
@@ -252,7 +247,6 @@ public class AnalysisService {
                 "  JOIN e.catalogItem ci " +
                 "  JOIN ci.movementPatterns mp " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "GROUP BY mp")
                 .setParameter("ownerId", owner.getId())
@@ -270,7 +264,6 @@ public class AnalysisService {
         List<Object[]> rows = em.createQuery(
                 "SELECT t.trainingDate, AVG(t.rpe) FROM TrainingEntity t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND t.rpe IS NOT NULL " +
                 "GROUP BY t.trainingDate " +
@@ -290,7 +283,6 @@ public class AnalysisService {
         List<Object[]> rows = em.createQuery(
                 "SELECT t.trainingDate, COUNT(t) FROM TrainingEntity t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "GROUP BY t.trainingDate")
                 .setParameter("ownerId", owner.getId())
@@ -317,7 +309,6 @@ public class AnalysisService {
                 "  JOIN s.trainingExercise e " +
                 "  JOIN e.training t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND t.difficulty IS NOT NULL " +
                 "  AND s.weightKg IS NOT NULL AND s.reps IS NOT NULL " +
@@ -352,7 +343,6 @@ public class AnalysisService {
         List<Object[]> rows = em.createQuery(
                 "SELECT t.trainingDate, t.rpe FROM TrainingEntity t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "  AND t.rpe IS NOT NULL " +
                 "ORDER BY t.trainingDate ASC")
@@ -376,7 +366,6 @@ public class AnalysisService {
         List<Object[]> rows = em.createQuery(
                 "SELECT t.trainingDate, t.cycleDay, t.cyclePhase FROM TrainingEntity t " +
                 "WHERE t.owner.id = :ownerId " +
-                "  AND t.visibility = com.ragnarok.ragnarok_customers_training_diary.training.TrainingVisibility.PRIVATE " +
                 "  AND t.trainingDate BETWEEN :from AND :to " +
                 "ORDER BY t.trainingDate ASC, t.id ASC")
                 .setParameter("ownerId", owner.getId())
