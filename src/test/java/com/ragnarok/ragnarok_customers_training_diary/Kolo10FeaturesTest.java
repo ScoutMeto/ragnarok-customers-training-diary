@@ -214,6 +214,62 @@ class Kolo10FeaturesTest {
     }
 
     @Test
+    void straightSets_persistsGeneratedRowsAndRestFromMinutes() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 straight sets");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.STRAIGHT_SETS);
+        ex.setCustomName("Dřep");
+
+        var ss = new com.ragnarok.ragnarok_customers_training_diary.training.dto.StraightSetsConfigInput();
+        ss.setSetCount(3);
+        ss.setRepsPerSet(5);
+        ss.setRestMin(2);
+        ss.setRestSec(0);
+        for (int i = 0; i < 3; i++) {
+            var r = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                    .StraightSetsConfigInput.RowInput();
+            r.setReps(5);
+            r.setWeightKg(new java.math.BigDecimal("60.00"));
+            r.setRestSeconds(120);
+            ss.getRows().add(r);
+        }
+        ex.setStraightSets(ss);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        var cfg = created.getExercises().get(0).getStraightSetsConfig();
+        assertThat(cfg.getRestSeconds()).isEqualTo(120);
+        assertThat(cfg.getRows()).hasSize(3);
+        assertThat(cfg.getRows().get(2).getRowIndex()).isEqualTo(2);
+    }
+
+    @Test
+    void interval_combinesWorkAndRestFromMinutes() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 interval");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.INTERVAL);
+        ex.setCustomName("Veslo");
+
+        var iv = new com.ragnarok.ragnarok_customers_training_diary.training.dto.IntervalConfigInput();
+        iv.setRounds(5);
+        iv.setWorkMin(1);
+        iv.setWorkSec(30);
+        iv.setRestMin(0);
+        iv.setRestSec(45);
+        ex.setInterval(iv);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        var cfg = created.getExercises().get(0).getIntervalConfig();
+        assertThat(cfg.getWorkSeconds()).isEqualTo(90);
+        assertThat(cfg.getRestSeconds()).isEqualTo(45);
+    }
+
+    @Test
     void systemTag_keepsStableKeyWhenRenamed() {
         // Detekce jednotek v UI se řídí klíčem, ne názvem — přejmenování ji nesmí rozbít.
         TrainingTagEntity carry = new TrainingTagEntity();

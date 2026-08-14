@@ -491,13 +491,51 @@
 
                     <!-- =============== STRAIGHT_SETS (uniform sety) =============== -->
                     <div class="type-config type-straight_sets mt-4" style="display:none">
-                        <h6 class="mb-2">Straight Sets (3×8, 5×5, ...)</h6>
+                        <h6 class="mb-2">Straight Sets (3x8, 5x5, ...)</h6>
                         <div class="row g-2">
-                            <div class="col-md-3"><label class="form-label form-label-sm">Setů *</label><input type="number" min="1" max="50" data-name="straightSets.setCount" th:name="|exercises[${exStat.index}].straightSets.setCount|" th:value="${ex.straightSets?.setCount}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Opakování / set</label><input type="number" data-name="straightSets.repsPerSet" th:name="|exercises[${exStat.index}].straightSets.repsPerSet|" th:value="${ex.straightSets?.repsPerSet}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="straightSets.weightKg" th:name="|exercises[${exStat.index}].straightSets.weightKg|" th:value="${ex.straightSets?.weightKg}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" data-name="straightSets.restSeconds" th:name="|exercises[${exStat.index}].straightSets.restSeconds|" th:value="${ex.straightSets?.restSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="straightSets.notes" th:name="|exercises[${exStat.index}].straightSets.notes|" th:value="${ex.straightSets?.notes}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Setů *</label>
+                                <input type="number" min="1" max="50" data-name="straightSets.setCount"
+                                       th:name="|exercises[${exStat.index}].straightSets.setCount|"
+                                       th:value="${ex.straightSets?.setCount}" class="form-control form-control-sm ss-set-count">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Opakování / set</label>
+                                <input type="number" data-name="straightSets.repsPerSet"
+                                       th:name="|exercises[${exStat.index}].straightSets.repsPerSet|"
+                                       th:value="${ex.straightSets?.repsPerSet}" class="form-control form-control-sm ss-reps">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Váha (kg)</label>
+                                <input type="number" step="0.25" data-name="straightSets.weightKg"
+                                       th:name="|exercises[${exStat.index}].straightSets.weightKg|"
+                                       th:value="${ex.straightSets?.weightKg}" class="form-control form-control-sm ss-weight">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Pauza (m)</label>
+                                <input type="number" min="0" data-name="straightSets.restMin"
+                                       th:name="|exercises[${exStat.index}].straightSets.restMin|"
+                                       th:value="${ex.straightSets?.restMin}" class="form-control form-control-sm ss-rest-min">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Pauza (s)</label>
+                                <input type="number" min="0" max="59" data-name="straightSets.restSec"
+                                       th:name="|exercises[${exStat.index}].straightSets.restSec|"
+                                       th:value="${ex.straightSets?.restSec}" class="form-control form-control-sm ss-rest-sec">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label form-label-sm">Poznámky</label>
+                                <input type="text" data-name="straightSets.notes"
+                                       th:name="|exercises[${exStat.index}].straightSets.notes|"
+                                       th:value="${ex.straightSets?.notes}" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <div class="ss-rows-wrap mt-3" style="display:none">
+                            <div class="form-text mb-1">Sety (předvyplněno z předpisu, můžeš upravit):</div>
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th style="width:60px">Set</th><th>Opakování</th><th>Váha (kg)</th><th>Pauza (s)</th></tr></thead>
+                                <tbody class="ss-rows-tbody"></tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -507,9 +545,11 @@
                         <div class="row g-2">
                             <div class="col-md-2"><label class="form-label form-label-sm">Počet kol *</label><input type="number" min="1" max="100" data-name="interval.rounds" th:name="|exercises[${exStat.index}].interval.rounds|" th:value="${ex.interval?.rounds}" class="form-control form-control-sm"></div>
                             <div class="col-md-3"><label class="form-label form-label-sm">Práce: opakování</label><input type="number" data-name="interval.workReps" th:name="|exercises[${exStat.index}].interval.workReps|" th:value="${ex.interval?.workReps}" class="form-control form-control-sm"></div>
-                            <div class="col-md-3"><label class="form-label form-label-sm">nebo práce: čas (s)</label><input type="number" data-name="interval.workSeconds" th:name="|exercises[${exStat.index}].interval.workSeconds|" th:value="${ex.interval?.workSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" data-name="interval.restSeconds" th:name="|exercises[${exStat.index}].interval.restSeconds|" th:value="${ex.interval?.restSeconds}" class="form-control form-control-sm"></div>
-                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="interval.weightKg" th:name="|exercises[${exStat.index}].interval.weightKg|" th:value="${ex.interval?.weightKg}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">nebo práce (m)</label><input type="number" min="0" data-name="interval.workMin" th:name="|exercises[${exStat.index}].interval.workMin|" th:value="${ex.interval?.workMin}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">práce (s)</label><input type="number" min="0" max="59" data-name="interval.workSec" th:name="|exercises[${exStat.index}].interval.workSec|" th:value="${ex.interval?.workSec}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Pauza (m)</label><input type="number" min="0" data-name="interval.restMin" th:name="|exercises[${exStat.index}].interval.restMin|" th:value="${ex.interval?.restMin}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" min="0" max="59" data-name="interval.restSec" th:name="|exercises[${exStat.index}].interval.restSec|" th:value="${ex.interval?.restSec}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="interval.weightKg" th:name="|exercises[${exStat.index}].interval.weightKg|" th:value="${ex.interval?.weightKg}" class="form-control form-control-sm interval-weight"></div>
                             <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="interval.notes" th:name="|exercises[${exStat.index}].interval.notes|" th:value="${ex.interval?.notes}" class="form-control form-control-sm"></div>
                         </div>
                         <p class="form-text mb-0">Vyplň buď opakování, nebo čas práce (podle typu cviku).</p>
@@ -919,13 +959,21 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary add-circuit-step">+ Přidat cvik</button>
             </div>
             <div class="type-config type-straight_sets mt-4" style="display:none">
-                <h6 class="mb-2">Straight Sets</h6>
+                <h6 class="mb-2">Straight Sets (3x8, 5x5, ...)</h6>
                 <div class="row g-2">
-                    <div class="col-md-3"><label class="form-label form-label-sm">Setů *</label><input type="number" min="1" max="50" data-name="straightSets.setCount" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Opakování / set</label><input type="number" data-name="straightSets.repsPerSet" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="straightSets.weightKg" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" data-name="straightSets.restSeconds" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Setů *</label><input type="number" min="1" max="50" data-name="straightSets.setCount" class="form-control form-control-sm ss-set-count"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Opakování / set</label><input type="number" data-name="straightSets.repsPerSet" class="form-control form-control-sm ss-reps"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="straightSets.weightKg" class="form-control form-control-sm ss-weight"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (m)</label><input type="number" min="0" data-name="straightSets.restMin" class="form-control form-control-sm ss-rest-min"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s)</label><input type="number" min="0" max="59" data-name="straightSets.restSec" class="form-control form-control-sm ss-rest-sec"></div>
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="straightSets.notes" class="form-control form-control-sm"></div>
+                </div>
+                <div class="ss-rows-wrap mt-3" style="display:none">
+                    <div class="form-text mb-1">Sety (předvyplněno z předpisu, můžeš upravit):</div>
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th style="width:60px">Set</th><th>Opakování</th><th>Váha (kg)</th><th>Pauza (s)</th></tr></thead>
+                        <tbody class="ss-rows-tbody"></tbody>
+                    </table>
                 </div>
             </div>
             <div class="type-config type-interval mt-4" style="display:none">
@@ -933,9 +981,11 @@
                 <div class="row g-2">
                     <div class="col-md-2"><label class="form-label form-label-sm">Počet kol *</label><input type="number" min="1" max="100" data-name="interval.rounds" class="form-control form-control-sm"></div>
                     <div class="col-md-3"><label class="form-label form-label-sm">Práce: opakování</label><input type="number" data-name="interval.workReps" class="form-control form-control-sm"></div>
-                    <div class="col-md-3"><label class="form-label form-label-sm">nebo práce: čas (s)</label><input type="number" data-name="interval.workSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" data-name="interval.restSeconds" class="form-control form-control-sm"></div>
-                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="interval.weightKg" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">nebo práce (m)</label><input type="number" min="0" data-name="interval.workMin" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">práce (s)</label><input type="number" min="0" max="59" data-name="interval.workSec" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (m)</label><input type="number" min="0" data-name="interval.restMin" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Pauza (s) *</label><input type="number" min="0" max="59" data-name="interval.restSec" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Váha (kg)</label><input type="number" step="0.25" data-name="interval.weightKg" class="form-control form-control-sm interval-weight"></div>
                     <div class="col-12"><label class="form-label form-label-sm">Poznámky</label><input type="text" data-name="interval.notes" class="form-control form-control-sm"></div>
                 </div>
                 <p class="form-text mb-0">Vyplň buď opakování, nebo čas práce (podle typu cviku).</p>

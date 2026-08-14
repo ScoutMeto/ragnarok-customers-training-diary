@@ -222,6 +222,19 @@
                 <span th:if="${ex.straightSetsConfig.weightKg != null}">· <b class="num" th:text="${ex.straightSetsConfig.weightKg}">24</b> kg</span>
                 <span th:if="${ex.straightSetsConfig.restSeconds != null}">· pauza <span class="num" th:text="${ex.straightSetsConfig.restSeconds}">120</span>&nbsp;s</span>
             </div>
+            <!-- kolo 10: skutečně odcvičené sety -->
+            <table class="rk-series" th:if="${ex.straightSetsConfig != null and !ex.straightSetsConfig.rows.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>Set</th><th>Opakování</th><th>Váha (kg)</th><th>Pauza (s)</th></tr></thead>
+                <tbody>
+                <tr th:each="r, st : ${ex.straightSetsConfig.rows}">
+                    <td th:text="${st.count}">1</td>
+                    <td th:text="${r.reps} ?: '—'">5</td>
+                    <td th:text="${r.weightKg} ?: '—'">60</td>
+                    <td th:text="${r.restSeconds} ?: '—'">120</td>
+                </tr>
+                </tbody>
+            </table>
 
             <!-- Interval (Phase 13 A11) -->
             <div th:if="${ex.intervalConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">

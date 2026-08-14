@@ -53,6 +53,15 @@ public class ExerciseTypeConfigToInputMapper {
             in.setWorkReps(e.getWorkReps());
             in.setWorkSeconds(e.getWorkSeconds());
             in.setRestSeconds(e.getRestSeconds());
+            // kolo 10: práci i pauzu jde zadat v minutách + sekundách
+            if (e.getWorkSeconds() != null) {
+                in.setWorkMin(e.getWorkSeconds() / 60);
+                in.setWorkSec(e.getWorkSeconds() % 60);
+            }
+            if (e.getRestSeconds() != null) {
+                in.setRestMin(e.getRestSeconds() / 60);
+                in.setRestSec(e.getRestSeconds() % 60);
+            }
             in.setWeightKg(e.getWeightKg());
             in.setNotes(e.getNotes());
             input.setInterval(in);
@@ -103,7 +112,18 @@ public class ExerciseTypeConfigToInputMapper {
         in.setRepsPerSet(e.getRepsPerSet());
         in.setWeightKg(e.getWeightKg());
         in.setRestSeconds(e.getRestSeconds());
+        if (e.getRestSeconds() != null) {
+            in.setRestMin(e.getRestSeconds() / 60);
+            in.setRestSec(e.getRestSeconds() % 60);
+        }
         in.setNotes(e.getNotes());
+        for (var r : e.getRows()) {
+            var ri = new StraightSetsConfigInput.RowInput();
+            ri.setReps(r.getReps());
+            ri.setWeightKg(r.getWeightKg());
+            ri.setRestSeconds(r.getRestSeconds());
+            in.getRows().add(ri);
+        }
         return in;
     }
 

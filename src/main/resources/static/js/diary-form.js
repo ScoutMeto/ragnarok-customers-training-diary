@@ -120,6 +120,12 @@
             updateCircuitMode(exerciseCard);
             circuitRoundRestsSync(exerciseCard);
         }
+        if (selected === 'STRAIGHT_SETS') {
+            straightSetsApplyWeight(exerciseCard);
+        }
+        if (selected === 'INTERVAL') {
+            intervalApplyWeight(exerciseCard);
+        }
         if (selected === 'AMRAP') {
             const tbody = exerciseCard.querySelector('.amrap-steps-tbody');
             if (tbody && tbody.querySelectorAll('.amrap-step-row').length === 0) {
@@ -129,6 +135,69 @@
             exerciseCard.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
             amrapRoundsSync(exerciseCard);
         }
+    }
+
+    // ----- kolo 10: Straight Sets + Interval (propis váhy náčiní, generovaná tabulka) -----
+
+    /** Váha náčiní (u dvou zátěží součet) se propisuje do „Váha (kg)" typu cviku. */
+    function applyEquipmentWeightTo(card, selector) {
+        const input = card.querySelector(selector);
+        if (!input) return;
+        const eq = equipmentWeights(card);
+        if (eq.sum != null) input.value = eq.sum;
+    }
+
+    function straightSetsApplyWeight(card) {
+        applyEquipmentWeightTo(card, '.ss-weight');
+        straightSetsSync(card, false);
+    }
+
+    function intervalApplyWeight(card) {
+        applyEquipmentWeightTo(card, '.interval-weight');
+    }
+
+    /**
+     * Tabulka setů se generuje z předpisu (počet setů × opakování × váha × pauza).
+     * `overwrite=true` přepíše i vyplněné řádky (změna předpisu), jinak doplní jen prázdné.
+     */
+    function straightSetsSync(card, overwrite) {
+        const block = card.querySelector('.type-config.type-straight_sets');
+        if (!block) return;
+        const wrap = block.querySelector('.ss-rows-wrap');
+        const tbody = block.querySelector('.ss-rows-tbody');
+        if (!wrap || !tbody) return;
+
+        const count = parseInt(block.querySelector('.ss-set-count')?.value, 10);
+        if (!count || count < 1) { wrap.style.display = 'none'; return; }
+
+        const reps = block.querySelector('.ss-reps')?.value || '';
+        const weight = block.querySelector('.ss-weight')?.value || '';
+        const restMin = parseInt(block.querySelector('.ss-rest-min')?.value, 10) || 0;
+        const restSec = parseInt(block.querySelector('.ss-rest-sec')?.value, 10) || 0;
+        const rest = (restMin * 60 + restSec) || '';
+
+        while (tbody.querySelectorAll('tr').length > count) tbody.lastElementChild.remove();
+        while (tbody.querySelectorAll('tr').length < count) {
+            const tr = document.createElement('tr');
+            tr.className = 'ss-row';
+            tr.innerHTML = '<td class="row-num"></td>'
+                + '<td><input type="number" data-row-field="reps" class="form-control form-control-sm"></td>'
+                + '<td><input type="number" step="0.25" data-row-field="weightKg" class="form-control form-control-sm"></td>'
+                + '<td><input type="number" data-row-field="restSeconds" class="form-control form-control-sm"></td>';
+            tbody.appendChild(tr);
+        }
+        tbody.querySelectorAll('tr').forEach((tr, i) => {
+            tr.querySelector('.row-num').textContent = (i + 1);
+            const set = (sel, val) => {
+                const el = tr.querySelector(sel);
+                if (el && (overwrite || !el.value)) el.value = val;
+            };
+            set('[data-row-field="reps"]', reps);
+            set('[data-row-field="weightKg"]', weight);
+            set('[data-row-field="restSeconds"]', rest);
+        });
+        wrap.style.display = '';
+        renumberExercises();
     }
 
     // ----- kolo 10: AMRAP (sada cviků + záznam po kolech) -----
@@ -374,6 +443,14 @@
                 ['weightKg', 'reps', 'restSeconds', 'rpe', 'note'].forEach(fieldName => {
                     const el = row.querySelector('[data-name="' + fieldName + '"]');
                     if (el) el.name = 'exercises[' + idx + '].sets[' + sIdx + '].' + fieldName;
+                });
+            });
+
+            // kolo 10: Straight Sets — generovaná tabulka setů
+            card.querySelectorAll('.ss-row').forEach((row, rIdx) => {
+                row.querySelectorAll('[data-row-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].straightSets.rows[' + rIdx + '].'
+                            + el.getAttribute('data-row-field');
                 });
             });
 
@@ -1117,6 +1194,12 @@
             // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
             emomSync(card, false);
             emomApplyReps(card);
+        } else if (t.classList.contains('ss-set-count')) {
+            straightSetsSync(card, false);
+        } else if (t.classList.contains('ss-reps') || t.classList.contains('ss-weight')
+                || t.classList.contains('ss-rest-min') || t.classList.contains('ss-rest-sec')) {
+            // změna předpisu přepíše celou tabulku (uživatel ji pak může upravit)
+            straightSetsSync(card, true);
         } else if (t.classList.contains('amrap-rounds')) {
             amrapRoundsSync(card);
         } else if (t.classList.contains('circuit-mode')) {
@@ -1141,9 +1224,11 @@
             seriesRegenerate(card);
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
-            // kolo 9: změna váhy náčiní se okamžitě propíše do celé tabulky
+            // kolo 9/10: změna váhy náčiní se okamžitě propíše do všech tabulek
             emomApplyKg(card);
             seriesApplyWeight(card);
+            straightSetsApplyWeight(card);
+            intervalApplyWeight(card);
         }
     });
 
@@ -1169,9 +1254,11 @@
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
             updateKbState(card);
-            // kolo 9: „bezprostředně" — už během psaní váhy se tabulky aktualizují
+            // kolo 9/10: „bezprostředně" — už během psaní váhy se tabulky aktualizují
             emomApplyKg(card);
             seriesApplyWeight(card);
+            straightSetsApplyWeight(card);
+            intervalApplyWeight(card);
         } else if (t.classList.contains('step-reps-input') || t.classList.contains('step-seconds-input')) {
             // kolo 9: Opakování XOR Sekundy u kroku circuitu
             const stepRow = t.closest('.circuit-step-row');
@@ -1293,6 +1380,7 @@
         });
         kbValidate(card);
         amrapRoundsSync(card);
+        straightSetsSync(card, false);
     });
     // Phase 12: server-rendered kroky kruhového tréninku mají jen data-step-field,
     // jméno pole doplníme až tady → nutné zavolat renumber na load.

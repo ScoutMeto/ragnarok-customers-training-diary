@@ -19,7 +19,23 @@ public class StraightSetsConfigInput {
 
     private BigDecimal weightKg;
 
+    /** Kanonicky v sekundách; formulář zadává minuty + sekundy. */
     private Integer restSeconds;
 
+    private Integer restMin;
+    private Integer restSec;
+
     private String notes;
+
+    /** kolo 10: skutečně odcvičené sety. */
+    private java.util.List<RowInput> rows = new java.util.ArrayList<>();
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class RowInput {
+        private Integer reps;
+        private BigDecimal weightKg;
+        private Integer restSeconds;
+    }
 }

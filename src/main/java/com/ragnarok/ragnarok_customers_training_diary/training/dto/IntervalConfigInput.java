@@ -18,9 +18,16 @@ public class IntervalConfigInput {
 
     private Integer workReps;
 
+    /** Kanonicky v sekundách; formulář zadává minuty + sekundy (kolo 10). */
     private Integer workSeconds;
 
+    private Integer workMin;
+    private Integer workSec;
+
     private Integer restSeconds;
+
+    private Integer restMin;
+    private Integer restSec;
 
     private BigDecimal weightKg;
 

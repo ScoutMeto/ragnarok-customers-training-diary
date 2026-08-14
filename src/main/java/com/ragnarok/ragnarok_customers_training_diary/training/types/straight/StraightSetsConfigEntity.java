@@ -44,4 +44,11 @@ public class StraightSetsConfigEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** kolo 10: vygenerovaná (a editovatelná) tabulka setů. */
+    @jakarta.persistence.OneToMany(mappedBy = "straightSetsConfig",
+            cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true,
+            fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.OrderBy("rowIndex ASC")
+    private java.util.List<StraightSetsRowEntity> rows = new java.util.ArrayList<>();
 }

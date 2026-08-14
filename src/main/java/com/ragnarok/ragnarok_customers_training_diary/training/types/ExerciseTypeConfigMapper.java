@@ -145,8 +145,11 @@ public class ExerciseTypeConfigMapper {
         cfg.setTrainingExercise(exercise);
         cfg.setRounds(in.getRounds());
         cfg.setWorkReps(in.getWorkReps());
-        cfg.setWorkSeconds(in.getWorkSeconds());
-        cfg.setRestSeconds(in.getRestSeconds() != null ? in.getRestSeconds() : 0);
+        cfg.setWorkSeconds(CircuitConfigInput.toSeconds(
+                in.getWorkMin(), in.getWorkSec(), in.getWorkSeconds()));
+        Integer rest = CircuitConfigInput.toSeconds(
+                in.getRestMin(), in.getRestSec(), in.getRestSeconds());
+        cfg.setRestSeconds(rest != null ? rest : 0);
         cfg.setWeightKg(in.getWeightKg());
         cfg.setNotes(in.getNotes());
         exercise.setIntervalConfig(cfg);
@@ -160,8 +163,25 @@ public class ExerciseTypeConfigMapper {
         cfg.setSetCount(in.getSetCount());
         cfg.setRepsPerSet(in.getRepsPerSet());
         cfg.setWeightKg(in.getWeightKg());
-        cfg.setRestSeconds(in.getRestSeconds());
+        // kolo 10: pauza přichází jako minuty + sekundy
+        cfg.setRestSeconds(CircuitConfigInput.toSeconds(
+                in.getRestMin(), in.getRestSec(), in.getRestSeconds()));
         cfg.setNotes(in.getNotes());
+
+        if (in.getRows() != null) {
+            int idx = 0;
+            for (StraightSetsConfigInput.RowInput r : in.getRows()) {
+                if (r.getReps() == null && r.getWeightKg() == null && r.getRestSeconds() == null) continue;
+                var row = new com.ragnarok.ragnarok_customers_training_diary.training.types.straight
+                        .StraightSetsRowEntity();
+                row.setStraightSetsConfig(cfg);
+                row.setRowIndex(idx++);
+                row.setReps(r.getReps());
+                row.setWeightKg(r.getWeightKg());
+                row.setRestSeconds(r.getRestSeconds());
+                cfg.getRows().add(row);
+            }
+        }
 
         exercise.setStraightSetsConfig(cfg);
     }
