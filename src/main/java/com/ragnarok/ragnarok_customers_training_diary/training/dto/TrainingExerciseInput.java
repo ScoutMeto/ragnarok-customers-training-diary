@@ -75,6 +75,10 @@ public class TrainingExerciseInput {
     @Valid
     private StraightSetsConfigInput straightSets;
 
+    /** kolo 10: dlouhé pomalé kardio. */
+    @Valid
+    private CardioConfigInput cardio;
+
     /** Phase 13 (A11): Interval. */
     @Valid
     private IntervalConfigInput interval;

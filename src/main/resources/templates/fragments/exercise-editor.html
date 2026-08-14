@@ -490,6 +490,54 @@
                     </div>
 
                     <!-- =============== STRAIGHT_SETS (uniform sety) =============== -->
+                    <div class="type-config type-cardio mt-4" style="display:none">
+                        <h6 class="mb-2">Dlouhé kardio</h6>
+                        <div class="form-text mb-2">Long-slow cardio - dlouhotrvající aktivita o, převážně, nízké intenzitě. Na rozdíl od typu INTERVAL není její podstatou předem definované střídání pracovních a odpočinkových intervalů. Aktivita může obsahovat spontánní nebo plánované přestávky, ale stále se jedná o jeden souvislý cardio výkon.</div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (h) *</label><input type="number" min="0" data-name="cardio.elapsedHours" th:name="|exercises[${exStat.index}].cardio.elapsedHours|" th:value="${ex.cardio?.elapsedHours}" class="form-control form-control-sm cardio-elapsed" title="Povinné: bez doby trvání nelze trénink uložit"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (m) *</label><input type="number" min="0" max="59" data-name="cardio.elapsedMin" th:name="|exercises[${exStat.index}].cardio.elapsedMin|" th:value="${ex.cardio?.elapsedMin}" class="form-control form-control-sm cardio-elapsed"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (s) *</label><input type="number" min="0" max="59" data-name="cardio.elapsedSec" th:name="|exercises[${exStat.index}].cardio.elapsedSec|" th:value="${ex.cardio?.elapsedSec}" class="form-control form-control-sm cardio-elapsed"></div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-text mb-1">Celkový čas včetně přestávek. <strong>Povinný údaj</strong> — bez něj trénink neuložíš.</div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (h)</label><input type="number" min="0" data-name="cardio.activeHours" th:name="|exercises[${exStat.index}].cardio.activeHours|" th:value="${ex.cardio?.activeHours}" class="form-control form-control-sm cardio-active"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (m)</label><input type="number" min="0" max="59" data-name="cardio.activeMin" th:name="|exercises[${exStat.index}].cardio.activeMin|" th:value="${ex.cardio?.activeMin}" class="form-control form-control-sm cardio-active"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (s)</label><input type="number" min="0" max="59" data-name="cardio.activeSec" th:name="|exercises[${exStat.index}].cardio.activeSec|" th:value="${ex.cardio?.activeSec}" class="form-control form-control-sm cardio-active"></div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-text mb-1 cardio-active-hint">Nevyplněný čistý čas se dopočítá jako celkový čas minus přestávky.</div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-3"><label class="form-label form-label-sm">Vzdálenost</label><input type="number" step="0.01" min="0" data-name="cardio.distance" th:name="|exercises[${exStat.index}].cardio.distance|" th:value="${ex.cardio?.distance}" class="form-control form-control-sm cardio-distance"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Jednotka</label>
+                                <select data-name="cardio.distanceUnit" th:name="|exercises[${exStat.index}].cardio.distanceUnit|" class="form-select form-select-sm cardio-distance-unit">
+                                    <option value="M" th:selected="${ex.cardio?.distanceUnit != 'KM'}">metry</option>
+                                    <option value="KM" th:selected="${ex.cardio?.distanceUnit == 'KM'}">kilometry</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" min="0" data-name="cardio.repetitions" th:name="|exercises[${exStat.index}].cardio.repetitions|" th:value="${ex.cardio?.repetitions}" class="form-control form-control-sm"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Kroky</label><input type="number" min="0" data-name="cardio.steps" th:name="|exercises[${exStat.index}].cardio.steps|" th:value="${ex.cardio?.steps}" class="form-control form-control-sm"></div>
+                            <div class="col-md-3"><label class="form-label form-label-sm">Převýšení (m)</label><input type="number" min="0" data-name="cardio.elevationGainM" th:name="|exercises[${exStat.index}].cardio.elevationGainM|" th:value="${ex.cardio?.elevationGainM}" class="form-control form-control-sm"></div>
+                            <div class="col-12"><div class="form-text">Žádná z metrik není povinná a lze je kombinovat (túra může mít čas + metry + kroky + převýšení).</div></div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-3"><label class="form-label form-label-sm">Průměrná rychlost (km/h)</label><input type="number" step="0.01" min="0" data-name="cardio.avgSpeedKmh" th:name="|exercises[${exStat.index}].cardio.avgSpeedKmh|" th:value="${ex.cardio?.avgSpeedKmh}" class="form-control form-control-sm cardio-speed" placeholder="dopočítá se"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Tempo (min/km)</label><input type="number" min="0" data-name="cardio.avgPaceMin" th:name="|exercises[${exStat.index}].cardio.avgPaceMin|" th:value="${ex.cardio?.avgPaceMin}" class="form-control form-control-sm cardio-pace" placeholder="min"></div>
+                            <div class="col-md-2"><label class="form-label form-label-sm">Tempo (s)</label><input type="number" min="0" max="59" data-name="cardio.avgPaceSec" th:name="|exercises[${exStat.index}].cardio.avgPaceSec|" th:value="${ex.cardio?.avgPaceSec}" class="form-control form-control-sm cardio-pace" placeholder="s"></div>
+                            <div class="col-md-5 d-flex align-items-end"><div class="form-text mb-1 cardio-derived"></div></div>
+                            <div class="col-12"><div class="form-text">Rychlost i tempo se počítají z čistého času. Můžeš je přepsat podle údaje ze zařízení.</div></div>
+                        </div>
+
+                        <div class="col-12 mb-2"><label class="form-label form-label-sm">Poznámky k aktivitě</label><input type="text" data-name="cardio.notes" th:name="|exercises[${exStat.index}].cardio.notes|" th:value="${ex.cardio?.notes}" class="form-control form-control-sm"></div>
+
+                        <div class="form-text mb-1">Přestávky jsou dobrovolné — jsou to události uvnitř jedné aktivity, ne intervaly. Bez nich je čistý čas roven celkovému.</div>
+                        <div class="cardio-pauses-tbody"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary add-cardio-pause">+ Přidat přestávku</button>
+                    </div>
+
                     <div class="type-config type-straight_sets mt-4" style="display:none">
                         <h6 class="mb-2">Straight Sets (3x8, 5x5, ...)</h6>
                         <div class="row g-2">
@@ -975,6 +1023,54 @@
                 <div class="circuit-steps-tbody"></div>
                 <button type="button" class="btn btn-sm btn-outline-secondary add-circuit-step">+ Přidat cvik</button>
             </div>
+            <div class="type-config type-cardio mt-4" style="display:none">
+                <h6 class="mb-2">Dlouhé kardio</h6>
+                <div class="form-text mb-2">Long-slow cardio - dlouhotrvající aktivita o, převážně, nízké intenzitě. Na rozdíl od typu INTERVAL není její podstatou předem definované střídání pracovních a odpočinkových intervalů. Aktivita může obsahovat spontánní nebo plánované přestávky, ale stále se jedná o jeden souvislý cardio výkon.</div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (h) *</label><input type="number" min="0" data-name="cardio.elapsedHours" class="form-control form-control-sm cardio-elapsed" title="Povinné: bez doby trvání nelze trénink uložit"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (m) *</label><input type="number" min="0" max="59" data-name="cardio.elapsedMin" class="form-control form-control-sm cardio-elapsed"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Celkový čas (s) *</label><input type="number" min="0" max="59" data-name="cardio.elapsedSec" class="form-control form-control-sm cardio-elapsed"></div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-text mb-1">Celkový čas včetně přestávek. <strong>Povinný údaj</strong> — bez něj trénink neuložíš.</div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (h)</label><input type="number" min="0" data-name="cardio.activeHours" class="form-control form-control-sm cardio-active"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (m)</label><input type="number" min="0" max="59" data-name="cardio.activeMin" class="form-control form-control-sm cardio-active"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Čistý čas (s)</label><input type="number" min="0" max="59" data-name="cardio.activeSec" class="form-control form-control-sm cardio-active"></div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-text mb-1 cardio-active-hint">Nevyplněný čistý čas se dopočítá jako celkový čas minus přestávky.</div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3"><label class="form-label form-label-sm">Vzdálenost</label><input type="number" step="0.01" min="0" data-name="cardio.distance" class="form-control form-control-sm cardio-distance"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Jednotka</label>
+                        <select data-name="cardio.distanceUnit" class="form-select form-select-sm cardio-distance-unit">
+                            <option value="M">metry</option>
+                            <option value="KM">kilometry</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" min="0" data-name="cardio.repetitions" class="form-control form-control-sm"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Kroky</label><input type="number" min="0" data-name="cardio.steps" class="form-control form-control-sm"></div>
+                    <div class="col-md-3"><label class="form-label form-label-sm">Převýšení (m)</label><input type="number" min="0" data-name="cardio.elevationGainM" class="form-control form-control-sm"></div>
+                    <div class="col-12"><div class="form-text">Žádná z metrik není povinná a lze je kombinovat (túra může mít čas + metry + kroky + převýšení).</div></div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3"><label class="form-label form-label-sm">Průměrná rychlost (km/h)</label><input type="number" step="0.01" min="0" data-name="cardio.avgSpeedKmh" class="form-control form-control-sm cardio-speed" placeholder="dopočítá se"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Tempo (min/km)</label><input type="number" min="0" data-name="cardio.avgPaceMin" class="form-control form-control-sm cardio-pace" placeholder="min"></div>
+                    <div class="col-md-2"><label class="form-label form-label-sm">Tempo (s)</label><input type="number" min="0" max="59" data-name="cardio.avgPaceSec" class="form-control form-control-sm cardio-pace" placeholder="s"></div>
+                    <div class="col-md-5 d-flex align-items-end"><div class="form-text mb-1 cardio-derived"></div></div>
+                    <div class="col-12"><div class="form-text">Rychlost i tempo se počítají z čistého času. Můžeš je přepsat podle údaje ze zařízení.</div></div>
+                </div>
+
+                <div class="col-12 mb-2"><label class="form-label form-label-sm">Poznámky k aktivitě</label><input type="text" data-name="cardio.notes" class="form-control form-control-sm"></div>
+
+                <div class="form-text mb-1">Přestávky jsou dobrovolné — jsou to události uvnitř jedné aktivity, ne intervaly. Bez nich je čistý čas roven celkovému.</div>
+                <div class="cardio-pauses-tbody"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary add-cardio-pause">+ Přidat přestávku</button>
+            </div>
+
             <div class="type-config type-straight_sets mt-4" style="display:none">
                 <h6 class="mb-2">Straight Sets (3x8, 5x5, ...)</h6>
                 <div class="row g-2">
@@ -1111,6 +1207,32 @@
         <td><input type="text" data-name="note" class="form-control form-control-sm"></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger remove-set">×</button></td>
     </tr>
+</template>
+
+<template id="cardioPauseTemplate">
+    <div class="cardio-pause-row border rounded p-2 mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <strong class="small"><span class="pause-num">N</span>. přestávka</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-cardio-pause" title="Odebrat přestávku">&times;</button>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-2"><label class="form-label form-label-sm">Začátek (h)</label><input type="number" min="0" data-pause-field="startHours" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Začátek (m)</label><input type="number" min="0" max="59" data-pause-field="startMin" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Začátek (s)</label><input type="number" min="0" max="59" data-pause-field="startSec" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Délka (m)</label><input type="number" min="0" data-pause-field="durationMin" class="form-control form-control-sm cardio-pause-dur"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Délka (s)</label><input type="number" min="0" max="59" data-pause-field="durationSec" class="form-control form-control-sm cardio-pause-dur"></div>
+            <div class="col-md-2 d-flex align-items-end">
+                <label class="form-check small" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+                    <input type="checkbox" class="form-check-input" data-pause-field="activePause" value="true">
+                    <span>Aktivní</span>
+                </label>
+            </div>
+            <div class="col-md-3"><label class="form-label form-label-sm">Vzdálenost v tu chvíli</label><input type="number" step="0.01" min="0" data-pause-field="distanceAtPause" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Opakování</label><input type="number" min="0" data-pause-field="repetitionsAtPause" class="form-control form-control-sm"></div>
+            <div class="col-md-2"><label class="form-label form-label-sm">Kroky</label><input type="number" min="0" data-pause-field="stepsAtPause" class="form-control form-control-sm"></div>
+            <div class="col-md-5"><label class="form-label form-label-sm">Poznámka</label><input type="text" data-pause-field="note" class="form-control form-control-sm" placeholder="chůze, protahování…"></div>
+        </div>
+    </div>
 </template>
 
 <template id="amrapStepTemplate">

@@ -698,6 +698,10 @@ public class TrainingService {
         for (TrainingExerciseInput exInput : exerciseInputs) {
             TrainingExerciseEntity exercise = new TrainingExerciseEntity();
             exercise.setOrderIndex(orderIdx++);
+            // kolo 10: vazbu na trénink nastavujeme hned — CARDIO si z ní umí dopočítat
+            // dobu trvání z časů tréninkové jednotky, když ji uživatel nevyplní.
+            // (addExercise níže ji nastaví znovu, je to idempotentní.)
+            exercise.setTraining(training);
             exercise.setType(exInput.getType());
             exercise.setRpe(exInput.getRpe());
             exercise.setNotes(exInput.getNotes());

@@ -53,6 +53,7 @@ public class ExerciseTypeConfigMapper {
         exercise.setIntervalConfig(null);
         exercise.setStrongFirstLadderConfig(null);
         exercise.setKbSportConfig(null);
+        exercise.setCardioConfig(null);
 
         TrainingExerciseType type = input.getType();
         if (type == null) return;
@@ -67,7 +68,8 @@ public class ExerciseTypeConfigMapper {
             case INTERVAL -> applyInterval(exercise, input.getInterval());
             case STRONGFIRST_LADDER -> applyStrongFirstLadder(exercise, input.getStrongFirstLadder());
             case KB_SPORT_TIME -> applyKbSport(exercise, input.getKbSport());
-            case FREEFORM, CARDIO -> { /* žádný extra config — jen set tabulka */ }
+            case CARDIO -> applyCardio(exercise, input.getCardio());
+            case FREEFORM -> { /* žádný extra config — jen set tabulka */ }
         }
     }
 
@@ -411,6 +413,88 @@ public class ExerciseTypeConfigMapper {
         exercise.setCircuitConfig(cfg);
     }
 
+
+    // ----- CARDIO (kolo 10) -----
+
+    /**
+     * Doba trvání je jediný povinný údaj CARDIA. Když ji uživatel nevyplní, dopočítá se
+     * z časů tréninkové jednotky (začátek–konec); pokud ani ty nejsou, uložení selže.
+     */
+    private void applyCardio(TrainingExerciseEntity exercise,
+                             com.ragnarok.ragnarok_customers_training_diary.training.dto.CardioConfigInput in) {
+        Integer elapsed = in == null ? null : com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .CardioConfigInput.toSeconds(in.getElapsedHours(), in.getElapsedMin(), in.getElapsedSec());
+
+        if (elapsed == null || elapsed <= 0) {
+            elapsed = durationFromTrainingTimes(exercise);
+        }
+        if (elapsed == null || elapsed <= 0) {
+            throw new IllegalArgumentException(
+                    "U dlouhého kardia musí být vyplněná doba trvání — buď přímo u aktivity, "
+                            + "nebo časem začátku a konce tréninku.");
+        }
+
+        var cfg = new com.ragnarok.ragnarok_customers_training_diary.training.types.cardio.CardioConfigEntity();
+        cfg.setTrainingExercise(exercise);
+        cfg.setElapsedSeconds(elapsed);
+
+        if (in != null) {
+            cfg.setActiveSeconds(com.ragnarok.ragnarok_customers_training_diary.training.dto
+                    .CardioConfigInput.toSeconds(in.getActiveHours(), in.getActiveMin(), in.getActiveSec()));
+            cfg.setDistanceM(toMeters(in.getDistance(), in.getDistanceUnit()));
+            cfg.setRepetitions(in.getRepetitions());
+            cfg.setSteps(in.getSteps());
+            cfg.setElevationGainM(in.getElevationGainM());
+            cfg.setAvgSpeedKmh(in.getAvgSpeedKmh());
+            Integer pace = com.ragnarok.ragnarok_customers_training_diary.training.dto
+                    .CardioConfigInput.toSeconds(null, in.getAvgPaceMin(), in.getAvgPaceSec());
+            cfg.setAvgPaceSPerKm(pace != null && pace > 0 ? pace : null);
+            cfg.setNotes(in.getNotes());
+
+            if (in.getPauses() != null) {
+                int idx = 0;
+                for (var p : in.getPauses()) {
+                    Integer duration = com.ragnarok.ragnarok_customers_training_diary.training.dto
+                            .CardioConfigInput.toSeconds(null, p.getDurationMin(), p.getDurationSec());
+                    if (duration == null || duration <= 0) continue;
+                    Integer start = com.ragnarok.ragnarok_customers_training_diary.training.dto
+                            .CardioConfigInput.toSeconds(p.getStartHours(), p.getStartMin(), p.getStartSec());
+                    var pause = new com.ragnarok.ragnarok_customers_training_diary.training.types.cardio
+                            .CardioPauseEntity();
+                    pause.setCardioConfig(cfg);
+                    pause.setOrderIndex(idx++);
+                    pause.setStartFromBeginS(start != null ? start : 0);
+                    pause.setDurationSeconds(duration);
+                    pause.setActivePause(p.isActivePause());
+                    pause.setDistanceAtPauseM(toMeters(p.getDistanceAtPause(), in.getDistanceUnit()));
+                    pause.setRepetitionsAtPause(p.getRepetitionsAtPause());
+                    pause.setStepsAtPause(p.getStepsAtPause());
+                    pause.setNote(p.getNote());
+                    cfg.getPauses().add(pause);
+                }
+            }
+        }
+
+        exercise.setCardioConfig(cfg);
+    }
+
+    /** Vzdálenost se interně ukládá vždy v metrech. */
+    private Integer toMeters(java.math.BigDecimal value, String unit) {
+        if (value == null) return null;
+        java.math.BigDecimal meters = "KM".equals(unit)
+                ? value.multiply(java.math.BigDecimal.valueOf(1000))
+                : value;
+        return meters.setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+    }
+
+    private Integer durationFromTrainingTimes(TrainingExerciseEntity exercise) {
+        var training = exercise.getTraining();
+        if (training == null || training.getStartTime() == null || training.getEndTime() == null) {
+            return null;
+        }
+        long seconds = java.time.Duration.between(training.getStartTime(), training.getEndTime()).getSeconds();
+        return seconds > 0 ? (int) seconds : null;
+    }
 
     // ----- NUMERIC SERIES (Ladder / Stepladder / Pyramid) -----
 

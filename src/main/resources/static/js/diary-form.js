@@ -120,6 +120,9 @@
             updateCircuitMode(exerciseCard);
             circuitRoundRestsSync(exerciseCard);
         }
+        if (selected === 'CARDIO') {
+            cardioRecalc(exerciseCard);
+        }
         if (selected === 'STRONGFIRST_LADDER') {
             applyEquipmentWeightTo(exerciseCard, '.sf-weight');
             sfLadderUnits(exerciseCard);
@@ -140,6 +143,85 @@
             exerciseCard.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
             amrapRoundsSync(exerciseCard);
         }
+    }
+
+    // ----- kolo 10: CARDIO (dlouhé pomalé kardio) -----
+
+    function num(el) {
+        const v = parseFloat(el && el.value);
+        return isNaN(v) ? 0 : v;
+    }
+
+    function cardioSeconds(block, cls) {
+        const inputs = block.querySelectorAll('.' + cls);
+        if (inputs.length < 3) return 0;
+        return num(inputs[0]) * 3600 + num(inputs[1]) * 60 + num(inputs[2]);
+    }
+
+    /**
+     * h:mm:ss (hodiny jen když jsou potřeba). Pozor: níže v souboru existuje starší
+     * fmtTime(mm:ss) — deklarace funkcí se ve stejném scope přepisují, proto má
+     * tahle vlastní jméno.
+     */
+    function cardioFmtTime(totalSeconds) {
+        const s = Math.max(0, Math.round(totalSeconds));
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        const pad = n => (n < 10 ? '0' + n : '' + n);
+        return (h > 0 ? h + ':' + pad(m) : m) + ':' + pad(sec);
+    }
+
+    function addCardioPauseRow(wrap) {
+        const tpl = document.getElementById('cardioPauseTemplate');
+        if (!tpl || !wrap) return null;
+        const row = tpl.content.firstElementChild.cloneNode(true);
+        wrap.appendChild(row);
+        return row;
+    }
+
+    /**
+     * Čistý čas = celkový − suma přestávek (pokud ho uživatel nezadal ručně).
+     * Rychlost a tempo se počítají z čistého času, ne z celkového — uživatelem
+     * zadané hodnoty mají přednost, jen se zobrazí dopočet pro kontrolu.
+     */
+    function cardioRecalc(card) {
+        const block = card.querySelector('.type-config.type-cardio');
+        if (!block) return;
+
+        const elapsed = cardioSeconds(block, 'cardio-elapsed');
+        let pauseTotal = 0;
+        block.querySelectorAll('.cardio-pause-row').forEach((row, i) => {
+            const numEl = row.querySelector('.pause-num');
+            if (numEl) numEl.textContent = (i + 1);
+            const m = row.querySelector('[data-pause-field="durationMin"]');
+            const s = row.querySelector('[data-pause-field="durationSec"]');
+            pauseTotal += num(m) * 60 + num(s);
+        });
+
+        const manualActive = cardioSeconds(block, 'cardio-active');
+        const active = manualActive > 0 ? manualActive : Math.max(0, elapsed - pauseTotal);
+
+        // vzdálenost interně v metrech
+        const distInput = block.querySelector('.cardio-distance');
+        const unit = block.querySelector('.cardio-distance-unit');
+        const meters = num(distInput) * (unit && unit.value === 'KM' ? 1000 : 1);
+
+        const parts = [];
+        parts.push('Přestávky celkem ' + cardioFmtTime(pauseTotal));
+        parts.push('čistý čas ' + cardioFmtTime(active));
+        if (meters > 0 && active > 0) {
+            parts.push('rychlost ' + (meters * 3.6 / active).toFixed(2) + ' km/h');
+            parts.push('tempo ' + cardioFmtTime(active * 1000 / meters) + ' min/km');
+        }
+        const out = block.querySelector('.cardio-derived');
+        if (out) out.textContent = parts.join(' · ');
+
+        // povinná doba trvání — dokud není vyplněná, pole se zvýrazní
+        const missing = elapsed <= 0;
+        block.querySelectorAll('.cardio-elapsed').forEach(inp => {
+            inp.classList.toggle('is-invalid', missing);
+        });
     }
 
     // ----- kolo 10: StrongFirst žebřík -----
@@ -561,6 +643,14 @@
                 ['weightKg', 'reps', 'restSeconds', 'rpe', 'note'].forEach(fieldName => {
                     const el = row.querySelector('[data-name="' + fieldName + '"]');
                     if (el) el.name = 'exercises[' + idx + '].sets[' + sIdx + '].' + fieldName;
+                });
+            });
+
+            // kolo 10: CARDIO — přestávky
+            card.querySelectorAll('.cardio-pause-row').forEach((row, pIdx) => {
+                row.querySelectorAll('[data-pause-field]').forEach(el => {
+                    el.name = 'exercises[' + idx + '].cardio.pauses[' + pIdx + '].'
+                            + el.getAttribute('data-pause-field');
                 });
             });
 
@@ -1221,6 +1311,17 @@
                 tbody.appendChild(setRowTemplate.content.firstElementChild.cloneNode(true));
             }
             renumberExercises();
+        } else if (target.classList.contains('add-cardio-pause')) {
+            const card = target.closest('.exercise-card');
+            addCardioPauseRow(card.querySelector('.cardio-pauses-tbody'));
+            renumberExercises();
+            cardioRecalc(card);
+        } else if (target.classList.contains('remove-cardio-pause')) {
+            const card = target.closest('.exercise-card');
+            const row = target.closest('.cardio-pause-row');
+            if (row) row.remove();
+            renumberExercises();
+            cardioRecalc(card);
         } else if (target.classList.contains('add-amrap-step')) {
             const card = target.closest('.exercise-card');
             addAmrapStepRow(card.querySelector('.amrap-steps-tbody'));
@@ -1321,6 +1422,8 @@
             // kolo 9: přednastavený počet opakování okamžitě přepíše všechny řádky
             emomSync(card, false);
             emomApplyReps(card);
+        } else if (t.closest('.type-config.type-cardio')) {
+            cardioRecalc(card);
         } else if (t.classList.contains('sf-height') || t.classList.contains('sf-cycles')
                 || t.classList.contains('sf-rest')
                 || t.getAttribute('data-name') === 'strongFirstLadder.unilateral') {
@@ -1382,6 +1485,8 @@
     container.addEventListener('input', function (e) {
         const t = e.target;
         const card = t.closest('.exercise-card');
+        // kolo 10: dopočty CARDIA běží živě (nic nemažou, jen přepočítávají)
+        if (card && t.closest('.type-config.type-cardio')) cardioRecalc(card);
         if (!card) return;
         if (t.classList.contains('custom-name-input') && t.value.trim()) {
             const catalogSelect = card.querySelector('.catalog-select');
@@ -1524,6 +1629,7 @@
         straightSetsSync(card, false);
         sfLadderUnits(card);
         sfLadderSync(card);
+        cardioRecalc(card);
     });
     // Phase 12: server-rendered kroky kruhového tréninku mají jen data-step-field,
     // jméno pole doplníme až tady → nutné zavolat renumber na load.

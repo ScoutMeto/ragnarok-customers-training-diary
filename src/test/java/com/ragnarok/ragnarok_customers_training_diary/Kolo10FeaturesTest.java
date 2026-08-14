@@ -315,6 +315,80 @@ class Kolo10FeaturesTest {
     }
 
     @Test
+    void cardio_computesActiveTimeSpeedAndPace() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 kardio");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.CARDIO);
+        ex.setCustomName("Běh");
+
+        // Metův příklad: běh 20 km, 2:30:00 celkem, dvě přestávky 20 a 10 minut
+        var c = new com.ragnarok.ragnarok_customers_training_diary.training.dto.CardioConfigInput();
+        c.setElapsedHours(2);
+        c.setElapsedMin(30);
+        c.setDistance(new java.math.BigDecimal("20"));
+        c.setDistanceUnit("KM");
+
+        var p1 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .CardioConfigInput.PauseInput();
+        p1.setStartHours(1);
+        p1.setDurationMin(20);
+        var p2 = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                .CardioConfigInput.PauseInput();
+        p2.setStartHours(1);
+        p2.setStartMin(50);
+        p2.setDurationMin(10);
+        c.getPauses().add(p1);
+        c.getPauses().add(p2);
+        ex.setCardio(c);
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        var cfg = created.getExercises().get(0).getCardioConfig();
+        assertThat(cfg.getElapsedSeconds()).isEqualTo(9000);      // 150 min
+        assertThat(cfg.getDistanceM()).isEqualTo(20000);          // km → metry
+        assertThat(cfg.totalPauseSeconds()).isEqualTo(1800);      // 30 min
+        assertThat(cfg.resolvedActiveSeconds()).isEqualTo(7200);  // 120 min
+        // tempo z čistého času: 7200 s / 20 km = 360 s/km = 6:00 min/km
+        assertThat(cfg.resolvedAvgPaceSPerKm()).isEqualTo(360);
+        assertThat(cfg.resolvedAvgSpeedKmh()).isEqualByComparingTo(new java.math.BigDecimal("10.00"));
+    }
+
+    @Test
+    void cardio_fallsBackToTrainingTimesWhenDurationMissing() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 kardio bez délky");
+        input.setStartTime(java.time.LocalTime.of(10, 0));
+        input.setEndTime(java.time.LocalTime.of(11, 0));
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.CARDIO);
+        ex.setCustomName("Veslo");
+        ex.setCardio(new com.ragnarok.ragnarok_customers_training_diary.training.dto.CardioConfigInput());
+        input.getExercises().add(ex);
+
+        TrainingEntity created = trainingService.create(alice, input);
+        assertThat(created.getExercises().get(0).getCardioConfig().getElapsedSeconds()).isEqualTo(3600);
+    }
+
+    @Test
+    void cardio_rejectsSaveWithoutAnyDuration() {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("Kolo 10 kardio bez času");
+        var ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.CARDIO);
+        ex.setCustomName("Veslo");
+        ex.setCardio(new com.ragnarok.ragnarok_customers_training_diary.training.dto.CardioConfigInput());
+        input.getExercises().add(ex);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> trainingService.create(alice, input))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("doba trvání");
+    }
+
+    @Test
     void systemTag_keepsStableKeyWhenRenamed() {
         // Detekce jednotek v UI se řídí klíčem, ne názvem — přejmenování ji nesmí rozbít.
         TrainingTagEntity carry = new TrainingTagEntity();

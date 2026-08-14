@@ -43,6 +43,52 @@ public class ExerciseTypeConfigToInputMapper {
         if (ex.getNumericSeriesConfig() != null) {
             input.setNumericSeries(toNumericSeriesInput(ex.getNumericSeriesConfig()));
         }
+        if (ex.getCardioConfig() != null) {
+            var e = ex.getCardioConfig();
+            var in = new com.ragnarok.ragnarok_customers_training_diary.training.dto.CardioConfigInput();
+            int elapsed = e.getElapsedSeconds() != null ? e.getElapsedSeconds() : 0;
+            in.setElapsedHours(elapsed / 3600);
+            in.setElapsedMin((elapsed % 3600) / 60);
+            in.setElapsedSec(elapsed % 60);
+            if (e.getActiveSeconds() != null) {
+                in.setActiveHours(e.getActiveSeconds() / 3600);
+                in.setActiveMin((e.getActiveSeconds() % 3600) / 60);
+                in.setActiveSec(e.getActiveSeconds() % 60);
+            }
+            if (e.getDistanceM() != null) {
+                in.setDistance(java.math.BigDecimal.valueOf(e.getDistanceM()));
+                in.setDistanceUnit("M");
+            }
+            in.setRepetitions(e.getRepetitions());
+            in.setSteps(e.getSteps());
+            in.setElevationGainM(e.getElevationGainM());
+            in.setAvgSpeedKmh(e.getAvgSpeedKmh());
+            if (e.getAvgPaceSPerKm() != null) {
+                in.setAvgPaceMin(e.getAvgPaceSPerKm() / 60);
+                in.setAvgPaceSec(e.getAvgPaceSPerKm() % 60);
+            }
+            in.setNotes(e.getNotes());
+            for (var p : e.getPauses()) {
+                var pi = new com.ragnarok.ragnarok_customers_training_diary.training.dto
+                        .CardioConfigInput.PauseInput();
+                int start = p.getStartFromBeginS() != null ? p.getStartFromBeginS() : 0;
+                pi.setStartHours(start / 3600);
+                pi.setStartMin((start % 3600) / 60);
+                pi.setStartSec(start % 60);
+                int dur = p.getDurationSeconds() != null ? p.getDurationSeconds() : 0;
+                pi.setDurationMin(dur / 60);
+                pi.setDurationSec(dur % 60);
+                pi.setActivePause(p.isActivePause());
+                if (p.getDistanceAtPauseM() != null) {
+                    pi.setDistanceAtPause(java.math.BigDecimal.valueOf(p.getDistanceAtPauseM()));
+                }
+                pi.setRepetitionsAtPause(p.getRepetitionsAtPause());
+                pi.setStepsAtPause(p.getStepsAtPause());
+                pi.setNote(p.getNote());
+                in.getPauses().add(pi);
+            }
+            input.setCardio(in);
+        }
         if (ex.getStraightSetsConfig() != null) {
             input.setStraightSets(toStraightSetsInput(ex.getStraightSetsConfig()));
         }

@@ -215,6 +215,35 @@
             </div>
 
             <!-- Straight Sets -->
+            <!-- kolo 10: dlouhé kardio -->
+            <div th:if="${ex.cardioConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
+                <strong>Dlouhé kardio</strong> ·
+                celkem <span class="num" th:text="${ex.cardioConfig.elapsedSeconds / 60}">52</span>&nbsp;min
+                <span th:if="${ex.cardioConfig.resolvedActiveSeconds() != null}">· čistý čas
+                    <b class="num" th:text="${ex.cardioConfig.resolvedActiveSeconds() / 60}">45</b>&nbsp;min</span>
+                <span th:if="${ex.cardioConfig.distanceM != null}">· <b class="num" th:text="${ex.cardioConfig.distanceM}">10000</b>&nbsp;m</span>
+                <span th:if="${ex.cardioConfig.repetitions != null}">· <b class="num" th:text="${ex.cardioConfig.repetitions}">1000</b>&nbsp;opakování</span>
+                <span th:if="${ex.cardioConfig.steps != null}">· <b class="num" th:text="${ex.cardioConfig.steps}">23481</b>&nbsp;kroků</span>
+                <span th:if="${ex.cardioConfig.elevationGainM != null}">· převýšení <b class="num" th:text="${ex.cardioConfig.elevationGainM}">640</b>&nbsp;m</span>
+                <span th:if="${ex.cardioConfig.resolvedAvgSpeedKmh() != null}">· <b class="num" th:text="${ex.cardioConfig.resolvedAvgSpeedKmh()}">11.5</b>&nbsp;km/h</span>
+                <span th:if="${ex.cardioConfig.resolvedAvgPaceSPerKm() != null}">· tempo
+                    <b class="num" th:text="${ex.cardioConfig.resolvedAvgPaceSPerKm() / 60}">5</b>:<b
+                       class="num" th:text="${#strings.replace(#numbers.formatInteger(ex.cardioConfig.resolvedAvgPaceSPerKm() % 60, 2), ',', '')}">12</b>&nbsp;min/km</span>
+            </div>
+            <table class="rk-series" th:if="${ex.cardioConfig != null and !ex.cardioConfig.pauses.isEmpty()}"
+                   style="margin: 0 var(--sp-5) var(--sp-4);">
+                <thead><tr><th>#</th><th>Od začátku</th><th>Délka</th><th>Typ</th><th>Poznámka</th></tr></thead>
+                <tbody>
+                <tr th:each="p, st : ${ex.cardioConfig.pauses}">
+                    <td th:text="${st.count}">1</td>
+                    <td><span class="num" th:text="${p.startFromBeginS / 60}">60</span>&nbsp;min</td>
+                    <td><span class="num" th:text="${p.durationSeconds / 60}">20</span>&nbsp;min</td>
+                    <td th:text="${p.activePause} ? 'aktivní' : 'pasivní'">pasivní</td>
+                    <td th:text="${p.note} ?: '—'">chůze</td>
+                </tr>
+                </tbody>
+            </table>
+
             <div th:if="${ex.straightSetsConfig != null}" class="rk-ex__banner" style="margin-top: var(--sp-4);">
                 <strong>Straight Sets</strong> ·
                 <span class="num" th:text="${ex.straightSetsConfig.setCount}">3</span> ×

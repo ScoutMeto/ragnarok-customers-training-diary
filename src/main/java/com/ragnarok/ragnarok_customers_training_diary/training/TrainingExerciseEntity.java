@@ -133,6 +133,10 @@ public class TrainingExerciseEntity {
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private NumericSeriesConfigEntity numericSeriesConfig;
 
+    /** kolo 10: dlouhé pomalé kardio. */
+    @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private com.ragnarok.ragnarok_customers_training_diary.training.types.cardio.CardioConfigEntity cardioConfig;
+
     /** Straight sets (3×8, 5×5, ...). */
     @OneToOne(mappedBy = "trainingExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private StraightSetsConfigEntity straightSetsConfig;
