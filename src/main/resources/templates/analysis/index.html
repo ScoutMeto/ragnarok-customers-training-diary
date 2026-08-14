@@ -87,27 +87,161 @@
                 <p class="rk-help">Zahrnuje katalogové i vlastní cviky stejného názvu, za vybrané období.</p>
             </div>
 
-            <div id="exStatResult" class="rk-stats-row" style="display: none;">
-                <div class="rk-kpi rk-kpi--accent">
-                    <div class="rk-kpi__label">Objem</div>
-                    <div class="rk-kpi__value"><span id="exVolume">0</span><span class="rk-kpi__unit">kg</span></div>
-                </div>
-                <div class="rk-kpi">
-                    <div class="rk-kpi__label">Série</div>
-                    <div class="rk-kpi__value" id="exSets">0</div>
-                </div>
-                <div class="rk-kpi">
-                    <div class="rk-kpi__label">Opakování</div>
-                    <div class="rk-kpi__value" id="exReps">0</div>
-                </div>
-                <div class="rk-kpi">
-                    <div class="rk-kpi__label">Max. opakování / max. váha</div>
-                    <div class="rk-kpi__value"><span id="exMaxReps">0</span><span class="rk-kpi__unit">×</span> · <span id="exMaxWeight">—</span><span class="rk-kpi__unit">kg</span></div>
+            <!-- kolo 10: co se zobrazí, se řídí charakterem provedení cviku
+                 (Repetitivní provedení / Nošení / Izometrie) -->
+            <div id="exStatResult" style="display: none;">
+                <p class="rk-help" style="margin-bottom: var(--sp-2);">
+                    Charakter provedení: <strong id="exCharacter">—</strong>
+                </p>
+                <div style="overflow-x:auto;">
+                    <table class="rk-series" style="width:100%;">
+                        <tbody id="exSummaryRows"></tbody>
+                    </table>
                 </div>
             </div>
             <p id="exStatEmpty" class="text-muted" style="font-size: var(--fs-sm); display: none;">
                 Pro tento cvik a období nejsou žádná data.
             </p>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P59: tréninky za období, rozklikávací na cviky -->
+    <div class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__head">
+            <div class="rk-card__title">🗂️ Tréninky za období</div>
+        </div>
+        <div class="rk-card__body">
+            <p class="rk-help" style="margin-bottom: var(--sp-3);">
+                Rozklikni řádek pro souhrn za celý trénink a rozpad na jednotlivé cviky.
+                Z názvu se proklikneš přímo do tréninku.
+            </p>
+            <div id="trainingTagFilter" class="d-flex flex-wrap gap-2" style="margin-bottom: var(--sp-3);">
+                <span class="text-muted" style="font-size: var(--fs-sm);">— načítám tagy tréninků —</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="rk-series" style="width:100%;">
+                    <thead><tr>
+                        <th style="width:34px"></th><th>Datum</th><th>Trénink</th><th>Obtížnost</th>
+                        <th>Série</th><th>Opakování</th><th>kg</th><th>kg / těl. váha</th>
+                    </tr></thead>
+                    <tbody id="trainingRows"></tbody>
+                </table>
+            </div>
+            <p id="trainingRowsEmpty" class="text-muted" style="font-size: var(--fs-sm); display:none;">
+                Za zvolené období nejsou žádné tréninky.
+            </p>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P60: pět výkonnostních oblastí -->
+    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
+        <h3>Výkonnost po oblastech</h3>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            Tečka = trénink; kliknutím se otevře. Hodnoty jsou vykreslené relativně,
+            protože každá oblast má jinou jednotku.
+        </p>
+        <div class="rk-chart__wrap" style="height: 320px;">
+            <canvas id="chartAreas"></canvas>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P61: radar vybrané oblasti -->
+    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
+        <h3>Oblast v radaru</h3>
+        <div class="rk-field" style="max-width: 320px; margin-bottom: var(--sp-3);">
+            <label class="rk-label" for="areaRadarSelect">Oblast</label>
+            <select id="areaRadarSelect" class="form-select">
+                <option value="externalWeight">Externí váha (kg × opakování)</option>
+                <option value="bodyweightReps">Vlastní váha (opakování)</option>
+                <option value="timeUnderLoad">Čas pod zátěží (kg × s)</option>
+                <option value="distanceUnderLoad">Vzdálenost pod zátěží (kg × m)</option>
+                <option value="longCardioSeconds">Dlouhé kardio (čistý čas)</option>
+            </select>
+        </div>
+        <div class="rk-chart__wrap" style="height: 320px;">
+            <canvas id="chartAreaRadar"></canvas>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P61: rozpady -->
+    <div class="row g-3" style="margin-bottom: var(--sp-4);">
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Obtížnost tréninků</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartDifficultyRadar"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Typy provedení</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartTypes"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Části těla</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartBodyParts"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Unilaterálně × bilaterálně</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartLaterality"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Vlastní váha × náčiní</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartLoadKind"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Izolace × celé tělo</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartIsolation"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Charakter provedení</h3>
+                <p class="text-muted" style="font-size: var(--fs-sm);" id="characterNumbers"></p>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartCharacter"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rk-chart"><h3>Všechny tagy u cviků</h3>
+                <div class="rk-chart__wrap" style="height: 280px;"><canvas id="chartAllTags"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P62: filtrace cviků podle tagů -->
+    <div class="rk-card" style="margin-bottom: var(--sp-4);">
+        <div class="rk-card__head">
+            <div class="rk-card__title">🔎 Cviky podle tagů</div>
+        </div>
+        <div class="rk-card__body">
+            <p class="rk-help" style="margin-bottom: var(--sp-3);">
+                Zobrazí cviky, které mají <strong>všechny</strong> zvolené tagy. Z řádku se proklikneš do tréninku.
+            </p>
+            <div id="exerciseTagFilter" class="d-flex flex-wrap gap-2" style="margin-bottom: var(--sp-3);">
+                <span class="text-muted" style="font-size: var(--fs-sm);">— načítám tagy cviků —</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="rk-series" style="width:100%;">
+                    <thead><tr><th>Datum</th><th>Trénink</th><th>Cvik</th><th>Charakter</th>
+                        <th>Série</th><th>Opakování</th><th>kg</th><th>m</th><th>s</th></tr></thead>
+                    <tbody id="exerciseTagRows"></tbody>
+                </table>
+            </div>
+            <p id="exerciseTagEmpty" class="text-muted" style="font-size: var(--fs-sm); display:none;">
+                Vyber tagy (nebo za zvolené období nic neodpovídá).
+            </p>
+        </div>
+    </div>
+
+    <!-- kolo 10 / P63: sledované proměnné -->
+    <div class="rk-chart" style="margin-bottom: var(--sp-4);">
+        <h3>Vývoj sledovaných proměnných</h3>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            RPE, tepová frekvence, tělesná váha, spánek a tréninkový objem v čase.
+            Legendou si řady vypínáš. U žen je nad tečkou písmeno fáze cyklu.
+        </p>
+        <div class="rk-chart__wrap" style="height: 340px;">
+            <canvas id="chartVariables"></canvas>
         </div>
     </div>
 
@@ -255,6 +389,7 @@
     }
 </script>
 <script th:src="@{/js/analysis.js}"></script>
+<script th:src="@{/js/analysis-performance.js}"></script>
 
 <!-- Phase 15: souhrn pro konkrétní cvik (samostatný od Chart.js sekce) -->
 <script>
