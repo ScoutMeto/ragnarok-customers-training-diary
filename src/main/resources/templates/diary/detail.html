@@ -165,7 +165,7 @@
             <div class="rk-ex__tags" th:if="${ex.catalogItem != null or (ex.tags != null and !ex.tags.isEmpty())}">
                 <!-- th:each se vyhodnocuje PŘED th:if, proto je podmínka na obalujícím th:block -->
                 <th:block th:if="${ex.catalogItem != null}">
-                    <span th:each="br : ${ex.catalogItem.bodyRegions}" class="rk-badge" th:text="${br.label}">Horní část těla</span>
+                    <span th:each="br : ${ex.catalogItem.bodyRegions}" class="rk-badge" th:text="${T(com.ragnarok.ragnarok_customers_training_diary.catalog.CatalogLabels).bodyRegion(br)}">Horní část těla</span>
                     <span th:each="mp : ${ex.catalogItem.movementPatterns}" class="rk-badge" th:text="${mp}">PUSH</span>
                 </th:block>
                 <span th:if="${ex.catalogItem != null and ex.catalogItem.equipment != null}" class="rk-badge" th:text="${ex.catalogItem.equipment}">KETTLEBELL</span>
@@ -616,50 +616,9 @@
 <script th:src="@{/js/timer.js}"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    window.__timerConfigs = { emom: {}, tabata: {}, amrap: {}, circuit: {} };
+    window.__timerConfigs = /*[[${timerConfigs}]]*/ { emom: {}, tabata: {}, amrap: {}, circuit: {} };
     /*]]>*/
 </script>
-<th:block th:each="ex : ${training.exercises}">
-    <script th:if="${ex.emomConfig != null}" th:inline="javascript">
-        /*<![CDATA[*/
-        window.__timerConfigs.emom[/*[[${ex.id}]]*/ 0] = {
-            totalMinutes: /*[[${ex.emomConfig.totalMinutes}]]*/ 10,
-            intervalSeconds: /*[[${ex.emomConfig.intervalSeconds}]]*/ 60,
-            defaultReps: /*[[${ex.emomConfig.defaultReps}]]*/ null,
-            defaultWeightKg: /*[[${ex.emomConfig.defaultWeightKg}]]*/ null,
-            minuteOverrides: /*[[${ex.emomConfig.minuteOverrides}]]*/ []
-        };
-        /*]]>*/
-    </script>
-    <script th:if="${ex.tabataConfig != null}" th:inline="javascript">
-        /*<![CDATA[*/
-        window.__timerConfigs.tabata[/*[[${ex.id}]]*/ 0] = {
-            rounds: /*[[${ex.tabataConfig.rounds}]]*/ 8,
-            workSeconds: /*[[${ex.tabataConfig.workSeconds}]]*/ 20,
-            restSeconds: /*[[${ex.tabataConfig.restSeconds}]]*/ 10,
-            defaultReps: /*[[${ex.tabataConfig.defaultReps}]]*/ null,
-            defaultWeightKg: /*[[${ex.tabataConfig.defaultWeightKg}]]*/ null
-        };
-        /*]]>*/
-    </script>
-    <script th:if="${ex.amrapConfig != null}" th:inline="javascript">
-        /*<![CDATA[*/
-        window.__timerConfigs.amrap[/*[[${ex.id}]]*/ 0] = {
-            timecapSeconds: /*[[${ex.amrapConfig.timecapSeconds}]]*/ 480,
-            targetRepsPerRound: /*[[${ex.amrapConfig.targetRepsPerRound}]]*/ null
-        };
-        /*]]>*/
-    </script>
-    <script th:if="${ex.circuitConfig != null}" th:inline="javascript">
-        /*<![CDATA[*/
-        window.__timerConfigs.circuit[/*[[${ex.id}]]*/ 0] = {
-            rounds: /*[[${ex.circuitConfig.rounds}]]*/ 3,
-            restBetweenRoundsS: /*[[${ex.circuitConfig.restBetweenRoundsS}]]*/ null,
-            steps: /*[[${ex.circuitConfig.steps}]]*/ []
-        };
-        /*]]>*/
-    </script>
-</th:block>
 <script>
     document.addEventListener('click', function (e) {
         const t = e.target.closest('button[data-timer-emom],button[data-timer-tabata],button[data-timer-amrap],button[data-timer-circuit]');

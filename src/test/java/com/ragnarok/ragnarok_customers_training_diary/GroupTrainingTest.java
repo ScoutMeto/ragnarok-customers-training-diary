@@ -2,6 +2,11 @@ package com.ragnarok.ragnarok_customers_training_diary;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository;
@@ -23,9 +28,11 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -37,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
  *  - clients can comment on group trainings (PRIVATE rules unchanged)
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class GroupTrainingTest {
@@ -47,6 +55,7 @@ class GroupTrainingTest {
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ExerciseTypeConfigToInputMapper toInputMapper;
     @Autowired private TrainingTagRepository tagRepository;
+    @Autowired private MockMvc mockMvc;
 
     private AccountEntity alice;
     private AccountEntity bob;
@@ -195,6 +204,29 @@ class GroupTrainingTest {
         assertThat(copiedEx.getTags()).extracting(TrainingTagEntity::getId).contains(systemTag.getId());
     }
 
+    @Test
+    void detailPageRendersGroupTrainingWithEmomTimerConfig() throws Exception {
+        TrainingInput input = new TrainingInput();
+        input.setTrainingDate(LocalDate.now());
+        input.setName("EMOM detail");
+
+        TrainingExerciseInput ex = new TrainingExerciseInput();
+        ex.setType(TrainingExerciseType.EMOM);
+        ex.setCustomName("KB clean");
+        EmomConfigInput emom = new EmomConfigInput();
+        emom.setTotalMinutes(10);
+        emom.setIntervalSeconds(60);
+        emom.setDefaultReps(5);
+        ex.setEmom(emom);
+        input.getExercises().add(ex);
+
+        TrainingEntity group = trainingService.createGroup(trainer, input);
+
+        mockMvc.perform(get("/diary/{id}", group.getId()).with(user(alice)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("window.__timerConfigs")))
+                .andExpect(content().string(containsString("\"emom\"")));
+    }
     // -----------------------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------------------

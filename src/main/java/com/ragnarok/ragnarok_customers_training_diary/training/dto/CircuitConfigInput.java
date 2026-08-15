@@ -56,6 +56,8 @@ public class CircuitConfigInput {
         @jakarta.validation.constraints.Pattern(regexp = "REPS|METERS|SECONDS")
         private String repUnit;
         private String note;
+        /** Výška překážky nebo výskoku v centimetrech pro tag Skoky, výskoky. */
+        private BigDecimal jumpHeightCm;
         // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
         private String equipmentName;
         private BigDecimal equipmentWeightKg;

@@ -208,6 +208,7 @@ public class AdminTrainingTemplateController {
         model.addAttribute("exerciseTypes", List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogOptions", catalogService.allOptions());
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());
+        model.addAttribute("tagCategories", com.ragnarok.ragnarok_customers_training_diary.tag.TagCategory.values());
     }
 
     private TrainingInput toInput(TrainingEntity entity) {

@@ -54,6 +54,8 @@ public class AmrapConfigInput {
         private String repUnit;
         private BigDecimal weightKg;
         private String note;
+        /** Výška překážky nebo výskoku v centimetrech pro tag Skoky, výskoky. */
+        private BigDecimal jumpHeightCm;
         private String equipmentName;
         private BigDecimal equipmentWeightKg;
         private Integer equipmentCount;
@@ -72,5 +74,7 @@ public class AmrapConfigInput {
         private Integer actualReps;
         private BigDecimal actualWeightKg;
         private String note;
+        /** Výška překážky nebo výskoku v centimetrech pro tag Skoky, výskoky. */
+        private BigDecimal jumpHeightCm;
     }
 }

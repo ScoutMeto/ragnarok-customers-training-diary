@@ -5,8 +5,6 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,11 +20,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Položka v globálním katalogu cviků. Klient si volí z katalogu (drop-down) anebo
- * napíše vlastní {@code custom_name} přímo v cviku tréninku.
- *
- * <p>Systémové položky ({@code isSystem = true}) jsou součástí seed migrace a
- * nelze je smazat (jen deaktivovat). Custom položky vytváří admin.
+ * Položka v katalogu cviků. Systémové položky jsou sdílené, uživatelská úprava
+ * systémové položky se ukládá jako vlastní kopie.
  */
 @Entity
 @Table(name = "exercise_catalog_item")
@@ -43,20 +38,16 @@ public class ExerciseCatalogItemEntity {
     private String name;
 
     /**
-     * kolo 10: cvik může spadat do víc oblastí těla najednou (dřep s výskokem =
-     * dolní část těla + střed těla). Do V42 to byla jedna hodnota.
+     * Rozšiřitelný číselník oblastí těla. Systémové hodnoty zůstávají uložené
+     * jako původní stabilní klíče: FULL_BODY, UPPER_BODY, LOWER_BODY, CORE.
      */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "exercise_catalog_body_region",
             joinColumns = @JoinColumn(name = "catalog_item_id"))
-    @Column(name = "body_region", length = 32)
-    @Enumerated(EnumType.STRING)
-    private Set<BodyRegion> bodyRegions = new LinkedHashSet<>();
+    @Column(name = "body_region", length = 64)
+    private Set<String> bodyRegions = new LinkedHashSet<>();
 
-    /**
-     * Phase 20a: rozšiřitelný číselník (system hodnoty + admin custom) → uložen jako text.
-     * kolo 10: složitější cvik obsahuje víc vzorců, ne jen jeden primární.
-     */
+    /** Rozšiřitelný číselník pohybových vzorců uložený jako stabilní textový klíč. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "exercise_catalog_movement_pattern",
             joinColumns = @JoinColumn(name = "catalog_item_id"))
@@ -66,11 +57,9 @@ public class ExerciseCatalogItemEntity {
     @Column(name = "primary_muscle", length = 64)
     private String primaryMuscle;
 
-    /** Phase 17: zapojené/vedlejší svalové skupiny (volný text). */
     @Column(name = "secondary_muscles", length = 255)
     private String secondaryMuscles;
 
-    /** Phase 20b: rozšiřitelný číselník (system enum hodnoty + admin custom) → uložen jako text. */
     @Column(length = 64)
     private String equipment;
 

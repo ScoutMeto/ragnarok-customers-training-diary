@@ -259,25 +259,68 @@
     }
 
     function renderAreaRadar() {
-        const sel = document.getElementById('areaRadarSelect');
-        if (!sel) return;
-        const key = sel.value;
         destroy('chartAreaRadar');
         const el = document.getElementById('chartAreaRadar');
         if (!el) return;
+
+        const rawTotals = AREAS.map(a => lastAreas.reduce((sum, p) => sum + (parseFloat(p[a.key]) || 0), 0));
+        const max = Math.max.apply(null, rawTotals.concat([0]));
+        const values = rawTotals.map(v => (max > 0 ? (v / max) * 100 : 0));
+
         charts.chartAreaRadar = new Chart(el.getContext('2d'), {
             type: 'radar',
             data: {
-                labels: lastAreas.map(p => p.date),
+                labels: AREAS.map(a => a.label),
                 datasets: [{
-                    label: (AREAS.find(a => a.key === key) || {}).label || key,
-                    data: lastAreas.map(p => parseFloat(p[key]) || 0),
+                    label: 'Zastoupení oblastí',
+                    data: values,
+                    rawValues: rawTotals,
                     borderColor: COLORS[0],
-                    backgroundColor: COLORS[0] + '44'
+                    backgroundColor: COLORS[0] + '22',
+                    pointBackgroundColor: AREAS.map((_, i) => COLORS[i % COLORS.length]),
+                    pointBorderColor: '#F1EFE9',
+                    pointHoverBackgroundColor: '#F1EFE9',
+                    pointHoverBorderColor: AREAS.map((_, i) => COLORS[i % COLORS.length]),
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    borderWidth: 2
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false,
-                       plugins: { legend: { position: 'bottom' } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        onClick: () => {},
+                        labels: {
+                            generateLabels: () => AREAS.map((a, i) => ({
+                                text: a.label,
+                                fillStyle: COLORS[i % COLORS.length],
+                                strokeStyle: COLORS[i % COLORS.length],
+                                lineWidth: 2,
+                                hidden: false
+                            }))
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const raw = ctx.dataset.rawValues[ctx.dataIndex] || 0;
+                                const pct = Math.round(ctx.parsed.r || 0);
+                                return ctx.label + ': ' + pct + ' % maxima (' + fmt(raw) + ')';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        suggestedMax: 100,
+                        ticks: { callback: v => v + ' %' }
+                    }
+                }
+            }
         });
     }
 
@@ -339,63 +382,65 @@
     }
 
     // =====================================================================
-    // P62: filtrace podle tagů
+    // Filtr tagů tréninku
     // =====================================================================
 
+    const TAG_CATEGORIES = [
+        { key: 'GENERAL', label: 'Obecné' },
+        { key: 'BODY_REGION', label: 'Oblast těla' },
+        { key: 'MOVEMENT_PATTERN', label: 'Pohybový vzorec' },
+        { key: 'EQUIPMENT', label: 'Náčiní/nářadí/pomůcky' }
+    ];
+
+    function sortedTags(tags) {
+        return [...tags].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'cs'));
+    }
+
+    function tagCheckbox(tag, onChange) {
+        const label = document.createElement('label');
+        label.className = 'form-check small m-0';
+        label.style.cssText = 'display:flex;gap:5px;align-items:center;cursor:pointer;';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.className = 'form-check-input';
+        chk.value = tag.id;
+        chk.addEventListener('change', onChange);
+        const span = document.createElement('span');
+        span.textContent = tag.name;
+        label.appendChild(chk);
+        label.appendChild(span);
+        return label;
+    }
+
     function tagCheckboxes(container, tags, onChange) {
+        if (!container) return;
         container.innerHTML = '';
         if (!tags.length) {
             container.textContent = 'Zatím nemáš žádné tagy.';
             return;
         }
-        tags.forEach(tag => {
-            const label = document.createElement('label');
-            label.className = 'form-check small';
-            label.style.cssText = 'display:flex;gap:5px;align-items:center;cursor:pointer;';
-            const chk = document.createElement('input');
-            chk.type = 'checkbox';
-            chk.className = 'form-check-input';
-            chk.value = tag.id;
-            chk.addEventListener('change', onChange);
-            const span = document.createElement('span');
-            span.textContent = tag.name;
-            label.appendChild(chk);
-            label.appendChild(span);
-            container.appendChild(label);
+
+        const sorted = sortedTags(tags);
+        TAG_CATEGORIES.forEach(category => {
+            const categoryTags = sorted.filter(tag => (tag.category || 'GENERAL') === category.key);
+            if (!categoryTags.length) return;
+
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:6px;';
+            const title = document.createElement('strong');
+            title.textContent = category.label + ':';
+            title.style.cssText = 'min-width:160px;padding-top:2px;';
+            row.appendChild(title);
+            categoryTags.forEach(tag => row.appendChild(tagCheckbox(tag, onChange)));
+            container.appendChild(row);
         });
     }
 
     function selectedIds(container) {
+        if (!container) return [];
         return Array.from(container.querySelectorAll('input[type="checkbox"]:checked'))
             .map(c => c.value);
     }
-
-    function renderExerciseOccurrences(list) {
-        const tbody = document.getElementById('exerciseTagRows');
-        const empty = document.getElementById('exerciseTagEmpty');
-        tbody.innerHTML = '';
-        if (!list.length) { empty.style.display = ''; return; }
-        empty.style.display = 'none';
-        list.forEach(o => {
-            const tr = document.createElement('tr');
-            tr.appendChild(td(o.date));
-            const nameCell = document.createElement('td');
-            const link = document.createElement('a');
-            link.href = '/diary/' + o.trainingId;
-            link.textContent = o.trainingName || 'Trénink';
-            nameCell.appendChild(link);
-            tr.appendChild(nameCell);
-            tr.appendChild(td(o.exerciseName));
-            tr.appendChild(td(CHARACTER_LABEL[o.character] || '—'));
-            tr.appendChild(td(fmt(o.sets), 'num'));
-            tr.appendChild(td(fmt(o.reps), 'num'));
-            tr.appendChild(td(parseFloat(o.liftedKg) > 0 ? fmt(o.liftedKg) : '—', 'num'));
-            tr.appendChild(td(o.meters > 0 ? fmt(o.meters) : '—', 'num'));
-            tr.appendChild(td(o.seconds > 0 ? fmt(o.seconds) : '—', 'num'));
-            tbody.appendChild(tr);
-        });
-    }
-
     // =====================================================================
     // P63: sledované proměnné
     // =====================================================================
@@ -456,7 +501,6 @@
     // =====================================================================
 
     const trainingTagBox = document.getElementById('trainingTagFilter');
-    const exerciseTagBox = document.getElementById('exerciseTagFilter');
 
     function loadTrainings() {
         const ids = selectedIds(trainingTagBox);
@@ -464,18 +508,8 @@
             .then(renderTrainings)
             .catch(err => console.error('Tréninky za období', err));
     }
-
-    function loadExerciseOccurrences() {
-        const ids = selectedIds(exerciseTagBox);
-        if (!ids.length) { renderExerciseOccurrences([]); return; }
-        api('exercises-by-tags', ids.map(i => '&tagIds=' + i).join(''))
-            .then(renderExerciseOccurrences)
-            .catch(err => console.error('Cviky podle tagů', err));
-    }
-
     function loadAll() {
         loadTrainings();
-        loadExerciseOccurrences();
         api('areas').then(renderAreas).catch(err => console.error('Oblasti', err));
         api('distributions').then(renderDistributions).catch(err => console.error('Rozpady', err));
         api('variables').then(renderVariables).catch(err => console.error('Proměnné', err));
@@ -487,13 +521,11 @@
                 .catch(err => console.error('Souhrn cviku', err));
         }
     }
-
-    // tagy do obou filtrů (sdílený pool tréninkových i cvičebních tagů)
+    // tagy do filtru tréninků
     fetch('/api/tags', { credentials: 'same-origin' })
         .then(r => r.ok ? r.json() : [])
         .then(tags => {
             tagCheckboxes(trainingTagBox, tags, loadTrainings);
-            tagCheckboxes(exerciseTagBox, tags, loadExerciseOccurrences);
         })
         .catch(() => {});
 
@@ -506,8 +538,6 @@
                 .catch(err => console.error('Souhrn cviku', err));
         });
     }
-    const radarSelect = document.getElementById('areaRadarSelect');
-    if (radarSelect) radarSelect.addEventListener('change', renderAreaRadar);
 
     const refresh = document.getElementById('refreshBtn');
     if (refresh) refresh.addEventListener('click', loadAll);

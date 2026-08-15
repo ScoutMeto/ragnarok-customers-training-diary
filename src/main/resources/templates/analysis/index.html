@@ -145,19 +145,12 @@
         </div>
     </div>
 
-    <!-- kolo 10 / P61: radar vybrané oblasti -->
+    <!-- kolo 10 / P61: radar pěti oblastí -->
     <div class="rk-chart" style="margin-bottom: var(--sp-4);">
         <h3>Oblast v radaru</h3>
-        <div class="rk-field" style="max-width: 320px; margin-bottom: var(--sp-3);">
-            <label class="rk-label" for="areaRadarSelect">Oblast</label>
-            <select id="areaRadarSelect" class="form-select">
-                <option value="externalWeight">Externí váha (kg × opakování)</option>
-                <option value="bodyweightReps">Vlastní váha (opakování)</option>
-                <option value="timeUnderLoad">Čas pod zátěží (kg × s)</option>
-                <option value="distanceUnderLoad">Vzdálenost pod zátěží (kg × m)</option>
-                <option value="longCardioSeconds">Dlouhé kardio (čistý čas)</option>
-            </select>
-        </div>
+        <p class="text-muted" style="font-size: var(--fs-sm);">
+            Souhrnné zastoupení pěti sledovaných oblastí za vybrané období.
+        </p>
         <div class="rk-chart__wrap" style="height: 320px;">
             <canvas id="chartAreaRadar"></canvas>
         </div>
@@ -208,31 +201,6 @@
         </div>
     </div>
 
-    <!-- kolo 10 / P62: filtrace cviků podle tagů -->
-    <div class="rk-card" style="margin-bottom: var(--sp-4);">
-        <div class="rk-card__head">
-            <div class="rk-card__title">🔎 Cviky podle tagů</div>
-        </div>
-        <div class="rk-card__body">
-            <p class="rk-help" style="margin-bottom: var(--sp-3);">
-                Zobrazí cviky, které mají <strong>všechny</strong> zvolené tagy. Z řádku se proklikneš do tréninku.
-            </p>
-            <div id="exerciseTagFilter" class="d-flex flex-wrap gap-2" style="margin-bottom: var(--sp-3);">
-                <span class="text-muted" style="font-size: var(--fs-sm);">— načítám tagy cviků —</span>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="rk-series" style="width:100%;">
-                    <thead><tr><th>Datum</th><th>Trénink</th><th>Cvik</th><th>Charakter</th>
-                        <th>Série</th><th>Opakování</th><th>kg</th><th>m</th><th>s</th></tr></thead>
-                    <tbody id="exerciseTagRows"></tbody>
-                </table>
-            </div>
-            <p id="exerciseTagEmpty" class="text-muted" style="font-size: var(--fs-sm); display:none;">
-                Vyber tagy (nebo za zvolené období nic neodpovídá).
-            </p>
-        </div>
-    </div>
-
     <!-- kolo 10 / P63: sledované proměnné -->
     <div class="rk-chart" style="margin-bottom: var(--sp-4);">
         <h3>Vývoj sledovaných proměnných</h3>
@@ -245,15 +213,15 @@
         </div>
     </div>
 
-    <!-- Phase 15 (B1/B5): objem/série/reps podle zaměření cviků (per-exercise tagy) -->
+    <!-- Phase 15 (B1/B5): objem/série/reps/metriky podle zaměření cviků (per-exercise tagy) -->
     <div class="rk-card" style="margin-bottom: var(--sp-4);">
         <div class="rk-card__head">
             <div class="rk-card__title">🎯 Objem podle zaměření cviků</div>
         </div>
         <div class="rk-card__body">
             <p class="rk-help" style="margin-bottom: var(--sp-3);">
-                Vyber jedno či více zaměření (např. core + dolní část těla). Sečte cviky,
-                které mají alespoň jeden z vybraných tagů, za zvolené období.
+                Vyber jedno či více zaměření. Sečtou se cviky, které mají alespoň jeden z vybraných tagů,
+                včetně tagů zadaných u kroků CIRCUIT a AMRAP.
             </p>
             <div id="tagStatChecks" class="d-flex flex-wrap gap-2" style="margin-bottom: var(--sp-4);">
                 <span class="text-muted" style="font-size: var(--fs-sm);">— načítám zaměření —</span>
@@ -272,18 +240,29 @@
                     <div class="rk-kpi__label">Opakování</div>
                     <div class="rk-kpi__value" id="tagReps">0</div>
                 </div>
+                <div class="rk-kpi" id="tagMetersBox" style="display: none;">
+                    <div class="rk-kpi__label">Metry</div>
+                    <div class="rk-kpi__value"><span id="tagMeters">0</span><span class="rk-kpi__unit">m</span></div>
+                </div>
+                <div class="rk-kpi" id="tagSecondsBox" style="display: none;">
+                    <div class="rk-kpi__label">Sekundy</div>
+                    <div class="rk-kpi__value"><span id="tagSeconds">0</span><span class="rk-kpi__unit">s</span></div>
+                </div>
+                <div class="rk-kpi" id="tagCardioSecondsBox" style="display: none;">
+                    <div class="rk-kpi__label">Čistý čas kardio (typ tréninku CARDIO)</div>
+                    <div class="rk-kpi__value"><span id="tagCardioSeconds">0</span><span class="rk-kpi__unit">s</span></div>
+                </div>
             </div>
             <p id="tagStatEmpty" class="text-muted" style="font-size: var(--fs-sm); display: none;">
                 Pro vybrané zaměření a období nejsou žádná data.
             </p>
         </div>
     </div>
-
     <!-- Body region + Movement pattern -->
     <div class="row g-3" style="margin-bottom: var(--sp-4);">
         <div class="col-md-6">
             <div class="rk-chart h-100">
-                <h3>Sety per oblast těla</h3>
+                <h3>Sety pro oblast těla</h3>
                 <div class="rk-chart__wrap" style="height: 280px;">
                     <canvas id="chartBodyRegion"></canvas>
                 </div>
@@ -477,39 +456,91 @@
         fetch(`/api/analysis/stats-by-tags?${qs}&from=${p.from}&to=${p.to}`, { credentials: 'same-origin' })
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(s => {
-                const hasData = s && (s.totalSets > 0 || s.totalReps > 0);
+                const totalMeters = Number(s.totalMeters || 0);
+                const totalSeconds = Number(s.totalSeconds || 0);
+                const cardioSeconds = Number(s.cardioSeconds || 0);
+                const regularSeconds = Math.max(0, totalSeconds - cardioSeconds);
+                const hasData = s && (s.totalSets > 0 || s.totalReps > 0 || totalMeters > 0 || totalSeconds > 0 || cardioSeconds > 0);
                 if (!hasData) { tagResult.style.display = 'none'; tagEmpty.style.display = ''; return; }
                 const fmt = (v) => v != null ? parseFloat(v).toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) : '0';
+                const setMetric = (boxId, valueId, value) => {
+                    const box = document.getElementById(boxId);
+                    const valueEl = document.getElementById(valueId);
+                    if (!box || !valueEl) return;
+                    if (value > 0) {
+                        valueEl.textContent = fmt(value);
+                        box.style.display = '';
+                    } else {
+                        box.style.display = 'none';
+                    }
+                };
                 document.getElementById('tagVolume').textContent = fmt(s.totalVolumeKg);
                 document.getElementById('tagSets').textContent = s.totalSets;
                 document.getElementById('tagReps').textContent = s.totalReps;
+                setMetric('tagMetersBox', 'tagMeters', totalMeters);
+                setMetric('tagSecondsBox', 'tagSeconds', regularSeconds);
+                setMetric('tagCardioSecondsBox', 'tagCardioSeconds', cardioSeconds);
                 tagEmpty.style.display = 'none';
                 tagResult.style.display = '';
             })
             .catch(() => { tagResult.style.display = 'none'; tagEmpty.style.display = ''; });
     }
 
+    const tagUiCategories = [
+        { key: 'GENERAL', label: 'Obecné' },
+        { key: 'BODY_REGION', label: 'Oblast těla' },
+        { key: 'MOVEMENT_PATTERN', label: 'Pohybový vzorec' },
+        { key: 'EQUIPMENT', label: 'Náčiní/nářadí/pomůcky' }
+    ];
+
+    function sortedTagList(tags) {
+        return [...tags].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'cs'));
+    }
+
+    function tagStatCheckbox(tag) {
+        const label = document.createElement('label');
+        label.className = 'form-check form-check-inline m-0';
+        label.style.cssText = 'display:flex;gap:5px;align-items:center;cursor:pointer;';
+        const input = document.createElement('input');
+        input.className = 'form-check-input';
+        input.type = 'checkbox';
+        input.value = tag.id;
+        input.addEventListener('change', loadTagStats);
+        const span = document.createElement('span');
+        span.className = 'form-check-label small';
+        span.textContent = tag.name;
+        label.appendChild(input);
+        label.appendChild(span);
+        return label;
+    }
+
+    function renderTagStatChecks(tags) {
+        if (!tags || tags.length === 0) {
+            tagChecks.innerHTML = '<span class="text-muted" style="font-size:var(--fs-sm)">Zatím nemáš u cviků žádné tagy zaměření.</span>';
+            return;
+        }
+        tagChecks.innerHTML = '';
+        const sorted = sortedTagList(tags);
+        tagUiCategories.forEach(category => {
+            const categoryTags = sorted.filter(t => (t.category || 'GENERAL') === category.key);
+            if (!categoryTags.length) return;
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:6px;';
+            const head = document.createElement('strong');
+            head.textContent = category.label + ':';
+            head.style.cssText = 'min-width:160px;padding-top:2px;';
+            row.appendChild(head);
+            categoryTags.forEach(t => row.appendChild(tagStatCheckbox(t)));
+            tagChecks.appendChild(row);
+        });
+    }
+
     if (tagChecks) {
         fetch('/api/analysis/exercise-tags', { credentials: 'same-origin' })
             .then(r => r.ok ? r.json() : [])
-            .then(tags => {
-                if (!tags || tags.length === 0) {
-                    tagChecks.innerHTML = '<span class="text-muted" style="font-size:var(--fs-sm)">Zatím nemáš u cviků žádné tagy zaměření.</span>';
-                    return;
-                }
-                tagChecks.innerHTML = '';
-                tags.forEach(t => {
-                    const label = document.createElement('label');
-                    label.className = 'form-check form-check-inline m-0';
-                    label.innerHTML = '<input class="form-check-input" type="checkbox" value="' + t.id + '">'
-                        + '<span class="form-check-label small">' + t.name + '</span>';
-                    label.querySelector('input').addEventListener('change', loadTagStats);
-                    tagChecks.appendChild(label);
-                });
-            })
+            .then(renderTagStatChecks)
             .catch(() => { tagChecks.innerHTML = '<span class="text-muted">chyba načítání</span>'; });
     }
-
     // Při kliku na "Načíst" (změna období) přepočti i tyhle sekce
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', function () { loadStats(); loadTagStats(); });

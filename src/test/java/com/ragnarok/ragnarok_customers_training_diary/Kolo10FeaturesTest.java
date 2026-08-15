@@ -6,9 +6,13 @@ import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRepository;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountRole;
 import com.ragnarok.ragnarok_customers_training_diary.catalog.BodyRegion;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.CatalogAttributeOptionEntity;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.CatalogAttributeOptionService;
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemEntity;
 import com.ragnarok.ragnarok_customers_training_diary.catalog.ExerciseCatalogItemRepository;
 import com.ragnarok.ragnarok_customers_training_diary.tag.SystemTag;
+import com.ragnarok.ragnarok_customers_training_diary.tag.TagCategory;
+import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagService;
 import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity;
 import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagRepository;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingEntity;
@@ -38,6 +42,8 @@ class Kolo10FeaturesTest {
     @Autowired private TrainingService trainingService;
     @Autowired private AccountRepository accountRepository;
     @Autowired private TrainingTagRepository tagRepository;
+    @Autowired private TrainingTagService tagService;
+    @Autowired private CatalogAttributeOptionService attrOptionService;
     @Autowired private ExerciseCatalogItemRepository catalogRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
@@ -408,18 +414,39 @@ class Kolo10FeaturesTest {
         ExerciseCatalogItemEntity item = new ExerciseCatalogItemEntity();
         item.setName("Dřep s výskokem");
         item.setSystem(false);
-        item.getBodyRegions().add(BodyRegion.LOWER_BODY);
-        item.getBodyRegions().add(BodyRegion.CORE);
+        item.getBodyRegions().add(BodyRegion.LOWER_BODY.name());
+        item.getBodyRegions().add(BodyRegion.CORE.name());
         item.getMovementPatterns().add("SQUAT");
         item.getMovementPatterns().add("PLYO");
         item = catalogRepository.save(item);
 
         var reloaded = catalogRepository.findById(item.getId()).orElseThrow();
-        assertThat(reloaded.getBodyRegions()).containsExactlyInAnyOrder(BodyRegion.LOWER_BODY, BodyRegion.CORE);
+        assertThat(reloaded.getBodyRegions()).containsExactlyInAnyOrder(BodyRegion.LOWER_BODY.name(), BodyRegion.CORE.name());
         assertThat(reloaded.getMovementPatterns()).containsExactlyInAnyOrder("SQUAT", "PLYO");
         assertThat(BodyRegion.LOWER_BODY.getLabel()).isEqualTo("Dolní část těla");
     }
 
+
+    @Test
+    void analyticCustomTagCreatesCatalogOptionAndDuplicateIsReused() {
+        var created = tagService.createCustomTag(alice, "Předloktí", "#123456", TagCategory.BODY_REGION);
+
+        assertThat(created.created()).isTrue();
+        assertThat(created.duplicate()).isFalse();
+        assertThat(created.catalogOptionCreated()).isTrue();
+        assertThat(created.tag().getCategory()).isEqualTo(TagCategory.BODY_REGION);
+        assertThat(attrOptionService.listVisibleTo(alice, CatalogAttributeOptionEntity.Kind.BODY_REGION))
+                .anyMatch(o -> o.getName().equals("Předloktí") && !o.isSystem());
+
+        var duplicate = tagService.createCustomTag(alice, "predlokti", "#654321", TagCategory.BODY_REGION);
+
+        assertThat(duplicate.created()).isFalse();
+        assertThat(duplicate.duplicate()).isTrue();
+        assertThat(duplicate.tag().getId()).isEqualTo(created.tag().getId());
+        assertThat(attrOptionService.listVisibleTo(alice, CatalogAttributeOptionEntity.Kind.BODY_REGION).stream()
+                .filter(o -> o.getName().equals("Předloktí"))
+                .count()).isEqualTo(1);
+    }
     private TrainingInput base() {
         TrainingInput input = new TrainingInput();
         input.setTrainingDate(LocalDate.now());

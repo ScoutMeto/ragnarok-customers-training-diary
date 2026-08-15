@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dynamický editor cviků a setů ve formuláři tréninku.
  *
  * Strategie: každý cvik je <div class="exercise-card"> s data-exercise-index.
@@ -34,12 +34,18 @@
         OTHER: null  // review fix: anglické "other" do pole Náčiní nepatří — prefill přeskočit
     };
 
+    function catalogOptionText(ci) {
+        const origin = ci.origin ? ' - ' + ci.origin : '';
+        const equipment = ci.equipment ? ' (' + ci.equipment + ')' : '';
+        return (ci.name || '') + origin + equipment;
+    }
+
     function populateCatalogSelect(selectEl) {
         const items = window.__catalogItems || [];
         items.forEach(ci => {
             const opt = document.createElement('option');
             opt.value = ci.id;
-            opt.textContent = ci.name + ' (' + (ci.equipment || '') + ')';
+            opt.textContent = catalogOptionText(ci);
             selectEl.appendChild(opt);
         });
     }
@@ -52,7 +58,7 @@
         items.forEach(ci => {
             const opt = document.createElement('option');
             opt.value = ci.name;
-            opt.textContent = ci.name + ' (' + (ci.equipment || '') + ')';
+            opt.textContent = catalogOptionText(ci);
             selectEl.appendChild(opt);
         });
         selectEl.dataset.populated = '1';
@@ -69,6 +75,29 @@
     // kolo 10: CIRCUIT zastřešuje i SUPERSET a COMPLEX (režim se volí uvnitř bloku)
     const TYPE_LABELS = { CIRCUIT: 'CIRCUIT/SUPERSET/COMPLEX' };
 
+    const TYPE_HELP = {
+        FREEFORM: 'Volný záznam běžných sérií. Použij ho pro klasické cviky, kde zapisuješ sety, opakování, váhu, pauzy a poznámky.',
+        EMOM: 'Every minute on the minute. Zapisuje práci předepsanou na jednotlivé minuty a případné odchylky v konkrétních minutách.',
+        TABATA: 'Krátké intervaly práce a pauzy v kolech. Hodí se pro strukturovaný intervalový blok s opakovaným cvikem.',
+        LADDER: 'Žebřík se zvyšující se hodnotou výkonu. Použij pro série, které postupují nahoru podle předpisu.',
+        STEPLADDER: 'Stupňovaný žebřík nahoru a zpět dolů. Hodí se pro kontrolovaný objem s návratem po dosažení vrcholu.',
+        PYRAMID: 'Pyramida se vzestupem a sestupem po úrovních. Každý stupeň zapisuje jednu pracovní řadu.',
+        KB_SPORT_TIME: 'Časový blok kettlebell sportu. Sleduje celkový čas, opakování a rozpad výkonu po částech.',
+        CIRCUIT: 'CIRCUIT, SUPERSET nebo COMPLEX. Zapisuje více cviků uvnitř jednoho bloku, včetně kol, pauz, tagů a náčiní u jednotlivých kroků.',
+        STRAIGHT_SETS: 'Jednotný předpis pro více stejných setů. Vyplníš počet setů, opakování, váhu a pauzu, aplikace vytvoří tabulku.',
+        INTERVAL: 'Střídání pracovních a odpočinkových intervalů. Hodí se pro kratší intervalovou práci mimo dlouhé kardio.',
+        CARDIO: 'Souvislé delší kardio. Slouží pro delší běh, chůzi, kolo nebo podobnou aktivitu s časem, vzdáleností a pauzami.',
+        AMRAP: 'As many rounds/reps as possible v časovém limitu. Zapisuje sadu cviků a skutečně dokončená kola.'
+    };
+
+    const MULTI_UNIT_TAGS = new Set(['GAIT', 'LOCOMOTION', 'JUMPS']);
+
+    const TAG_HELP = {
+        GAIT: 'Běh zde znamená krátké běhy a sprinty v rámci tréninku. Dlouhé běhy patří do typu CARDIO. Lze zapsat opakování, metry i sekundy a případně náčiní jako saně, vestu nebo padák.',
+        LOCOMOTION: 'Lokomoce a animal movements zahrnují lezení, převalování, chůzi po rukách a podobné prvky. Lze zapsat opakování, metry i sekundy.',
+        JUMPS: 'Skok může být vertikální, horizontální nebo kombinovaný. Lze zapsat počet skoků, metry, sekundy a výšku bedny, překážky nebo výskoku.',
+        COORDINATION: 'Koordinace označuje cviky zaměřené hlavně na řízení pohybu, rytmus, přesnost a návaznost pohybů.'
+    };
     function populateTypeSelect(selectEl, currentValue) {
         const types = window.__exerciseTypes || ['FREEFORM'];
         types.forEach(t => {
@@ -80,10 +109,106 @@
         });
     }
 
+    function updateTypeHelp(exerciseCard) {
+        const typeSelect = exerciseCard.querySelector('.type-select');
+        const help = exerciseCard.querySelector('.type-help');
+        if (!typeSelect || !help) return;
+        const text = TYPE_HELP[typeSelect.value] || '';
+        help.textContent = text;
+        help.style.display = text ? '' : 'none';
+    }
+
+    function tagKey(chk) {
+        return ((chk && chk.dataset && chk.dataset.systemKey) || '').toUpperCase();
+    }
+
+    function tagCheckboxes(scope) {
+        return scope ? Array.from(scope.querySelectorAll('input[type="checkbox"][data-system-key]')) : [];
+    }
+
+    function findTagCheckbox(scope, systemKey) {
+        return tagCheckboxes(scope).find(chk => tagKey(chk) === systemKey) || null;
+    }
+
+    function applyBodyRegionTagRules(changedCheckbox) {
+        if (!changedCheckbox || !changedCheckbox.matches('input[type="checkbox"][data-system-key]')) return;
+        const scope = changedCheckbox.closest('.exercise-tags')
+                || changedCheckbox.closest('.training-tags')
+                || changedCheckbox.closest('.circuit-step-row')
+                || changedCheckbox.closest('.amrap-step-row');
+        if (!scope) return;
+        const full = findTagCheckbox(scope, 'FULL_BODY');
+        const upper = findTagCheckbox(scope, 'UPPER_BODY');
+        const lower = findTagCheckbox(scope, 'LOWER_BODY');
+        if (!full || !upper || !lower) return;
+
+        const key = tagKey(changedCheckbox);
+        if (key === 'FULL_BODY') {
+            upper.checked = full.checked;
+            lower.checked = full.checked;
+            return;
+        }
+        if (key === 'UPPER_BODY' || key === 'LOWER_BODY') {
+            full.checked = upper.checked && lower.checked;
+        }
+    }
+
+    function tagHelpHost(scope) {
+        if (!scope) return null;
+        return scope.classList && scope.classList.contains('exercise-tags') ? scope.parentElement : scope;
+    }
+
+    function tagHelpElement(scope) {
+        const host = tagHelpHost(scope);
+        if (!host) return null;
+        let help = Array.from(host.children).find(el => el.classList && el.classList.contains('tag-help'));
+        if (!help) {
+            help = document.createElement('div');
+            help.className = 'form-text tag-help mt-1';
+            host.appendChild(help);
+        }
+        return help;
+    }
+
+    function updateTagHelp(scope) {
+        const help = tagHelpElement(scope);
+        if (!help) return;
+        const messages = [];
+        tagCheckboxes(scope).forEach(chk => {
+            if (!chk.checked || chk.disabled) return;
+            const text = TAG_HELP[tagKey(chk)];
+            if (text && !messages.includes(text)) messages.push(text);
+        });
+        help.textContent = messages.join(' ');
+        help.style.display = messages.length ? '' : 'none';
+    }
+
+    function updateTagHelpForCheckbox(chk) {
+        const scope = chk && (chk.closest('.exercise-tags')
+                || chk.closest('.training-tags')
+                || chk.closest('.circuit-step-row')
+                || chk.closest('.amrap-step-row'));
+        updateTagHelp(scope);
+    }
+
+    function updateJumpHeightVisibility(scope) {
+        if (!scope) return;
+        const isStep = scope.classList.contains('circuit-step-row') || scope.classList.contains('amrap-step-row');
+        const tagScope = isStep ? scope : scope.querySelector('.exercise-tags');
+        const selectedType = isStep ? null : (scope.querySelector('.type-select')?.value || 'FREEFORM');
+        const show = triggerTags(tagScope).jumps && (isStep || selectedType !== 'CARDIO');
+        const wrap = isStep
+                ? Array.from(scope.querySelectorAll('.jump-height-wrap'))
+                        .find(el => el.closest('.circuit-step-row, .amrap-step-row') === scope)
+                : scope.querySelector('.equipment-block .jump-height-wrap');
+        if (wrap) wrap.style.display = show ? '' : 'none';
+    }
     function updateTypeConfigVisibility(exerciseCard) {
         const typeSelect = exerciseCard.querySelector('.type-select');
         if (!typeSelect) return;
         const selected = typeSelect.value;
+        updateTypeHelp(exerciseCard);
+        updateJumpHeightVisibility(exerciseCard);
         exerciseCard.querySelectorAll('.type-config').forEach(div => {
             const isMatch = div.classList.contains('type-' + selected.toLowerCase());
             div.style.display = isMatch ? '' : 'none';
@@ -143,6 +268,7 @@
             exerciseCard.querySelectorAll('.amrap-step-row').forEach(updateStepUnits);
             amrapRoundsSync(exerciseCard);
         }
+        updateCircuitFieldPlacement(exerciseCard);
     }
 
     // ----- kolo 10: CARDIO (dlouhé pomalé kardio) -----
@@ -324,19 +450,20 @@
         const wrap = block.querySelector('.sf-unit-wrap');
         if (!sel || !wrap) return;
         const tags = triggerTags(card.querySelector('.exercise-tags'));
-        const active = tags.carry || tags.iso;
+        const active = tags.carry || tags.iso || tags.multi;
+        const allowMeters = tags.carry || tags.multi;
+        const allowReps = tags.multi && !tags.iso;
         wrap.style.display = active ? '' : 'none';
         const meters = sel.querySelector('.sf-unit-meters');
-        if (meters) meters.hidden = !tags.carry;
+        if (meters) meters.hidden = !allowMeters;
         const reps = sel.querySelector('option[value="REPS"]');
-        if (reps) reps.hidden = active;
+        if (reps) reps.hidden = active && !allowReps;
         if (!active) sel.value = 'REPS';
-        if (active && sel.value === 'REPS') sel.value = tags.carry ? 'METERS' : 'SECONDS';
-        if (!tags.carry && sel.value === 'METERS') sel.value = 'SECONDS';
+        if (active && sel.value === 'REPS' && !allowReps) sel.value = tags.carry ? 'METERS' : 'SECONDS';
+        if (!allowMeters && sel.value === 'METERS') sel.value = 'SECONDS';
         const header = block.querySelector('.sf-value-header');
         if (header) header.textContent = unitLabel(sel.value);
     }
-
     // ----- kolo 10: Straight Sets + Interval (propis váhy náčiní, generovaná tabulka) -----
 
     /** Váha náčiní (u dvou zátěží součet) se propisuje do „Váha (kg)" typu cviku. */
@@ -499,6 +626,132 @@
         return checked ? checked.value : 'CIRCUIT';
     }
 
+    function isCircuitCard(card) {
+        return (card.querySelector('.type-select')?.value || 'FREEFORM') === 'CIRCUIT';
+    }
+
+    function isComplexCircuit(card) {
+        return isCircuitCard(card) && circuitMode(card) === 'COMPLEX';
+    }
+
+    function setControlsDisabled(root, disabled) {
+        if (!root) return;
+        root.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = !!disabled; });
+    }
+
+    function normalizeEquipmentLabel(value) {
+        return (value || '').trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function isNoEquipment(value) {
+        const normalized = normalizeEquipmentLabel(value);
+        return normalized === 'bez pomucek' || normalized === 'bodyweight' || normalized === 'none';
+    }
+
+    function equipmentField(scope, field, step) {
+        if (!scope) return null;
+        const attr = step ? 'data-step-field' : 'data-name';
+        return scope.querySelector('[' + attr + '="' + field + '"]');
+    }
+
+    function hasExplicitEquipmentValue(scope, step) {
+        const name = equipmentField(scope, 'equipmentName', step)?.value?.trim() || '';
+        const weight = equipmentField(scope, 'equipmentWeightKg', step)?.value || '';
+        const count = equipmentField(scope, 'equipmentCount', step)?.value || '';
+        const second = equipmentField(scope, 'equipmentSecondWeightKg', step)?.value || '';
+        return !!(name || weight || second || count === '2');
+    }
+
+    function copyEquipmentValues(source, sourceStep, target, targetStep) {
+        ['equipmentName', 'equipmentWeightKg', 'equipmentCount', 'equipmentSecondWeightKg'].forEach(field => {
+            const src = equipmentField(source, field, sourceStep);
+            const dst = equipmentField(target, field, targetStep);
+            if (src && dst) dst.value = src.value;
+        });
+    }
+
+    function updateEquipmentBodyweightState(scope, step, forceDisabled) {
+        const name = equipmentField(scope, 'equipmentName', step);
+        if (!name) return;
+        const weight = equipmentField(scope, 'equipmentWeightKg', step);
+        const count = equipmentField(scope, 'equipmentCount', step);
+        const second = equipmentField(scope, 'equipmentSecondWeightKg', step);
+        const noEquipment = isNoEquipment(name.value);
+
+        if (noEquipment) {
+            if (weight) weight.value = '';
+            if (count) count.value = '1';
+            if (second) second.value = '';
+        }
+
+        name.disabled = !!forceDisabled;
+        [weight, count, second].forEach(el => {
+            if (el) el.disabled = !!forceDisabled || noEquipment;
+        });
+
+        const secondWrap = step ? scope.querySelector('.step-equipment-second')
+                : scope.querySelector('.equipment-second');
+        if (secondWrap) {
+            secondWrap.style.display = (!forceDisabled && !noEquipment && count && count.value === '2') ? '' : 'none';
+        }
+    }
+
+    function updateStepEquipmentBodyweightState(stepRow) {
+        updateEquipmentBodyweightState(stepRow, true, false);
+    }
+
+    function updateCardEquipmentBodyweightState(card, forceTopDisabled) {
+        updateEquipmentBodyweightState(card.querySelector('.equipment-block'), false, forceTopDisabled);
+        card.querySelectorAll('.circuit-step-row, .amrap-step-row').forEach(updateStepEquipmentBodyweightState);
+    }
+
+    function hydrateComplexTopLevelEquipment(card, block) {
+        const top = card.querySelector('.equipment-block');
+        if (!top || hasExplicitEquipmentValue(top, false)) return;
+        const firstWithEquipment = Array.from(block.querySelectorAll('.circuit-step-row'))
+                .find(row => hasExplicitEquipmentValue(row, true));
+        if (firstWithEquipment) copyEquipmentValues(firstWithEquipment, true, top, false);
+    }
+
+    function updateCircuitFieldPlacement(card) {
+        const block = card.querySelector('.type-config.type-circuit');
+        const isCircuit = isCircuitCard(card);
+        const mode = isCircuit ? circuitMode(card) : null;
+
+        const tagBlock = card.querySelector('.exercise-tags-block');
+        if (tagBlock) {
+            tagBlock.style.display = isCircuit ? 'none' : '';
+            setControlsDisabled(tagBlock, isCircuit);
+        }
+
+        const topEquipmentVisible = !isCircuit || mode === 'COMPLEX';
+        const topEquipment = card.querySelector('.equipment-block');
+        if (topEquipment) topEquipment.style.display = topEquipmentVisible ? '' : 'none';
+
+        if (block) {
+            if (isCircuit && mode === 'COMPLEX') {
+                hydrateComplexTopLevelEquipment(card, block);
+                applyComplexSharedEquipment(block);
+            }
+            block.querySelectorAll('.circuit-step-row').forEach(row => {
+                const stepEquipment = row.querySelector('.step-equipment-block')
+                        || row.querySelector('.step-equipment-name')?.closest('.row');
+                if (stepEquipment) stepEquipment.style.display = (isCircuit && mode === 'COMPLEX') ? 'none' : '';
+            });
+            const stepsHelp = block.querySelector('.circuit-steps-help');
+            if (stepsHelp) {
+                stepsHelp.textContent = (isCircuit && mode === 'COMPLEX')
+                        ? 'Cviky v complexu - zaměření se zadává u každého cviku zvlášť; náčiní a váha jsou společné pro celý complex.'
+                        : 'Cviky v kole (přidej, kolik potřebuješ) - náčiní a zaměření se zadává u každého cviku zvlášť:';
+            }
+        }
+
+        updateCardEquipmentBodyweightState(card, !topEquipmentVisible);
+        updateExerciseUnits(card);
+        if (typeof syncTrainingTags === 'function') syncTrainingTags();
+    }
+
     /**
      * Režim mění jen pravidla, ne strukturu:
      * SUPERSET/COMPLEX = bez pauzy mezi cviky (pole zašedne), COMPLEX navíc sdílí
@@ -526,31 +779,19 @@
             if (!restAllowed) inp.value = '';
         });
 
-        if (mode === 'COMPLEX') applyComplexSharedEquipment(block);
+        updateCircuitFieldPlacement(card);
     }
 
-    /** COMPLEX: náčiní + váha (+ název) prvního cviku se propíše k ostatním. */
+    /** COMPLEX: top-level equipment is canonical; hidden step fields keep backend stats complete. */
     function applyComplexSharedEquipment(block) {
-        const rows = block.querySelectorAll('.circuit-step-row');
-        if (rows.length < 2) return;
-        const first = rows[0];
-        const read = sel => { const el = first.querySelector(sel); return el ? el.value : null; };
-        const fields = ['.step-equipment-name', '.step-equipment-weight',
-                        '.step-equipment-count', '.step-equipment-second-weight'];
-        const src = {};
-        fields.forEach(sel => { src[sel] = read(sel); });
-        rows.forEach((row, i) => {
-            if (i === 0) return;
-            fields.forEach(sel => {
-                const el = row.querySelector(sel);
-                if (el && src[sel] !== null) el.value = src[sel];
-            });
-            // druhá zátěž: viditelnost se řídí počtem zátěží prvního cviku
-            const secondWrap = row.querySelector('.step-equipment-second');
-            if (secondWrap) secondWrap.style.display = (src['.step-equipment-count'] === '2') ? '' : 'none';
+        const card = block.closest('.exercise-card');
+        const top = card && card.querySelector('.equipment-block');
+        if (!top) return;
+        block.querySelectorAll('.circuit-step-row').forEach(row => {
+            copyEquipmentValues(top, false, row, true);
+            updateStepEquipmentBodyweightState(row);
         });
     }
-
     /** kolo 10: předvyplněná (editovatelná) tabulka pauz na konci každého kola. */
     function circuitRoundRestsSync(card) {
         const block = card.querySelector('.type-config.type-circuit');
@@ -616,7 +857,7 @@
 
             // Top-level fields (type, catalogItemId, customName, rpe, notes, equipment..., setUnit)
             ['type', 'catalogItemId', 'customName', 'rpe', 'notes', 'setUnit',
-             'equipmentName', 'equipmentWeightKg', 'equipmentCount', 'equipmentSecondWeightKg'].forEach(fieldName => {
+             'equipmentName', 'equipmentWeightKg', 'equipmentCount', 'equipmentSecondWeightKg', 'jumpHeightCm'].forEach(fieldName => {
                 const el = card.querySelector('[data-name="' + fieldName + '"]');
                 if (el) el.name = 'exercises[' + idx + '].' + fieldName;
             });
@@ -1177,13 +1418,15 @@
      * systémových tagů se počešťují a dřívější porovnávání podle názvu logiku tiše rozbilo.
      */
     function triggerTags(container) {
-        const res = { carry: false, iso: false };
+        const res = { carry: false, iso: false, multi: false, jumps: false };
         if (!container) return res;
         container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-            if (!chk.checked) return;
-            const key = chk.dataset.systemKey;
+            if (!chk.checked || chk.disabled) return;
+            const key = tagKey(chk);
             if (key === 'CARRY') res.carry = true;
-            if (key === 'ISOMETRY') res.iso = true;
+            if (key === 'ISOMETRY' || key === 'ISOMETRIC') res.iso = true;
+            if (MULTI_UNIT_TAGS.has(key)) res.multi = true;
+            if (key === 'JUMPS') res.jumps = true;
         });
         return res;
     }
@@ -1197,33 +1440,31 @@
         const select = card.querySelector('.set-unit-select');
         if (!select) return;
         const tags = triggerTags(card.querySelector('.exercise-tags'));
-        const carry = tags.carry, iso = tags.iso;
-        const active = carry || iso;
+        const active = tags.carry || tags.iso || tags.multi;
+        const allowMeters = tags.carry || tags.multi;
+        const allowReps = tags.multi && !tags.iso;
         const wrap = card.querySelector('.set-unit-wrap');
         const seriesWrap = card.querySelector('.series-unit-wrap');
         if (wrap) wrap.style.display = active ? '' : 'none';
         if (seriesWrap) seriesWrap.style.display = active ? '' : 'none';
-        // Isometrie bez Nošení → Metry nejsou k dispozici (výdrž se nepřekonává na vzdálenost)
-        const allowMeters = carry;
         card.querySelectorAll('.set-unit-select option[value="METERS"], .series-unit-meters').forEach(opt => {
             opt.hidden = !allowMeters;
         });
-        // kolo 10: s Nošením/Izometrií se opakování nepočítají → volba REPS zmizí
         card.querySelectorAll('.set-unit-select option[value="REPS"], .series-unit-reps').forEach(opt => {
-            opt.hidden = active;
+            opt.hidden = active && !allowReps;
         });
         if (!active) select.value = 'REPS';
-        if (active && select.value === 'REPS') select.value = carry ? 'METERS' : 'SECONDS';
+        if (active && select.value === 'REPS' && !allowReps) select.value = tags.carry ? 'METERS' : 'SECONDS';
         if (!allowMeters && select.value === 'METERS') select.value = 'SECONDS';
-        // synchronizace viditelného série-selectu s kanonickým setUnit selectem
         const seriesSel = card.querySelector('.series-unit-select');
         if (seriesSel) seriesSel.value = select.value;
         const header = card.querySelector('.sets-reps-header');
         if (header) header.textContent = unitLabel(select.value);
         const seriesHeader = card.querySelector('.series-reps-header');
         if (seriesHeader) seriesHeader.textContent = unitLabel(select.value);
+        updateTagHelp(card.querySelector('.exercise-tags'));
+        updateJumpHeightVisibility(card);
     }
-
     /**
      * kolo 9: jednotky + XOR na úrovni circuit kroku. Carry tag kroku → volba
      * Sekundy/Metry místo opakování a pevné pole Sekundy mizí; Isometrie → jen Sekundy.
@@ -1232,26 +1473,27 @@
         const sel = stepRow.querySelector('.step-unit-select');
         if (!sel) return;
         const tags = triggerTags(stepRow);
-        const active = tags.carry || tags.iso;
+        const active = tags.carry || tags.iso || tags.multi;
+        const allowMeters = tags.carry || tags.multi;
+        const allowReps = tags.multi && !tags.iso;
         sel.style.display = active ? '' : 'none';
         const repsLabel = stepRow.querySelector('.step-reps-label');
         if (repsLabel) repsLabel.style.display = active ? 'none' : '';
         const metersOpt = sel.querySelector('option[value="METERS"]');
-        if (metersOpt) metersOpt.hidden = !tags.carry;
-        // kolo 10: Nošení/Izometrie nepřipouští záznam na opakování
+        if (metersOpt) metersOpt.hidden = !allowMeters;
         const repsOpt = sel.querySelector('option[value="REPS"]');
-        if (repsOpt) repsOpt.hidden = active;
+        if (repsOpt) repsOpt.hidden = active && !allowReps;
         if (!active) sel.value = 'REPS';
-        if (active && sel.value === 'REPS') sel.value = tags.carry ? 'METERS' : 'SECONDS';
-        if (!tags.carry && sel.value === 'METERS') sel.value = 'SECONDS';
-        // pevné pole Sekundy mizí, když je aktivní volba jednotky
+        if (active && sel.value === 'REPS' && !allowReps) sel.value = tags.carry ? 'METERS' : 'SECONDS';
+        if (!allowMeters && sel.value === 'METERS') sel.value = 'SECONDS';
         const secondsCol = stepRow.querySelector('.step-seconds-col');
         const secondsInput = stepRow.querySelector('.step-seconds-input');
         if (secondsCol) secondsCol.style.display = active ? 'none' : '';
         if (active && secondsInput) secondsInput.value = '';
+        updateTagHelp(stepRow);
+        updateJumpHeightVisibility(stepRow);
         updateStepXor(stepRow);
     }
-
     /** kolo 9: u kroku lze vyplnit jen Opakování NEBO Sekundy (vzájemně se blokují). */
     function updateStepXor(stepRow) {
         const reps = stepRow.querySelector('.step-reps-input');
@@ -1282,6 +1524,8 @@
         eqInput.value = label;
         eqInput.dataset.autofilled = '1';
         updateKbState(card);
+        updateCardEquipmentBodyweightState(card);
+        if (isComplexCircuit(card)) applyComplexSharedEquipment(card.querySelector('.type-config.type-circuit'));
     }
 
     // =========================================================================
@@ -1326,11 +1570,13 @@
             const card = target.closest('.exercise-card');
             addAmrapStepRow(card.querySelector('.amrap-steps-tbody'));
             renumberExercises();
+            updateCardEquipmentBodyweightState(card);
             amrapRoundsSync(card);
         } else if (target.classList.contains('add-circuit-step')) {
             const card = target.closest('.exercise-card');
             addCircuitStepRow(card.querySelector('.circuit-steps-tbody'));
             renumberExercises();
+            updateCircuitMode(card);
         } else if (target.classList.contains('remove-step')) {
             const card = target.closest('.exercise-card');
             const row = target.closest('.circuit-step-row, .amrap-step-row');
@@ -1338,6 +1584,7 @@
             if (row) row.remove();
             renumberExercises();
             if (wasAmrap && card) amrapRoundsSync(card);
+            if (!wasAmrap && card) updateCircuitMode(card);
         } else if (target.classList.contains('remove-series-row')) {
             // kolo 9: smazání řádku série (např. nedokončená pyramida)
             const card = target.closest('.exercise-card');
@@ -1367,6 +1614,8 @@
             }
         } else if (t.classList.contains('equipment-count')) {
             updateEquipmentSecondVisibility(card);
+            updateCardEquipmentBodyweightState(card);
+            if (isComplexCircuit(card)) applyComplexSharedEquipment(card.querySelector('.type-config.type-circuit'));
             updateKbState(card);
             // kolo 9: změna počtu zátěží se okamžitě propíše do všech tabulek
             emomApplyKg(card);
@@ -1376,6 +1625,7 @@
             const stepRow = t.closest('.circuit-step-row');
             const second = stepRow && stepRow.querySelector('.step-equipment-second');
             if (second) second.style.display = (t.value === '2') ? '' : 'none';
+            if (stepRow) updateStepEquipmentBodyweightState(stepRow);
         } else if (t.classList.contains('step-catalog-select') && t.value) {
             const wrap = t.parentElement;
             const nameInput = wrap && wrap.querySelector('.step-name-input');
@@ -1406,10 +1656,12 @@
             if (canonical) canonical.value = t.value;
             updateExerciseUnits(card);
         } else if (t.getAttribute('data-step-field') === 'tagIds') {
-            // kolo 9/10: Nošení/Izometrie na kroku kruhového tréninku i AMRAPu → jednotky
+            // kolo 9/10: tagy na kroku kruhového tréninku i AMRAPu → jednotky, nápověda, výška výskoku
+            applyBodyRegionTagRules(t);
             const stepRow = t.closest('.circuit-step-row, .amrap-step-row');
             if (stepRow) updateStepUnits(stepRow);
         } else if (t.closest('.exercise-tags')) {
+            applyBodyRegionTagRules(t);
             updateExerciseUnits(card);
             sfLadderUnits(card);
         } else if (t.classList.contains('kb-split-parts')) {
@@ -1452,9 +1704,10 @@
                 || t.getAttribute('data-step-field') === 'equipmentWeightKg'
                 || t.getAttribute('data-step-field') === 'equipmentCount'
                 || t.getAttribute('data-step-field') === 'equipmentSecondWeightKg') {
-            // COMPLEX sdílí náčiní prvního cviku se všemi ostatními
+            const stepRow = t.closest('.circuit-step-row, .amrap-step-row');
+            if (stepRow) updateStepEquipmentBodyweightState(stepRow);
             const block = card.querySelector('.type-config.type-circuit');
-            if (block && circuitMode(card) === 'COMPLEX') applyComplexSharedEquipment(block);
+            if (block && isComplexCircuit(card)) applyComplexSharedEquipment(block);
         } else if (t.classList.contains('tabata-rounds')) {
             tabataSync(card, false);
         } else if (t.classList.contains('tabata-default-reps')) {
@@ -1471,15 +1724,14 @@
             intervalApplyWeight(card);
             applyEquipmentWeightTo(card, '.sf-weight');
             sfApplyWeight(card);
+            updateCardEquipmentBodyweightState(card);
+            if (isComplexCircuit(card)) applyComplexSharedEquipment(card.querySelector('.type-config.type-circuit'));
         }
     });
 
     function updateEquipmentSecondVisibility(card) {
-        const countSel = card.querySelector('.equipment-count');
-        const second = card.querySelector('.equipment-second');
-        if (countSel && second) {
-            second.style.display = (countSel.value === '2') ? '' : 'none';
-        }
+        const hideTopEquipment = isCircuitCard(card) && circuitMode(card) !== 'COMPLEX';
+        updateCardEquipmentBodyweightState(card, hideTopEquipment);
     }
 
     container.addEventListener('input', function (e) {
@@ -1495,6 +1747,8 @@
             // ruční zápis náčiní = nadřazený katalogu
             t.dataset.autofilled = '';
             updateKbState(card);
+            updateCardEquipmentBodyweightState(card);
+            if (isComplexCircuit(card)) applyComplexSharedEquipment(card.querySelector('.type-config.type-circuit'));
         } else if (t.getAttribute('data-name') === 'equipmentWeightKg'
                 || t.getAttribute('data-name') === 'equipmentSecondWeightKg') {
             updateKbState(card);
@@ -1505,6 +1759,11 @@
             intervalApplyWeight(card);
             applyEquipmentWeightTo(card, '.sf-weight');
             sfApplyWeight(card);
+            updateCardEquipmentBodyweightState(card);
+            if (isComplexCircuit(card)) applyComplexSharedEquipment(card.querySelector('.type-config.type-circuit'));
+        } else if (t.getAttribute('data-step-field') === 'equipmentName') {
+            const stepRow = t.closest('.circuit-step-row, .amrap-step-row');
+            if (stepRow) updateStepEquipmentBodyweightState(stepRow);
         } else if (t.classList.contains('step-reps-input') || t.classList.contains('step-seconds-input')) {
             // kolo 9: Opakování XOR Sekundy u kroku circuitu
             const stepRow = t.closest('.circuit-step-row');
@@ -1541,8 +1800,8 @@
     /** Id tagů skutečně použitých u konkrétních cviků (včetně kroků kruhového tréninku). */
     function usedExerciseTagIds() {
         const ids = new Set();
-        container.querySelectorAll('.exercise-tags input[type="checkbox"]:checked,'
-                + ' input[data-step-field="tagIds"]:checked').forEach(chk => ids.add(chk.value));
+        container.querySelectorAll('.exercise-tags input[type="checkbox"]:checked:not(:disabled),'
+                + ' input[data-step-field="tagIds"]:checked:not(:disabled)').forEach(chk => ids.add(chk.value));
         return ids;
     }
 
@@ -1561,10 +1820,20 @@
     function syncTrainingTags() {
         if (!trainingTagsBox) return;
         const used = usedExerciseTagIds();
-        used.forEach(id => {
-            const box = trainingTagsBox.querySelector('input[type="checkbox"][value="' + id + '"]');
-            if (box && !box.checked) box.checked = true;
+        trainingTagsBox.querySelectorAll('input[type="checkbox"]').forEach(box => {
+            if (used.has(box.value)) {
+                if (!box.checked) {
+                    box.checked = true;
+                    box.dataset.autoTag = '1';
+                } else if (box.dataset.manualTag !== '1') {
+                    box.dataset.autoTag = '1';
+                }
+            } else if (box.checked && box.dataset.autoTag === '1' && box.dataset.manualTag !== '1') {
+                box.checked = false;
+                box.dataset.autoTag = '';
+            }
         });
+        updateTagHelp(trainingTagsBox);
         highlightUnusedTrainingTags(used);
     }
 
@@ -1583,7 +1852,29 @@
     }
 
     if (trainingTagsBox) {
-        trainingTagsBox.addEventListener('change', () => highlightUnusedTrainingTags());
+        function markInitialTrainingTagOrigin() {
+            const used = usedExerciseTagIds();
+            trainingTagsBox.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+                chk.dataset.autoTag = '';
+                chk.dataset.manualTag = '';
+                if (!chk.checked || chk.disabled) return;
+                if (used.has(chk.value)) chk.dataset.autoTag = '1';
+                else chk.dataset.manualTag = '1';
+            });
+        }
+
+        trainingTagsBox.addEventListener('change', function (e) {
+            const t = e.target;
+            if (t && t.matches('input[type="checkbox"][data-system-key]')) {
+                applyBodyRegionTagRules(t);
+                trainingTagsBox.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+                    chk.dataset.autoTag = '';
+                    chk.dataset.manualTag = chk.checked ? '1' : '';
+                });
+                updateTagHelp(trainingTagsBox);
+            }
+            highlightUnusedTrainingTags();
+        });
         container.addEventListener('change', function (e) {
             const t = e.target;
             if (t.getAttribute('data-step-field') === 'tagIds' || t.closest('.exercise-tags')) {
@@ -1602,6 +1893,8 @@
                 if (!ok) e.preventDefault();
             });
         }
+        markInitialTrainingTagOrigin();
+        updateTagHelp(trainingTagsBox);
         highlightUnusedTrainingTags();
     }
 

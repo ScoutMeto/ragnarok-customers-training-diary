@@ -58,6 +58,9 @@ public class AmrapStepEntity {
     @Column(length = 255)
     private String note;
 
+    @Column(name = "jump_height_cm", precision = 6, scale = 2)
+    private BigDecimal jumpHeightCm;
+
     @Column(name = "equipment_name", length = 64)
     private String equipmentName;
 

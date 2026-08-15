@@ -73,11 +73,28 @@ class Phase17FeaturesTest {
     }
 
     @Test
-    void clientCannotEditSystemExercise() {
+    void clientEditSystemExerciseCreatesOwnCustomCopy() {
         ExerciseCatalogItemEntity systemItem = catalogService.create(admin, newItem("Systémový"));
+        ExerciseCatalogItemEntity data = newItem("Systémový upravený");
+        data.getMovementPatterns().add("PUSH");
+        data.getMovementPatterns().add("PLYO");
 
-        assertThatThrownBy(() -> catalogService.update(alice, systemItem.getId(), newItem("Změna")))
-                .isInstanceOf(ForbiddenException.class);
+        ExerciseCatalogItemEntity copy = catalogService.update(alice, systemItem.getId(), data);
+
+        assertThat(copy.getId()).isNotEqualTo(systemItem.getId());
+        assertThat(copy.isSystem()).isFalse();
+        assertThat(copy.getCreatedBy().getId()).isEqualTo(alice.getId());
+        assertThat(copy.getName()).isEqualTo("Systémový upravený");
+        assertThat(copy.getMovementPatterns()).containsExactly("PUSH", "PLYO");
+
+        ExerciseCatalogItemEntity original = catalogService.getById(systemItem.getId());
+        assertThat(original.isSystem()).isTrue();
+        assertThat(original.getName()).isEqualTo("Systémový");
+
+        assertThat(catalogService.listVisibleTo(alice))
+                .anyMatch(i -> i.getId().equals(copy.getId()) && !i.isSystem());
+        assertThat(catalogService.listVisibleTo(bob))
+                .noneMatch(i -> i.getId().equals(copy.getId()));
     }
 
     @Test

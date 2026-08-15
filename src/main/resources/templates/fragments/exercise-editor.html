@@ -31,6 +31,7 @@
                                     th:selected="${ex.type == t}"
                                     th:text="${t.name() == 'CIRCUIT' ? 'CIRCUIT/SUPERSET/COMPLEX' : t}">FREEFORM</option>
                         </select>
+                        <div class="form-text type-help"></div>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -43,7 +44,7 @@
                                 <option th:each="ci : ${catalogOptions}"
                                         th:value="${ci.id}"
                                         th:selected="${ex.catalogItemId == ci.id}"
-                                        th:text="${ci.name} + ' (' + ${ci.equipment} + ')'">Cvik</option>
+                                        th:text="${ci.selectLabel()}">Cvik</option>
                             </select>
                             <div class="form-text">Chybí ti cvik? Přidej si ho v sekci Cviky.</div>
                         </div>
@@ -76,19 +77,24 @@
                     </div>
 
                     <!-- Phase 11 (A2): per-exercise tagy zaměření (kolo 8: přesunuto NAD tabulku sérií) -->
-                    <div class="mt-1 mb-3" th:if="${!tags.isEmpty()}">
+                    <div class="mt-1 mb-3 exercise-tags-block" th:if="${!tags.isEmpty()}">
                         <label class="form-label form-label-sm" style="font-weight:600;">Zaměření cviku</label>
-                        <div class="d-flex flex-wrap gap-2 exercise-tags">
-                            <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="checkbox"
-                                       data-name="tagIds"
-                                       th:data-system-key="${tag.systemKey}"
-                                       th:id="|extag-${exStat.index}-${tag.id}|"
-                                       th:name="|exercises[${exStat.index}].tagIds|"
-                                       th:value="${tag.id}"
-                                       th:checked="${ex.tagIds != null and ex.tagIds.contains(tag.id)}">
-                                <label class="form-check-label small" th:for="|extag-${exStat.index}-${tag.id}|"
-                                       th:text="${tag.name}">Tag</label>
+                        <div class="exercise-tags">
+                            <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:5px;">
+                                <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                    <div th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check form-check-inline m-0">
+                                        <input class="form-check-input" type="checkbox"
+                                               data-name="tagIds"
+                                               th:data-system-key="${tag.systemKey}"
+                                               th:id="|extag-${exStat.index}-${tag.id}|"
+                                               th:name="|exercises[${exStat.index}].tagIds|"
+                                               th:value="${tag.id}"
+                                               th:checked="${ex.tagIds != null and ex.tagIds.contains(tag.id)}">
+                                        <label class="form-check-label small" th:for="|extag-${exStat.index}-${tag.id}|"
+                                               th:text="${tag.name}">Tag</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -120,6 +126,13 @@
                             <input type="number" step="0.25" data-name="equipmentSecondWeightKg"
                                    th:name="|exercises[${exStat.index}].equipmentSecondWeightKg|" th:value="${ex.equipmentSecondWeightKg}"
                                    class="form-control form-control-sm num">
+                        </div>
+                        <div class="col-md-3 jump-height-wrap" th:style="${ex.jumpHeightCm != null} ? '' : 'display:none'">
+                            <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                            <input type="number" step="0.1" min="0" data-name="jumpHeightCm"
+                                   th:name="|exercises[${exStat.index}].jumpHeightCm|" th:value="${ex.jumpHeightCm}"
+                                   class="form-control form-control-sm num">
+                            <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
                         </div>
                     </div>
 
@@ -426,7 +439,7 @@
                                 <tbody class="circuit-round-rests-tbody"></tbody>
                             </table>
                         </div>
-                        <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
+                        <div class="form-text mb-2 circuit-steps-help">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
                         <div class="circuit-steps-tbody">
                             <div th:each="s, sStat : ${ex.circuit?.steps}" class="circuit-step-row border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -454,7 +467,7 @@
                                     <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" th:value="${s.note}" class="form-control form-control-sm"></div>
                                 </div>
                                 <!-- kolo 8: náčiní per cvik kruhového tréninku -->
-                                <div class="row g-2 mt-1 align-items-end">
+                                <div class="row g-2 mt-1 align-items-end step-equipment-block">
                                     <div class="col-md-4">
                                         <label class="form-label form-label-sm">Náčiní</label>
                                         <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" th:value="${s.equipmentName}" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
@@ -471,17 +484,27 @@
                                         <label class="form-label form-label-sm">2. zátěž (kg)</label>
                                         <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm step-equipment-second-weight">
                                     </div>
+                                    <div class="col-md-3 jump-height-wrap" th:style="${s.jumpHeightCm != null} ? '' : 'display:none'">
+                                        <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                                        <input type="number" step="0.1" min="0" data-step-field="jumpHeightCm" th:value="${s.jumpHeightCm}" class="form-control form-control-sm step-jump-height">
+                                        <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
+                                    </div>
                                 </div>
                                 <!-- kolo 8: zaměření (tagy) per cvik kruhového tréninku -->
                                 <div class="mt-2" th:if="${!tags.isEmpty()}">
                                     <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
-                                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
-                                                   th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
-                                            <span th:text="${tag.name}">Tag</span>
-                                        </label>
+                                    <div class="tag-step-groups">
+                                        <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                                            <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                                                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
+                                                           th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
+                                                    <span th:text="${tag.name}">Tag</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -782,16 +805,26 @@
                                         <label class="form-label form-label-sm">Druhá zátěž (kg)</label>
                                         <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" th:value="${s.equipmentSecondWeightKg}" class="form-control form-control-sm step-equipment-second-weight">
                                     </div>
+                                    <div class="col-md-3 jump-height-wrap" th:style="${s.jumpHeightCm != null} ? '' : 'display:none'">
+                                        <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                                        <input type="number" step="0.1" min="0" data-step-field="jumpHeightCm" th:value="${s.jumpHeightCm}" class="form-control form-control-sm step-jump-height">
+                                        <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
+                                    </div>
                                 </div>
                                 <div class="mt-2" th:if="${!tags.isEmpty()}">
                                     <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
-                                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
-                                                   th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
-                                            <span th:text="${tag.name}">Tag</span>
-                                        </label>
+                                    <div class="tag-step-groups">
+                                        <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                                            <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                                                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}"
+                                                           th:checked="${s.tagIds != null and s.tagIds.contains(tag.id)}">
+                                                    <span th:text="${tag.name}">Tag</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -834,6 +867,7 @@
             <div class="mb-3">
                 <label class="form-label">Typ provedení</label>
                 <select data-name="type" class="form-select type-select"></select>
+                <div class="form-text type-help"></div>
             </div>
 
             <div class="row g-3 mb-3">
@@ -857,13 +891,18 @@
             </div>
 
             <!-- Phase 11 (A2): per-exercise tagy zaměření (kolo 8: NAD tabulkou sérií) -->
-            <div class="mt-1 mb-3" th:if="${!tags.isEmpty()}">
+            <div class="mt-1 mb-3 exercise-tags-block" th:if="${!tags.isEmpty()}">
                 <label class="form-label form-label-sm" style="font-weight:600;">Zaměření cviku</label>
-                <div class="d-flex flex-wrap gap-2 exercise-tags">
-                    <div th:each="tag : ${tags}" class="form-check form-check-inline m-0">
-                        <input class="form-check-input" type="checkbox"
-                               data-name="tagIds" th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
-                        <label class="form-check-label small" th:text="${tag.name}">Tag</label>
+                <div class="exercise-tags">
+                    <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:5px;">
+                        <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            <div th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="checkbox"
+                                       data-name="tagIds" th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
+                                <label class="form-check-label small" th:text="${tag.name}">Tag</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -889,6 +928,11 @@
                 <div class="col-md-3 equipment-second" style="display:none">
                     <label class="form-label form-label-sm">2. zátěž (kg)</label>
                     <input type="number" step="0.25" data-name="equipmentSecondWeightKg" class="form-control form-control-sm num">
+                </div>
+                <div class="col-md-3 jump-height-wrap" style="display:none">
+                    <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                    <input type="number" step="0.1" min="0" data-name="jumpHeightCm" class="form-control form-control-sm num">
+                    <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
                 </div>
             </div>
 
@@ -1019,7 +1063,7 @@
                         <tbody class="circuit-round-rests-tbody"></tbody>
                     </table>
                 </div>
-                <div class="form-text mb-2">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
+                <div class="form-text mb-2 circuit-steps-help">Cviky v kole (přidej, kolik potřebuješ) — náčiní a zaměření se zadává u každého cviku zvlášť:</div>
                 <div class="circuit-steps-tbody"></div>
                 <button type="button" class="btn btn-sm btn-outline-secondary add-circuit-step">+ Přidat cvik</button>
             </div>
@@ -1279,15 +1323,25 @@
                 <label class="form-label form-label-sm">Druhá zátěž (kg)</label>
                 <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm step-equipment-second-weight">
             </div>
+            <div class="col-md-3 jump-height-wrap" style="display:none">
+                <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                <input type="number" step="0.1" min="0" data-step-field="jumpHeightCm" class="form-control form-control-sm step-jump-height">
+                <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
+            </div>
         </div>
         <div class="mt-2" th:if="${tags != null and !tags.isEmpty()}">
             <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
-            <div class="d-flex flex-wrap gap-2">
-                <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
-                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
-                    <span th:text="${tag.name}">Tag</span>
-                </label>
+            <div class="tag-step-groups">
+                <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                    <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <label th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
+                            <span th:text="${tag.name}">Tag</span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1318,7 +1372,7 @@
             <div class="col-md-2"><label class="form-label form-label-sm">Odpočinek (s)</label><input type="number" data-step-field="restSeconds" class="form-control form-control-sm step-rest-input"></div>
             <div class="col-md-12"><label class="form-label form-label-sm">Pozn.</label><input type="text" data-step-field="note" class="form-control form-control-sm"></div>
         </div>
-        <div class="row g-2 mt-1 align-items-end">
+        <div class="row g-2 mt-1 align-items-end step-equipment-block">
             <div class="col-md-4">
                 <label class="form-label form-label-sm">Náčiní</label>
                 <input type="text" list="equipmentOptionsList" data-step-field="equipmentName" class="form-control form-control-sm step-equipment-name" placeholder="vyber nebo napiš vlastní">
@@ -1335,15 +1389,25 @@
                 <label class="form-label form-label-sm">2. zátěž (kg)</label>
                 <input type="number" step="0.25" data-step-field="equipmentSecondWeightKg" class="form-control form-control-sm step-equipment-second-weight">
             </div>
+            <div class="col-md-3 jump-height-wrap" style="display:none">
+                <label class="form-label form-label-sm">Výška výskoku (cm)</label>
+                <input type="number" step="0.1" min="0" data-step-field="jumpHeightCm" class="form-control form-control-sm step-jump-height">
+                <div class="form-text">Výška bedny, překážky nebo odhad výšky výskoku.</div>
+            </div>
         </div>
         <div class="mt-2" th:if="${tags != null and !tags.isEmpty()}">
             <div class="form-label form-label-sm mb-1">Zaměření cviku</div>
-            <div class="d-flex flex-wrap gap-2">
-                <label th:each="tag : ${tags}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
-                    <input type="checkbox" class="form-check-input" data-step-field="tagIds"
-                           th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
-                    <span th:text="${tag.name}">Tag</span>
-                </label>
+            <div class="tag-step-groups">
+                <div th:each="category : ${tagCategories}" class="tag-category-row" style="display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                    <strong style="min-width:170px;" th:text="${category.label + ':'}">Obecné:</strong>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <label th:each="tag : ${tags}" th:if="${tag.category == category}" class="form-check small" style="display:flex;gap:4px;align-items:center;cursor:pointer;">
+                            <input type="checkbox" class="form-check-input" data-step-field="tagIds"
+                                   th:data-system-key="${tag.systemKey}" th:value="${tag.id}">
+                            <span th:text="${tag.name}">Tag</span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

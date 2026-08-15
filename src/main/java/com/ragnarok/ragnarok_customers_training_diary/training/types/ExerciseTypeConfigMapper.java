@@ -314,6 +314,7 @@ public class ExerciseTypeConfigMapper {
                         && !"REPS".equals(s.getRepUnit()) ? s.getRepUnit() : null);
                 step.setWeightKg(s.getWeightKg());
                 step.setNote(s.getNote());
+                step.setJumpHeightCm(s.getJumpHeightCm());
                 step.setEquipmentName(s.getEquipmentName() != null && !s.getEquipmentName().isBlank()
                         ? s.getEquipmentName().trim() : null);
                 step.setEquipmentWeightKg(s.getEquipmentWeightKg());
@@ -381,6 +382,7 @@ public class ExerciseTypeConfigMapper {
                 step.setRepUnit(s.getRepUnit() != null && !s.getRepUnit().isBlank()
                         && !"REPS".equals(s.getRepUnit()) ? s.getRepUnit() : null);
                 step.setNote(s.getNote());
+                step.setJumpHeightCm(s.getJumpHeightCm());
                 // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
                 step.setEquipmentName(s.getEquipmentName() != null && !s.getEquipmentName().isBlank()
                         ? s.getEquipmentName().trim() : null);

@@ -735,6 +735,7 @@ public class TrainingService {
             // ScoutMeto kolo 8: jednotka tabulky sérií (Carry → metry/sekundy)
             exercise.setSetUnit(exInput.getSetUnit() != null && !exInput.getSetUnit().isBlank()
                     && !"REPS".equals(exInput.getSetUnit()) ? exInput.getSetUnit() : null);
+            exercise.setJumpHeightCm(exInput.getJumpHeightCm());
 
             // Per-type config (EMOM, Tabata, AMRAP, Circuit, ...). Bezpečné NO-OP pro FREEFORM.
             typeConfigMapper.apply(exercise, exInput);

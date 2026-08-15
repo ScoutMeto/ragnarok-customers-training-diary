@@ -206,18 +206,24 @@
         </div>
         <div class="rk-card__body">
             <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--sp-4);">
-                Vytvoř si vlastní tagy zaměření. Použiješ je u cviků i tréninků (vidíš je jen ty).
+                Vytvoř si vlastní tagy. Obecné tagy slouží k libovolnému označení, analytické tagy se propíšou také do katalogu a statistik.
                 Systémové tagy smazat nelze.
             </p>
-            <div style="display:flex; gap:8px; margin-bottom: var(--sp-3);">
+            <div style="display:flex; gap:8px; margin-bottom: var(--sp-3); flex-wrap: wrap; align-items:center;">
                 <input type="text" id="newTagName" class="form-control" placeholder="název tagu (např. Grip, Dech)"
                        maxlength="40" style="max-width: 320px;">
                 <input type="color" id="newTagColor" value="#6c757d" class="form-control"
                        style="width: 56px; padding: 4px;">
+                <select id="newTagCategory" class="form-select" style="max-width: 230px;">
+                    <option value="GENERAL">Obecné</option>
+                    <option value="BODY_REGION">Oblast těla</option>
+                    <option value="MOVEMENT_PATTERN">Pohybový vzorec</option>
+                    <option value="EQUIPMENT">Náčiní/nářadí/pomůcky</option>
+                </select>
                 <button type="button" id="addTagBtn" class="btn btn-accent">Přidat tag</button>
             </div>
             <div id="tagsError" class="text-muted" style="color: var(--rk-danger); font-size: var(--fs-sm);"></div>
-            <div id="myTagsList" class="d-flex flex-wrap gap-2" style="margin-top: var(--sp-2);"></div>
+            <div id="myTagsList" style="margin-top: var(--sp-2);"></div>
         </div>
     </div>
 
@@ -277,15 +283,23 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: scripts}"></div>
 
-<!-- Phase 19c: správa vlastních tagů přes REST API (/api/tags je CSRF-exempt) -->
+<!-- Phase 19c+: správa vlastních tagů přes REST API (/api/tags je CSRF-exempt) -->
 <script>
 (function () {
     const list = document.getElementById('myTagsList');
     const nameInput = document.getElementById('newTagName');
     const colorInput = document.getElementById('newTagColor');
+    const categoryInput = document.getElementById('newTagCategory');
     const addBtn = document.getElementById('addTagBtn');
     const errBox = document.getElementById('tagsError');
     if (!list || !addBtn) return;
+
+    const categories = [
+        { key: 'GENERAL', label: 'Obecné' },
+        { key: 'BODY_REGION', label: 'Oblast těla' },
+        { key: 'MOVEMENT_PATTERN', label: 'Pohybový vzorec' },
+        { key: 'EQUIPMENT', label: 'Náčiní/nářadí/pomůcky' }
+    ];
 
     function showError(msg) { errBox.textContent = msg || ''; }
 
@@ -312,28 +326,49 @@
         return el;
     }
 
+    function renderGrouped(tags) {
+        list.innerHTML = '';
+        const sorted = [...tags].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'cs'));
+        categories.forEach(cat => {
+            const rowTags = sorted.filter(t => (t.category || 'GENERAL') === cat.key);
+            if (!rowTags.length) return;
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:8px;';
+            const head = document.createElement('strong');
+            head.textContent = cat.label + ':';
+            head.style.cssText = 'min-width: 170px; padding-top:4px;';
+            row.appendChild(head);
+            rowTags.forEach(t => row.appendChild(chip(t)));
+            list.appendChild(row);
+        });
+    }
+
     function load() {
         fetch('/api/tags', { headers: { 'Accept': 'application/json' } })
             .then(r => r.json())
-            .then(tags => {
-                list.innerHTML = '';
-                tags.sort((a, b) => (a.system === b.system) ? a.name.localeCompare(b.name) : (a.system ? 1 : -1));
-                tags.forEach(t => list.appendChild(chip(t)));
-            })
+            .then(renderGrouped)
             .catch(() => showError('Nepodařilo se načíst tagy.'));
     }
 
     function addTag() {
         const name = (nameInput.value || '').trim();
+        const category = categoryInput ? categoryInput.value : 'GENERAL';
         showError('');
         if (!name) { showError('Zadej název tagu.'); return; }
         fetch('/api/tags', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: name, color: colorInput.value })
-        }).then(r => {
-            if (!r.ok) { showError('Tag se nepodařilo vytvořit (možná už existuje).'); return; }
-            nameInput.value = '';
+            body: JSON.stringify({ name: name, color: colorInput.value, category: category })
+        }).then(r => r.ok ? r.json() : null).then(result => {
+            if (!result) { showError('Tag se nepodařilo vytvořit.'); return; }
+            if (result.duplicate) {
+                showError('Tag se stejným názvem už existuje. Použije se existující tag.');
+            } else {
+                nameInput.value = '';
+                if (result.catalogOptionCreated) {
+                    showError('Tag vytvořen a propsán také do katalogu.');
+                }
+            }
             load();
         }).catch(() => showError('Chyba při vytváření tagu.'));
     }

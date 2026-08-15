@@ -3,6 +3,8 @@ package com.ragnarok.ragnarok_customers_training_diary.tag;
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,13 +18,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Tag pro štítkování tréninků. Dva typy:
- * <ul>
- *     <li><b>System tag</b> ({@code isSystem=true}, {@code owner=null}) — předdefinovaný
- *         (např. KB, CARDIO, BODYWEIGHT, OS_RESETS, ...), seed migrace</li>
- *     <li><b>Custom tag</b> ({@code isSystem=false}, {@code owner!=null}) — klient si
- *         přidá vlastní (např. "ranní", "doma", "Tabata-only")</li>
- * </ul>
+ * Tag pro štítkování tréninků. Systémové tagy jsou globální, vlastní tagy patří
+ * konkrétnímu uživateli. Kategorie rozhoduje, zda tag vstupuje do analytických
+ * grafů oblastí těla, pohybových vzorců nebo náčiní.
  */
 @Entity
 @Table(name = "training_tag")
@@ -45,14 +43,15 @@ public class TrainingTagEntity {
     private boolean isSystem = false;
 
     /**
-     * Stabilní identifikátor systémového tagu (kolo 10) — u vlastních tagů {@code null}.
-     *
-     * <p>UI i statistiky se rozhodují podle klíče, ne podle {@link #name}, aby přejmenování
-     * tagu (počeštění, úprava terminologie) nerozbilo logiku jednotek a agregací.
-     * Hodnoty viz {@link SystemTag}.
+     * Stabilní identifikátor systémového tagu. U vlastních tagů zůstává null,
+     * jejich analytický význam určuje {@link #category}.
      */
     @Column(name = "system_key", length = 32)
     private String systemKey;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private TagCategory category = TagCategory.GENERAL;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")

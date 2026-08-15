@@ -38,13 +38,21 @@
                     <div class="col-md-4">
                         <div class="rk-field">
                             <label class="rk-label">Oblast těla</label>
-                            <div class="form-text mb-1">Lze zvolit i víc oblastí (např. dolní část těla + střed těla).</div>
-                            <div class="d-flex flex-column gap-1">
+                            <div class="form-text mb-1">Lze zvolit i víc oblastí. Přidáním nové oblasti se vytvoří také odpovídající analytický tag.</div>
+                            <div id="bodyRegionBoxes" class="d-flex flex-column gap-1">
                                 <div th:each="b : ${bodyRegions}" class="form-check m-0">
                                     <input type="checkbox" class="form-check-input"
-                                           th:id="'br-' + ${b}" th:field="*{bodyRegions}" th:value="${b}">
-                                    <label class="form-check-label" th:for="'br-' + ${b}" th:text="${b.label}">Horní část těla</label>
+                                           th:id="'br-' + ${b.id}" th:field="*{bodyRegions}" th:value="${b.name}">
+                                    <label class="form-check-label" th:for="'br-' + ${b.id}" th:text="${b.label}">Horní část těla</label>
                                 </div>
+                            </div>
+                            <div class="catalog-attr-manage" data-kind="BODY_REGION"
+                                 data-checkboxes="bodyRegionBoxes" data-field="bodyRegions" data-auto-tag="true">
+                                <div style="display:flex; gap:6px; margin-top:6px;">
+                                    <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní oblast těla" maxlength="64">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
+                                </div>
+                                <div class="attr-custom-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
                             </div>
                         </div>
                     </div>
@@ -55,12 +63,12 @@
                             <div id="movementPatternBoxes" class="d-flex flex-column gap-1">
                                 <div th:each="mp : ${movementPatterns}" class="form-check m-0">
                                     <input type="checkbox" class="form-check-input"
-                                           th:id="'mp-' + ${mp.name}" th:field="*{movementPatterns}" th:value="${mp.name}">
-                                    <label class="form-check-label" th:for="'mp-' + ${mp.name}" th:text="${mp.name}">PUSH</label>
+                                           th:id="'mp-' + ${mp.id}" th:field="*{movementPatterns}" th:value="${mp.name}">
+                                    <label class="form-check-label" th:for="'mp-' + ${mp.id}" th:text="${mp.label}">Tlak</label>
                                 </div>
                             </div>
                             <div class="catalog-attr-manage" data-kind="MOVEMENT_PATTERN"
-                                 data-checkboxes="movementPatternBoxes" data-field="movementPatterns">
+                                 data-checkboxes="movementPatternBoxes" data-field="movementPatterns" data-auto-tag="true">
                                 <div style="display:flex; gap:6px; margin-top:6px;">
                                     <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní vzorec" maxlength="64">
                                     <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
@@ -74,9 +82,9 @@
                             <label class="rk-label" for="equipment">Náčiní</label>
                             <select id="equipment" th:field="*{equipment}" class="form-select">
                                 <option value="">—</option>
-                                <option th:each="op : ${equipments}" th:value="${op.name}" th:text="${op.name}">KETTLEBELL</option>
+                                <option th:each="op : ${equipments}" th:value="${op.name}" th:text="${op.label}">KETTLEBELL</option>
                             </select>
-                            <div class="catalog-attr-manage" data-kind="EQUIPMENT" data-select="equipment">
+                            <div class="catalog-attr-manage" data-kind="EQUIPMENT" data-select="equipment" data-ask-tag="true">
                                 <div style="display:flex; gap:6px; margin-top:6px;">
                                     <input type="text" class="form-control form-control-sm attr-new" placeholder="vlastní náčiní" maxlength="64">
                                     <button type="button" class="btn btn-sm btn-outline-secondary attr-add">Přidat</button>
@@ -123,12 +131,11 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <div th:replace="~{fragments/layout :: scripts}"></div>
 
-<!-- Phase 20a/b: správa rozšiřitelného číselníku (pohybový vzorec, náčiní) přes /api/catalog-options -->
+<!-- Phase 20a/b+: správa rozšiřitelného číselníku přes /api/catalog-options -->
 <script>
 (function () {
     document.querySelectorAll('.catalog-attr-manage').forEach(function (box) {
         const kind = box.getAttribute('data-kind');
-        // kolo 10: pohybový vzorec je nově víceznačný → checkboxy. Náčiní zůstává select.
         const boxesId = box.getAttribute('data-checkboxes');
         const boxes = boxesId ? document.getElementById(boxesId) : null;
         const fieldName = box.getAttribute('data-field');
@@ -136,7 +143,8 @@
         const input = box.querySelector('.attr-new');
         const addBtn = box.querySelector('.attr-add');
         const list = box.querySelector('.attr-custom-list');
-        // hodnoty, které mají po přegenerování zůstat zaškrtnuté (i čerstvě přidaná vlastní)
+        const autoTag = box.getAttribute('data-auto-tag') === 'true';
+        const askTag = box.getAttribute('data-ask-tag') === 'true';
         let pending = null;
 
         function checkedValues() {
@@ -147,7 +155,7 @@
         function customChip(o) {
             const chip = document.createElement('span');
             chip.style.cssText = 'display:inline-flex; align-items:center; gap:4px; border:1px solid var(--rk-border); border-radius:999px; padding:2px 8px; font-size:12px;';
-            chip.appendChild(document.createTextNode(o.name));
+            chip.appendChild(document.createTextNode(o.label || o.name));
             const x = document.createElement('button');
             x.type = 'button'; x.textContent = '−'; x.title = 'Smazat hodnotu';
             x.style.cssText = 'background:none; border:none; cursor:pointer; line-height:1; color:var(--rk-danger);';
@@ -166,10 +174,10 @@
                 wrap.className = 'form-check m-0';
                 const chk = document.createElement('input');
                 chk.type = 'checkbox'; chk.className = 'form-check-input';
-                chk.name = fieldName; chk.value = o.name; chk.id = 'mp-' + o.name;
+                chk.name = fieldName; chk.value = o.name; chk.id = kind.toLowerCase() + '-' + o.id;
                 chk.checked = current.has(o.name);
                 const lab = document.createElement('label');
-                lab.className = 'form-check-label'; lab.htmlFor = chk.id; lab.textContent = o.name;
+                lab.className = 'form-check-label'; lab.htmlFor = chk.id; lab.textContent = o.label || o.name;
                 wrap.appendChild(chk); wrap.appendChild(lab);
                 boxes.appendChild(wrap);
                 if (!o.system) list.appendChild(customChip(o));
@@ -178,16 +186,14 @@
 
         function rebuildSelect(options) {
             const current = select.value;
-            // ponech prázdnou volbu, zbytek přegeneruj
             select.innerHTML = '<option value="">—</option>';
             list.innerHTML = '';
             options.forEach(function (o) {
                 const opt = document.createElement('option');
-                opt.value = o.name; opt.textContent = o.name;
+                opt.value = o.name; opt.textContent = o.label || o.name;
                 select.appendChild(opt);
                 if (!o.system) list.appendChild(customChip(o));
             });
-            // obnov vybranou hodnotu (i kdyby to byla vlastní)
             if (current && !Array.prototype.some.call(select.options, o => o.value === current)) {
                 const opt = document.createElement('option');
                 opt.value = current; opt.textContent = current; select.appendChild(opt);
@@ -206,15 +212,18 @@
         function add() {
             const name = (input.value || '').trim();
             if (!name) return;
+            const createTag = autoTag || (askTag && window.confirm('Vytvořit k této hodnotě také tag pro zápis tréninku a statistiky?'));
             fetch('/api/catalog-options', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ kind: kind, name: name })
-            }).then(r => {
-                if (!r.ok) return;
+                body: JSON.stringify({ kind: kind, name: name, createTag: createTag })
+            }).then(r => r.ok ? r.json() : null).then(o => {
+                if (!o) return;
                 input.value = '';
-                // nově přidaná hodnota rovnou zaškrtnutá / vybraná
-                if (boxes) { pending = checkedValues().concat([name]); load(); }
-                else { select.value = name; load(); setTimeout(() => { select.value = name; }, 100); }
+                const value = o.name || name;
+                if (o.duplicate) window.alert('Tato hodnota už existuje. Použije se existující položka.');
+                if (o.tagDuplicate) window.alert('Tag se stejným názvem už existuje. Nový tag se proto nevytvořil.');
+                if (boxes) { pending = checkedValues().concat([value]); load(); }
+                else { select.value = value; load(); setTimeout(() => { select.value = value; }, 100); }
             });
         }
         function del(id) {

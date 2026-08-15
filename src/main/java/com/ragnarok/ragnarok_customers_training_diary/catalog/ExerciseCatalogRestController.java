@@ -39,7 +39,7 @@ public class ExerciseCatalogRestController {
             return new CatalogItemResponse(
                     e.getId(),
                     e.getName(),
-                    e.getBodyRegions().stream().map(Enum::name).toList(),
+                    java.util.List.copyOf(e.getBodyRegions()),
                     java.util.List.copyOf(e.getMovementPatterns()),
                     e.getPrimaryMuscle(),
                     e.getEquipment()

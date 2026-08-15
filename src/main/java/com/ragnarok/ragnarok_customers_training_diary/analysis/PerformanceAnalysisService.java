@@ -1,8 +1,9 @@
 package com.ragnarok.ragnarok_customers_training_diary.analysis;
 
 import com.ragnarok.ragnarok_customers_training_diary.account.AccountEntity;
-import com.ragnarok.ragnarok_customers_training_diary.catalog.BodyRegion;
+import com.ragnarok.ragnarok_customers_training_diary.catalog.CatalogLabels;
 import com.ragnarok.ragnarok_customers_training_diary.tag.SystemTag;
+import com.ragnarok.ragnarok_customers_training_diary.tag.TagCategory;
 import com.ragnarok.ragnarok_customers_training_diary.tag.TrainingTagEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingEntity;
 import com.ragnarok.ragnarok_customers_training_diary.training.TrainingExerciseEntity;
@@ -148,21 +149,37 @@ public class PerformanceAnalysisService {
             for (TrainingExerciseEntity ex : t.getExercises()) {
                 bump(byType, ex.getType() != null ? ex.getType().name() : "—");
 
-                Set<String> keys = systemKeys(ex.getTags());
-                for (TrainingTagEntity tag : ex.getTags()) {
-                    bump(byTag, tag.getName());
+                if (ex.getType() == TrainingExerciseType.CIRCUIT && ex.getCircuitConfig() != null) {
+                    for (var step : ex.getCircuitConfig().getSteps()) {
+                        Set<TrainingTagEntity> tags = mergeTags(ex.getTags(), step.getTags());
+                        addTagDistribution(tags, byTag, byBodyPart, byLaterality, byLoadKind, byIsolation, byCharacter,
+                                isBodyweightStep(tags, stepWeight(step, equipmentWeight(ex))));
+                    }
+                    collect(ex, switch (characterOf(ex)) {
+                        case REPETITIVE -> repetitive;
+                        case CARRY -> carry;
+                        case ISOMETRY -> isometry;
+                    });
+                    continue;
                 }
 
-                bump(byBodyPart, bodyPartOf(ex, keys));
-                bump(byLaterality, keys.contains(SystemTag.UNILATERAL)
-                        || keys.contains(SystemTag.UNILATERAL_LEFT)
-                        || keys.contains(SystemTag.UNILATERAL_RIGHT)
-                        ? "Unilaterální" : keys.contains(SystemTag.BILATERAL) ? "Bilaterální" : "Neurčeno");
-                bump(byLoadKind, isBodyweight(ex) ? "Vlastní váha" : "Náčiní");
-                bump(byIsolation, keys.contains(SystemTag.ISOLATION) ? "Izolované cvičení" : "Celé tělo");
+                if (ex.getType() == TrainingExerciseType.AMRAP && ex.getAmrapConfig() != null) {
+                    for (var step : ex.getAmrapConfig().getSteps()) {
+                        Set<TrainingTagEntity> tags = mergeTags(ex.getTags(), step.getTags());
+                        addTagDistribution(tags, byTag, byBodyPart, byLaterality, byLoadKind, byIsolation, byCharacter,
+                                isBodyweightStep(tags, amrapStepWeight(step, equipmentWeight(ex))));
+                    }
+                    collect(ex, switch (characterOf(ex)) {
+                        case REPETITIVE -> repetitive;
+                        case CARRY -> carry;
+                        case ISOMETRY -> isometry;
+                    });
+                    continue;
+                }
 
+                addTagDistribution(ex.getTags(), byTag, byBodyPart, byLaterality, byLoadKind, byIsolation, byCharacter,
+                        isBodyweight(ex));
                 Character ch = characterOf(ex);
-                bump(byCharacter, characterLabel(ch));
                 collect(ex, switch (ch) {
                     case REPETITIVE -> repetitive;
                     case CARRY -> carry;
@@ -193,24 +210,6 @@ public class PerformanceAnalysisService {
                     t.getBodyweightKg(), t.getSleepQualityRpe(), t.getSleepQuality(),
                     a.longCardioSeconds, a.externalWeight, a.bodyweightReps,
                     t.getCyclePhase() != null ? t.getCyclePhase().name().substring(0, 1) : null));
-        }
-        return out;
-    }
-
-    /** Cviky odpovídající VŠEM zvoleným tagům — P62. */
-    public List<ExerciseOccurrence> exercisesByTags(AccountEntity owner, LocalDate from, LocalDate to,
-                                                    Collection<Long> requiredTagIds) {
-        List<ExerciseOccurrence> out = new ArrayList<>();
-        if (requiredTagIds == null || requiredTagIds.isEmpty()) return out;
-        for (TrainingEntity t : loadTrainings(owner, from, to)) {
-            for (TrainingExerciseEntity ex : t.getExercises()) {
-                if (!hasAllTags(ex.getTags(), requiredTagIds)) continue;
-                Acc acc = new Acc();
-                collect(ex, acc);
-                out.add(new ExerciseOccurrence(t.getId(), t.getTrainingDate(), t.getName(),
-                        displayName(ex), characterOf(ex).name(),
-                        acc.sets, acc.reps, acc.liftedKg, acc.meters, acc.seconds));
-            }
         }
         return out;
     }
@@ -435,7 +434,35 @@ public class PerformanceAnalysisService {
         if (ex.getCatalogItem() != null) return ex.getCatalogItem().getName();
         return ex.getCustomName() != null ? ex.getCustomName() : "—";
     }
+    private static Set<TrainingTagEntity> mergeTags(Set<TrainingTagEntity> first, Set<TrainingTagEntity> second) {
+        Set<TrainingTagEntity> result = new java.util.LinkedHashSet<>();
+        if (first != null) result.addAll(first);
+        if (second != null) result.addAll(second);
+        return result;
+    }
 
+    private void addTagDistribution(
+            Set<TrainingTagEntity> tags,
+            Map<String, Long> byTag,
+            Map<String, Long> byBodyPart,
+            Map<String, Long> byLaterality,
+            Map<String, Long> byLoadKind,
+            Map<String, Long> byIsolation,
+            Map<String, Long> byCharacter,
+            boolean bodyweight) {
+        Set<String> keys = systemKeys(tags);
+        for (TrainingTagEntity tag : tags) {
+            bump(byTag, tag.getName());
+        }
+        bump(byBodyPart, bodyPartOf(tags));
+        bump(byLaterality, keys.contains(SystemTag.UNILATERAL)
+                || keys.contains(SystemTag.UNILATERAL_LEFT)
+                || keys.contains(SystemTag.UNILATERAL_RIGHT)
+                ? "Unilaterální" : keys.contains(SystemTag.BILATERAL) ? "Bilaterální" : "Neurčeno");
+        bump(byLoadKind, bodyweight ? "Vlastní váha" : "Náčiní");
+        bump(byIsolation, keys.contains(SystemTag.ISOLATION) ? "Izolované cvičení" : "Celé tělo");
+        bump(byCharacter, characterLabel(characterOf(tags)));
+    }
     private static Set<String> systemKeys(Set<TrainingTagEntity> tags) {
         return tags.stream()
                 .map(TrainingTagEntity::getSystemKey)
@@ -445,12 +472,18 @@ public class PerformanceAnalysisService {
 
     /** Charakter provedení. Cvik bez tagu se počítá jako repetitivní. */
     public Character characterOf(TrainingExerciseEntity ex) {
-        Set<String> keys = systemKeys(ex.getTags());
-        if (keys.contains(SystemTag.ISOMETRY)) return Character.ISOMETRY;
-        if (keys.contains(SystemTag.CARRY)) return Character.CARRY;
-        return Character.REPETITIVE;
+        return characterOf(ex.getTags());
     }
 
+    private Character characterOf(Set<TrainingTagEntity> tags) {
+        Set<String> keys = systemKeys(tags);
+        if (keys.contains(SystemTag.ISOMETRY) || keys.contains(SystemTag.ISOMETRIC)) return Character.ISOMETRY;
+        if (keys.contains(SystemTag.CARRY)
+                || keys.contains(SystemTag.GAIT)
+                || keys.contains(SystemTag.LOCOMOTION)
+                || keys.contains(SystemTag.JUMPS)) return Character.CARRY;
+        return Character.REPETITIVE;
+    }
     private static String characterLabel(Character c) {
         return switch (c) {
             case REPETITIVE -> "Repetitivní provedení";
@@ -466,19 +499,33 @@ public class PerformanceAnalysisService {
         return w == null || w.signum() == 0;
     }
 
-    /** Tagy cviku mají přednost před oblastí těla z katalogu. */
     private static String bodyPartOf(TrainingExerciseEntity ex, Set<String> keys) {
-        if (keys.contains(SystemTag.FULL_BODY)) return "Celé tělo";
-        if (keys.contains(SystemTag.UPPER_BODY)) return "Horní část těla";
-        if (keys.contains(SystemTag.LOWER_BODY)) return "Dolní část těla";
-        if (keys.contains(SystemTag.CORE)) return "Střed těla";
+        String fromTags = bodyPartOf(ex.getTags());
+        if (!"Neurčeno".equals(fromTags)) return fromTags;
         if (ex.getCatalogItem() != null && !ex.getCatalogItem().getBodyRegions().isEmpty()) {
-            BodyRegion first = ex.getCatalogItem().getBodyRegions().iterator().next();
-            return first.getLabel();
+            String first = ex.getCatalogItem().getBodyRegions().iterator().next();
+            return CatalogLabels.bodyRegion(first);
         }
         return "Neurčeno";
     }
 
+    private static String bodyPartOf(Set<TrainingTagEntity> tags) {
+        Set<String> keys = systemKeys(tags);
+        if (keys.contains(SystemTag.FULL_BODY)) return CatalogLabels.bodyRegion(SystemTag.FULL_BODY);
+        if (keys.contains(SystemTag.UPPER_BODY)) return CatalogLabels.bodyRegion(SystemTag.UPPER_BODY);
+        if (keys.contains(SystemTag.LOWER_BODY)) return CatalogLabels.bodyRegion(SystemTag.LOWER_BODY);
+        if (keys.contains(SystemTag.CORE)) return CatalogLabels.bodyRegion(SystemTag.CORE);
+        for (TrainingTagEntity tag : tags) {
+            if (tag.getCategory() == TagCategory.BODY_REGION) {
+                return tag.getName();
+            }
+        }
+        return "Neurčeno";
+    }
+    private boolean isBodyweightStep(Set<TrainingTagEntity> tags, BigDecimal weight) {
+        if (systemKeys(tags).contains(SystemTag.BODYWEIGHT)) return true;
+        return weight == null || weight.signum() == 0;
+    }
     private static BigDecimal equipmentWeight(TrainingExerciseEntity ex) {
         BigDecimal w1 = ex.getEquipmentWeightKg();
         BigDecimal w2 = ex.getEquipmentSecondWeightKg();
@@ -524,7 +571,11 @@ public class PerformanceAnalysisService {
 
     private static boolean hasAllTags(Set<TrainingTagEntity> tags, Collection<Long> required) {
         if (required == null || required.isEmpty()) return true;
-        Set<Long> ids = tags.stream().map(TrainingTagEntity::getId).collect(Collectors.toSet());
+        if (tags == null || tags.isEmpty()) return false;
+        Set<Long> ids = tags.stream()
+                .map(TrainingTagEntity::getId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
         return ids.containsAll(required);
     }
 
@@ -594,9 +645,4 @@ public class PerformanceAnalysisService {
             BigDecimal bodyweightKg, Short sleepQualityRpe, Short sleepQuality,
             long cardioSeconds, BigDecimal liftedKg, long bodyweightReps,
             String cyclePhaseLetter) {}
-
-    public record ExerciseOccurrence(
-            Long trainingId, LocalDate date, String trainingName,
-            String exerciseName, String character,
-            long sets, long reps, BigDecimal liftedKg, long meters, long seconds) {}
 }

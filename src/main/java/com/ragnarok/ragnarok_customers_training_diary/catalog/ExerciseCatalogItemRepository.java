@@ -20,7 +20,7 @@ public interface ExerciseCatalogItemRepository extends JpaRepository<ExerciseCat
             SELECT e FROM ExerciseCatalogItemEntity e
             WHERE e.active = true
               AND (e.isSystem = true OR e.createdBy.id = :userId)
-            ORDER BY e.name ASC
+            ORDER BY e.name ASC, e.isSystem ASC
             """)
     List<ExerciseCatalogItemEntity> findVisibleTo(@Param("userId") Long userId);
 
@@ -31,7 +31,7 @@ public interface ExerciseCatalogItemRepository extends JpaRepository<ExerciseCat
             SELECT e FROM ExerciseCatalogItemEntity e
             WHERE e.active = true
               AND LOWER(e.name) LIKE LOWER(CONCAT('%', :query, '%'))
-            ORDER BY e.name ASC
+            ORDER BY e.name ASC, e.isSystem ASC
             """)
     List<ExerciseCatalogItemEntity> searchByName(@Param("query") String query, Pageable pageable);
 }

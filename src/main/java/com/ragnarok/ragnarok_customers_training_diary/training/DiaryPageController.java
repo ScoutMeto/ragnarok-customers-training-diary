@@ -167,9 +167,94 @@ public class DiaryPageController {
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("isGroup", isGroup);
         model.addAttribute("readOnly", isReadOnly(user));
+        model.addAttribute("timerConfigs", buildTimerConfigs(training));
         // Phase 12 / A3: lookup mapa skutečného záznamu circuitu, klíč "exId-round-step"
         model.addAttribute("circuitLog", buildCircuitLogMap(training));
         return "diary/detail";
+    }
+
+    /**
+     * Builds a small, JSON-safe timer config for the detail page. Keep this detached
+     * from JPA entities; Thymeleaf inline JavaScript should only serialize scalars,
+     * lists and maps to avoid parser issues and entity cycles.
+     */
+    private java.util.Map<String, Object> buildTimerConfigs(TrainingEntity training) {
+        var timers = new java.util.LinkedHashMap<String, Object>();
+        var emom = new java.util.LinkedHashMap<String, Object>();
+        var tabata = new java.util.LinkedHashMap<String, Object>();
+        var amrap = new java.util.LinkedHashMap<String, Object>();
+        var circuit = new java.util.LinkedHashMap<String, Object>();
+        timers.put("emom", emom);
+        timers.put("tabata", tabata);
+        timers.put("amrap", amrap);
+        timers.put("circuit", circuit);
+
+        for (TrainingExerciseEntity ex : training.getExercises()) {
+            String exerciseKey = String.valueOf(ex.getId());
+
+            if (ex.getEmomConfig() != null) {
+                var source = ex.getEmomConfig();
+                var cfg = new java.util.LinkedHashMap<String, Object>();
+                cfg.put("totalMinutes", source.getTotalMinutes());
+                cfg.put("intervalSeconds", source.getIntervalSeconds());
+                cfg.put("defaultReps", source.getDefaultReps());
+                cfg.put("defaultWeightKg", source.getDefaultWeightKg());
+
+                var overrides = new java.util.ArrayList<java.util.Map<String, Object>>();
+                if (source.getMinuteOverrides() != null) {
+                    for (var o : source.getMinuteOverrides()) {
+                        var override = new java.util.LinkedHashMap<String, Object>();
+                        override.put("minuteIndex", o.getMinuteIndex());
+                        override.put("reps", o.getReps());
+                        override.put("weightKg", o.getWeightKg());
+                        override.put("note", o.getNote());
+                        overrides.add(override);
+                    }
+                }
+                cfg.put("minuteOverrides", overrides);
+                emom.put(exerciseKey, cfg);
+            }
+
+            if (ex.getTabataConfig() != null) {
+                var source = ex.getTabataConfig();
+                var cfg = new java.util.LinkedHashMap<String, Object>();
+                cfg.put("rounds", source.getRounds());
+                cfg.put("workSeconds", source.getWorkSeconds());
+                cfg.put("restSeconds", source.getRestSeconds());
+                cfg.put("defaultReps", source.getDefaultReps());
+                cfg.put("defaultWeightKg", source.getDefaultWeightKg());
+                tabata.put(exerciseKey, cfg);
+            }
+
+            if (ex.getAmrapConfig() != null) {
+                var source = ex.getAmrapConfig();
+                var cfg = new java.util.LinkedHashMap<String, Object>();
+                cfg.put("timecapSeconds", source.getTimecapSeconds());
+                cfg.put("targetRepsPerRound", source.getTargetRepsPerRound());
+                amrap.put(exerciseKey, cfg);
+            }
+
+            if (ex.getCircuitConfig() != null) {
+                var source = ex.getCircuitConfig();
+                var cfg = new java.util.LinkedHashMap<String, Object>();
+                cfg.put("rounds", source.getRounds());
+                cfg.put("restBetweenRoundsS", source.getRestBetweenRoundsS());
+
+                var steps = new java.util.ArrayList<java.util.Map<String, Object>>();
+                if (source.getSteps() != null) {
+                    for (var s : source.getSteps()) {
+                        var step = new java.util.LinkedHashMap<String, Object>();
+                        step.put("name", s.getName());
+                        step.put("durationSeconds", s.getDurationSeconds());
+                        step.put("restSeconds", s.getRestSeconds());
+                        steps.add(step);
+                    }
+                }
+                cfg.put("steps", steps);
+                circuit.put(exerciseKey, cfg);
+            }
+        }
+        return timers;
     }
 
     /**
@@ -511,6 +596,7 @@ public class DiaryPageController {
         model.addAttribute("exerciseTypes", java.util.List.of(TrainingExerciseType.values()));
         model.addAttribute("catalogOptions", catalogService.optionsVisibleTo(user));
         model.addAttribute("tags", tagService.findVisibleTo(user));
+        model.addAttribute("tagCategories", com.ragnarok.ragnarok_customers_training_diary.tag.TagCategory.values());
         model.addAttribute("equipmentOptions", equipmentService.listVisibleTo(user));
         // ScoutMeto kolo 5: cyklus jen pro ženy
         model.addAttribute("showCycle", user.isFemale());
@@ -555,6 +641,7 @@ public class DiaryPageController {
             ei.setEquipmentCount(ex.getEquipmentCount());
             ei.setEquipmentSecondWeightKg(ex.getEquipmentSecondWeightKg());
             ei.setSetUnit(ex.getSetUnit());
+            ei.setJumpHeightCm(ex.getJumpHeightCm());
             List<SetInput> setInputs = ex.getSets().stream().map(s -> {
                 SetInput si = new SetInput();
                 si.setId(s.getId());

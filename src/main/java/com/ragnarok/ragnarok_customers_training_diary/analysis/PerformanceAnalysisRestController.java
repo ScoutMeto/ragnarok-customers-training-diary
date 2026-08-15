@@ -35,7 +35,7 @@ public class PerformanceAnalysisRestController {
         return service.exerciseSummary(user, name, from, to);
     }
 
-    /** P59 + P62: tréninky za období, volitelně filtrované na tagy tréninku. */
+    /** P59: tréninky za období, volitelně filtrované na tagy tréninku. */
     @GetMapping("/trainings")
     public List<PerformanceAnalysisService.TrainingSummary> trainings(
             @AuthenticationPrincipal AccountEntity user,
@@ -61,16 +61,6 @@ public class PerformanceAnalysisRestController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return service.distributions(user, from, to);
-    }
-
-    /** P62: cviky, které mají VŠECHNY zvolené tagy. */
-    @GetMapping("/exercises-by-tags")
-    public List<PerformanceAnalysisService.ExerciseOccurrence> exercisesByTags(
-            @AuthenticationPrincipal AccountEntity user,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) Set<Long> tagIds) {
-        return service.exercisesByTags(user, from, to, tagIds);
     }
 
     /** P63: sledované proměnné v čase. */

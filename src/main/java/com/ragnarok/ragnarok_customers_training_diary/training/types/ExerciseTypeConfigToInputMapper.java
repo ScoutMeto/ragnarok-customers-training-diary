@@ -226,6 +226,7 @@ public class ExerciseTypeConfigToInputMapper {
             si.setRestSeconds(s.getRestSeconds());
             si.setRepUnit(s.getRepUnit());
             si.setNote(s.getNote());
+            si.setJumpHeightCm(s.getJumpHeightCm());
             // ScoutMeto kolo 8: náčiní + tagy per cvik kruhového tréninku
             si.setEquipmentName(s.getEquipmentName());
             si.setEquipmentWeightKg(s.getEquipmentWeightKg());
@@ -301,6 +302,7 @@ public class ExerciseTypeConfigToInputMapper {
             si.setRepUnit(st.getRepUnit());
             si.setWeightKg(st.getWeightKg());
             si.setNote(st.getNote());
+            si.setJumpHeightCm(st.getJumpHeightCm());
             si.setEquipmentName(st.getEquipmentName());
             si.setEquipmentWeightKg(st.getEquipmentWeightKg());
             si.setEquipmentCount(st.getEquipmentCount());

@@ -100,11 +100,22 @@ public class ExerciseCatalogService {
     }
 
     /**
-     * Upraví cvik. Klient smí jen svoje custom; admin smí systémové (i cizí).
+     * Upraví cvik. Admin upravuje originál; klientova editace systémového cviku založí jeho custom kopii.
      */
     @Transactional
     public ExerciseCatalogItemEntity update(AccountEntity editor, Long id, ExerciseCatalogItemEntity data) {
         ExerciseCatalogItemEntity item = getById(id);
+        boolean admin = editor.getRole() == AccountRole.ADMIN;
+
+        if (!admin && item.isSystem()) {
+            ExerciseCatalogItemEntity copy = new ExerciseCatalogItemEntity();
+            copyEditableFields(data, copy);
+            copy.setSystem(false);
+            copy.setCreatedBy(editor);
+            copy.setActive(true);
+            return repository.save(copy);
+        }
+
         requireEditable(editor, item);
         copyEditableFields(data, item);
         return item; // dirty checking

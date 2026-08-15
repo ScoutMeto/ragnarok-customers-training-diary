@@ -104,6 +104,9 @@ public class TrainingExerciseEntity {
     @Column(name = "set_unit", length = 10)
     private String setUnit;
 
+    @Column(name = "jump_height_cm", precision = 6, scale = 2)
+    private java.math.BigDecimal jumpHeightCm;
+
     /** Phase 11 (A2): per-exercise tagy zaměření (sdílený pool s tréninkovými tagy). */
     @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
     @jakarta.persistence.JoinTable(

@@ -51,6 +51,9 @@ public class TrainingExerciseInput {
     @jakarta.validation.constraints.Pattern(regexp = "REPS|METERS|SECONDS")
     private String setUnit;
 
+    /** Výška překážky nebo výskoku v centimetrech pro tag Skoky, výskoky. */
+    private java.math.BigDecimal jumpHeightCm;
+
     @Valid
     private List<SetInput> sets = new ArrayList<>();
 

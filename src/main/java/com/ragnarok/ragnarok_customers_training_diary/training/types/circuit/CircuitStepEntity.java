@@ -53,6 +53,9 @@ public class CircuitStepEntity {
     @Column(length = 255)
     private String note;
 
+    @Column(name = "jump_height_cm", precision = 6, scale = 2)
+    private BigDecimal jumpHeightCm;
+
     // ScoutMeto kolo 8: náčiní se zadává u každého cviku kruhového tréninku zvlášť
     @Column(name = "equipment_name", length = 64)
     private String equipmentName;

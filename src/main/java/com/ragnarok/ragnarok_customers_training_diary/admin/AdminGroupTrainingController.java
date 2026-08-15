@@ -401,6 +401,7 @@ public class AdminGroupTrainingController {
         model.addAttribute("catalogOptions", catalogService.allOptions());
         // Pro group trénink povolíme jen systémové tagy
         model.addAttribute("tags", tagRepository.findByIsSystemTrueOrderByNameAsc());
+        model.addAttribute("tagCategories", com.ragnarok.ragnarok_customers_training_diary.tag.TagCategory.values());
     }
 
     private TrainingInput toInput(TrainingEntity entity) {

@@ -22,6 +22,22 @@ public final class SystemTag {
     /** Izometrie — statická výdrž, jen sekundy (metry se nepřekonávají). */
     public static final String ISOMETRY = "ISOMETRY";
 
+    // --- pohybové vzorce použitelné i jako per-exercise/per-step tagy ---
+    public static final String GAIT = "GAIT";
+    public static final String HINGE = "HINGE";
+    public static final String ISOMETRIC = "ISOMETRIC";
+    public static final String LUNGE = "LUNGE";
+    public static final String OTHER = "OTHER";
+    public static final String PLYO = "PLYO";
+    public static final String PULL = "PULL";
+    public static final String PUSH = "PUSH";
+    public static final String ROTATION = "ROTATION";
+    public static final String SQUAT = "SQUAT";
+
+    // --- nové sledované tagy se speciálním chováním v zápisu ---
+    public static final String LOCOMOTION = "LOCOMOTION";
+    public static final String JUMPS = "JUMPS";
+    public static final String COORDINATION = "COORDINATION";
     // --- zaměření / oblast těla ---
     public static final String CORE = "CORE";
     public static final String FULL_BODY = "FULL_BODY";
